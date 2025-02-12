@@ -1,0 +1,33 @@
+<div>
+  <button (click)="toggleDirected()">
+    Cambiar a {{ isDirected ? "No dirigido" : "Dirigido" }}
+  </button>
+  <div
+    (dblclick)="onCanvasDblClick($event)"
+    (mousedown)="onCanvasMouseDown($event)"
+    class="canvas"
+  >
+    <svg width="800" height="600" (mouseup)="onCanvasMouseUp($event)">
+      @for (node of nodes; track node.id) {
+        <circle
+          [attr.cx]="node.x"
+          [attr.cy]="node.y"
+          r="10"
+          fill="blue"
+          (mousedown)="onNodeMouseDown($event, node)"
+        />
+      }
+      @for (edge of edges; track edge.source) {
+        <line
+          *ngFor="let edge of edges"
+          [attr.x1]="edge.source.x"
+          [attr.y1]="edge.source.y"
+          [attr.x2]="edge.target.x"
+          [attr.y2]="edge.target.y"
+          stroke="black"
+        />
+      }
+    </svg>
+    <i class="bx bxl-typescript"></i>
+  </div>
+</div>
