@@ -6,18 +6,18 @@
   overflow: hidden;
 }
 .node {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  background: #3498db;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
-  cursor: pointer;
-  user-select: none;
-  border: 2px solid transparent;
+  position: absolute !important;
+  width: 60px !important;
+  height: 60px !important;
+  background: #3498db !important;
+  color: white !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  border: 2px solid transparent !important;
 }
 .selected {
   border-color: red;
