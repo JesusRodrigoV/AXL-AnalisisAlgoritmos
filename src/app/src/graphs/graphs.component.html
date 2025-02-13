@@ -1,0 +1,28 @@
+<div class="menu">
+  <button onclick="toggleMoveMode()">Mover Nodos</button>
+  <button onclick="startConnection()">Conectar Nodos</button>
+  <button onclick="removeObject()">Remover Objeto</button>
+  <span class="status" id="status">Modo normal</span>
+</div>
+<div class="workspace" ondblclick="createNode(event)"></div>
+<svg id="svgCanvas">
+  <defs>
+    <marker
+      id="arrowhead"
+      markerWidth="10"
+      markerHeight="7"
+      refX="9"
+      refY="3.5"
+      orient="auto"
+    >
+      <polygon points="0 0, 10 3.5, 0 7" class="arrow"></polygon>
+    </marker>
+  </defs>
+</svg>
+<div class="modal" id="connectionModal">
+  <p>Peso (opcional):</p>
+  <input type="number" id="weight" />
+  <button onclick="confirmConnection(true)">Dirigido</button>
+  <button onclick="confirmConnection(false)">No dirigido</button>
+  <button onclick="closeModal()">Cancelar</button>
+</div>

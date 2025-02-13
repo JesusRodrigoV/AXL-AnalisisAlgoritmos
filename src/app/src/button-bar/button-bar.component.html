@@ -1,5 +1,9 @@
-<div class="button-bar">
-  <nav>
-    <button></button>
-  </nav>
+<div class="container">
+  <div class="button-bar">
+    <nav>
+      @for (button of buttons; track button.iconClass) {
+        <app-button [iconClass]="button.iconClass" [text]="button.text" />
+      }
+    </nav>
+  </div>
 </div>

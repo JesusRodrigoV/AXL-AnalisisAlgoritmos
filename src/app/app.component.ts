@@ -1,11 +1,11 @@
 import { Component } from "@angular/core";
 import { RouterOutlet } from "@angular/router";
-import { GraphComponent } from "./src/graph";
 import { CanvasComponent } from "./src/canvas";
+import { ButtonBarComponent } from "./src";
 
 @Component({
 	selector: "app-root",
-	imports: [RouterOutlet, GraphComponent, CanvasComponent],
+	imports: [RouterOutlet, CanvasComponent, ButtonBarComponent],
 	templateUrl: "./app.component.html",
 	styleUrl: "./app.component.scss",
 })

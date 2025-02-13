@@ -17,6 +17,6 @@ export const appConfig: ApplicationConfig = {
 		provideExperimentalZonelessChangeDetection(),
 		provideHttpClient(withFetch()),
 		provideClientHydration(withEventReplay()),
-		provideRouter(routes, withComponentInputBinding()), provideAnimationsAsync(), provideAnimationsAsync(),
+		provideRouter(routes, withComponentInputBinding()), provideAnimationsAsync(), provideAnimationsAsync(), provideAnimationsAsync(),
 	],
 };

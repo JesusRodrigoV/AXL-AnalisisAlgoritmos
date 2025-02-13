@@ -15,6 +15,7 @@
         "@angular/platform-browser-dynamic": "^19.1.0",
         "@angular/router": "^19.1.0",
         "boxicons": "^2.1.4",
+        "konva": "^9.3.18",
         "rxjs": "~7.8.0",
         "tslib": "^2.3.0",
         "zone.js": "~0.15.0",
@@ -1146,6 +1147,8 @@
     "karma-source-map-support": ["karma-source-map-support@1.4.0", "", { "dependencies": { "source-map-support": "^0.5.5" } }, "sha512-RsBECncGO17KAoJCYXjv+ckIz+Ii9NCi+9enk+rq6XC81ezYkb4/RHE6CTXdA7IOJqoF3wcaLfVG0CPmE5ca6A=="],
 
     "kind-of": ["kind-of@6.0.3", "", {}, "sha512-dcS1ul+9tmeD95T+x28/ehLgd9mENa3LsvDTtzm3vyBEO7RPptvAD+t44WVXaUjTBRcrpFeFlC8WCruUR456hw=="],
+
+    "konva": ["konva@9.3.18", "", {}, "sha512-ad5h0Y9phUrinBrKXyIISbURRHQO7Rx5cz7mAEEfdVCs45gDqRD8Y0I0nJRk8S6iqEbiRE87CEZu5GVSnU8oow=="],
 
     "launch-editor": ["launch-editor@2.9.1", "", { "dependencies": { "picocolors": "^1.0.0", "shell-quote": "^1.8.1" } }, "sha512-Gcnl4Bd+hRO9P9icCP/RVVT2o8SFlPXofuCxvA2SaZuH45whSvf5p8x5oih5ftLiVhEI4sp5xDY+R+b3zJBh5w=="],
 

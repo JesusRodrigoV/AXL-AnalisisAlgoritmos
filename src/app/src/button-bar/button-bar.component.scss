@@ -1,0 +1,24 @@
+.container {
+  display: flex;
+  justify-content: center;
+  //align-items: center;
+}
+
+.button-bar {
+  padding: 15px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50px;
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+}
+
+.button-bar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

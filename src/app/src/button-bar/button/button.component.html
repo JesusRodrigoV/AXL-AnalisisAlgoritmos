@@ -1,1 +1,10 @@
-<button></button>
+<button
+  mat-raised-button
+  [matTooltip]="text"
+  matTooltipPosition="below"
+  routerLinkActive="custom-button-active"
+  class="custom-button"
+  type="button"
+>
+  <i [class]="iconClasses"></i>
+</button>
