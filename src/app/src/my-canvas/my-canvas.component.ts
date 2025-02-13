@@ -39,12 +39,6 @@ export class MyCanvasComponent implements OnInit {
 	deleteMode = false;
 	draggingNode: Node | null = null;
 
-	openDialog() {
-		this.dialog.open(ModalContentComponent, {
-			data: "",
-		});
-	}
-
 	//Logica
 	ngOnInit(): void {
 		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
@@ -57,6 +51,7 @@ export class MyCanvasComponent implements OnInit {
 
 		// Botón de mover
 		const moveButton = document.createElement("button");
+		moveButton.classList.add("node");
 		moveButton.textContent = "Modo Mover";
 		moveButton.style.margin = "0 10px 0 0";
 		moveButton.style.padding = "5px 10px";
@@ -256,7 +251,7 @@ export class MyCanvasComponent implements OnInit {
 		for (const [index, node] of nodes.entries()) {
 			ctx.strokeStyle = node === this.selectedNode ? "#FF0000" : "#000000";
 			ctx.beginPath();
-			ctx.lineWidth = 4;
+			ctx.lineWidth = 2;
 			ctx.fillStyle = "#FFFFFF";
 			ctx.arc(node.x, node.y, 40, 0, 2 * Math.PI);
 			ctx.stroke();
@@ -413,11 +408,13 @@ export class MyCanvasComponent implements OnInit {
 				ctx.fillText(arco.peso.toString(), textX, textY);
 			}
 		}
+		console.log(this.arcos);
 	}
 
 	showModal(): void {
 		const dialogRef = this.dialog.open(ModalContentComponent, {
-			width: "250px",
+			height: "265px",
+			width: "200px",
 			data: { peso: this.peso, dirigido: this.arcoDirigido },
 		});
 
