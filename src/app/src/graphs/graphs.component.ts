@@ -1,120 +1,145 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	ElementRef,
+	ViewChild,
+} from "@angular/core";
+import { ButtonBarComponent } from "../button-bar";
 
 @Component({
-  selector: 'app-graphs',
-  imports: [],
-  templateUrl: './graphs.component.html',
-  styleUrl: './graphs.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+	selector: "app-graphs",
+	imports: [ButtonBarComponent],
+	templateUrl: "./graphs.component.html",
+	styleUrl: "./graphs.component.scss",
+	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GraphsComponent {
+	private nodeCount = 0;
+	private nodes: HTMLElement[] = [];
+	private connections: any[] = [];
+	private connecting = false;
+	private movingMode = false;
+	private startNode: HTMLElement | null = null;
+	private endNode: HTMLElement | null = null;
 
-private nodeCount = 0;
-        private nodes = [];
-        private connections = [];
-        private connecting = false;
-        private movingMode = false;
-        private startNode = null;
-        private endNode = null;
+	@ViewChild("workspace", { static: true }) workspace!: ElementRef;
+	@ViewChild("status", { static: true }) status!: ElementRef;
+	@ViewChild("connectionModal", { static: true }) connectionModal!: ElementRef;
+	@ViewChild("svgCanvas", { static: true }) svgCanvas!: ElementRef;
+	@ViewChild("weight", { static: true }) weight!: ElementRef;
 
-        function createNode(event) {
-            nodeCount++;
-            private node = document.createElement("div");
-            node.classList.add("node");
-            node.innerText = "Nodo " + nodeCount;
-            node.style.left = `${event.clientX - 30}px`;
-            node.style.top = `${event.clientY - 30}px`;
-            node.onmousedown = (e) => selectNode(e, node);
-            document.querySelector(".workspace").appendChild(node);
-            nodes.push(node);
-        }
+	protected createNode(event: MouseEvent) {
+		this.nodeCount++;
+		const node = document.createElement("div");
+		node.classList.add("node");
+		node.innerText = "Nodo " + this.nodeCount;
+		node.style.left = `${event.clientX - 30}px`;
+		node.style.top = `${event.clientY - 30}px`;
+		node.onmousedown = (e) => this.selectNode(e, node);
+		this.workspace.nativeElement.appendChild(node);
+		this.nodes.push(node);
+	}
 
-        function selectNode(event, node) {
-            event.stopPropagation();
-            if (movingMode) {
-                node.onmousemove = (e) => moveNode(e, node);
-                node.onmouseup = () => node.onmousemove = null;
-            } else if (connecting) {
-                node.classList.add("selected");
-                if (!startNode) {
-                    startNode = node;
-                } else if (startNode !== node) {
-                    endNode = node;
-                    openModal();
-                }
-            }
-        }
+	protected selectNode(event: MouseEvent, node: HTMLElement) {
+		event.stopPropagation();
+		if (this.movingMode) {
+			node.onmousemove = (e) => this.moveNode(e, node);
+			node.onmouseup = () => (node.onmousemove = null);
+		} else if (this.connecting) {
+			node.classList.add("selected");
+			if (!this.startNode) {
+				this.startNode = node;
+			} else if (this.startNode !== node) {
+				this.endNode = node;
+				this.openModal();
+			}
+		}
+	}
 
-        function moveNode(event, node) {
-            node.style.left = `${event.clientX - 30}px`;
-            node.style.top = `${event.clientY - 30}px`;
-            updateConnections();
-        }
+	protected moveNode(event: MouseEvent, node: HTMLElement) {
+		node.style.left = `${event.clientX - 30}px`;
+		node.style.top = `${event.clientY - 30}px`;
+		this.updateConnections();
+	}
 
-        function toggleMoveMode() {
-            movingMode = !movingMode;
-            connecting = false;
-            document.getElementById("status").innerText = movingMode ? "Modo Mover" : "Modo Normal";
-        }
+	protected toggleMoveMode() {
+		this.movingMode = !this.movingMode;
+		this.connecting = false;
+		this.status.nativeElement.innerText = this.movingMode
+			? "Modo Mover"
+			: "Modo Normal";
+	}
 
-        function startConnection() {
-            connecting = true;
-            movingMode = false;
-            document.getElementById("status").innerText = "Seleccione dos nodos";
-        }
+	protected startConnection() {
+		this.connecting = true;
+		this.movingMode = false;
+		this.status.nativeElement.innerText = "Seleccione dos nodos";
+	}
 
-        function openModal() {
-            document.getElementById("connectionModal").style.display = "block";
-        }
+	protected openModal() {
+		this.connectionModal.nativeElement.style.display = "block";
+	}
 
-        function closeModal() {
-            document.getElementById("connectionModal").style.display = "none";
-        }
+	protected closeModal() {
+		this.connectionModal.nativeElement.style.display = "none";
+	}
 
-        function confirmConnection(directed) {
-            private weight = document.getElementById("weight").value;
-            createConnection(startNode, endNode, directed, weight);
-            closeModal();
-            startNode.classList.remove("selected");
-            endNode.classList.remove("selected");
-            startNode = null;
-            endNode = null;
-            connecting = false;
-            document.getElementById("status").innerText = "Modo Normal";
-        }
+	protected confirmConnection(directed: boolean) {
+		const weight = (this.weight.nativeElement as HTMLInputElement).value;
+		this.createConnection(this.startNode!, this.endNode!, directed, weight);
+		this.closeModal();
+		this.startNode!.classList.remove("selected");
+		this.endNode!.classList.remove("selected");
+		this.startNode = null;
+		this.endNode = null;
+		this.connecting = false;
+		this.status.nativeElement.innerText = "Modo Normal";
+	}
 
-        function createConnection(start, end, directed, weight) {
-            private svg = document.getElementById("svgCanvas");
-            private path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-            path.setAttribute("stroke", "black");
-            path.setAttribute("fill", "none");
-            if (directed) {
-                path.setAttribute("marker-end", "url(#arrowhead)");
-            }
+	createConnection(
+		start: HTMLElement,
+		end: HTMLElement,
+		directed: boolean,
+		weight: string,
+	): void {
+		const svg = this.svgCanvas.nativeElement;
+		const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		path.setAttribute("stroke", "black");
+		path.setAttribute("fill", "none");
+		if (directed) {
+			path.setAttribute("marker-end", "url(#arrowhead)");
+		}
 
-            private text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            text.textContent = weight;
-            svg.appendChild(path);
-            svg.appendChild(text);
+		const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+		text.textContent = weight;
+		svg.appendChild(path);
+		svg.appendChild(text);
 
-            private isCurved = connections.some(conn => conn.start === end && conn.end === start);
-            connections.push({ start, end, path, text, isCurved, weight });
-            updateConnections();
-        }
+		const isCurved = this.connections.some(
+			(conn) => conn.start === end && conn.end === start,
+		);
+		this.connections.push({ start, end, path, text, isCurved, weight });
+		this.updateConnections();
+	}
 
-        function updateConnections() {
-            connections.forEach(({ start, end, path, text, isCurved, weight }) => {
-                private startX = start.offsetLeft + 30;
-                private startY = start.offsetTop + 30;
-                private endX = end.offsetLeft + 30;
-                private endY = end.offsetTop + 30;
+	updateConnections(): void {
+		this.connections.forEach(({ start, end, path, text, isCurved, weight }) => {
+			const startX = start.offsetLeft + 30;
+			const startY = start.offsetTop + 30;
+			const endX = end.offsetLeft + 30;
+			const endY = end.offsetTop + 30;
 
-                private midX = (startX + endX) / 2 + (isCurved ? 40 : 0);
-                private midY = (startY + endY) / 2 - (isCurved ? 40 : 0);
+			const midX = (startX + endX) / 2 + (isCurved ? 40 : 0);
+			const midY = (startY + endY) / 2 - (isCurved ? 40 : 0);
 
-                path.setAttribute("d", `M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`);
-                text.setAttribute("x", midX);
-                text.setAttribute("y", midY);
-            });
-        }
+			path.setAttribute(
+				"d",
+				`M ${startX} ${startY} Q ${midX} ${midY} ${endX} ${endY}`,
+			);
+			text.setAttribute("x", midX.toString());
+			text.setAttribute("y", midY.toString());
+		});
+	}
+
+	removeObject() {}
 }

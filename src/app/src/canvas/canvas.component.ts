@@ -5,10 +5,11 @@ import {
 	OnInit,
 } from "@angular/core";
 import Konva from "konva";
+import { ButtonBarComponent } from "../button-bar";
 
 @Component({
 	selector: "app-canvas",
-	imports: [],
+	imports: [ButtonBarComponent],
 	templateUrl: "./canvas.component.html",
 	styleUrl: "./canvas.component.scss",
 	changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,7 +35,7 @@ export class CanvasComponent implements OnInit {
 		this.stage.add(this.layer);
 
 		this.initializeCanvas();
-		this.initializeTutorial();
+		//this.initializeTutorial();
 	}
 
 	protected initializeCanvas() {
@@ -331,4 +332,7 @@ export class CanvasComponent implements OnInit {
 
 		updateTutorial();
 	}
+	toggleMoveMode() {}
+	startConnection() {}
+	removeObject() {}
 }

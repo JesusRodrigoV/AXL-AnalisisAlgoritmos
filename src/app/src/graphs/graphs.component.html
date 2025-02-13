@@ -1,10 +1,16 @@
+<app-button-bar
+  (moveMode)="toggleMoveMode()"
+  (connectionMode)="startConnection()"
+  (removeMode)="removeObject()"
+>
+</app-button-bar>
 <div class="menu">
   <button onclick="toggleMoveMode()">Mover Nodos</button>
   <button onclick="startConnection()">Conectar Nodos</button>
   <button onclick="removeObject()">Remover Objeto</button>
   <span class="status" id="status">Modo normal</span>
 </div>
-<div class="workspace" ondblclick="createNode(event)"></div>
+<div #workspace class="workspace" (dblclick)="createNode($event)"></div>
 <svg id="svgCanvas">
   <defs>
     <marker

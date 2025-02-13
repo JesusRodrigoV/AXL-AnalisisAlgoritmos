@@ -2,7 +2,11 @@
   <div class="button-bar">
     <nav>
       @for (button of buttons; track button.iconClass) {
-        <app-button [iconClass]="button.iconClass" [text]="button.text" />
+        <app-button
+          [iconClass]="button.iconClass"
+          [text]="button.text"
+          (clicked)="button.action()"
+        />
       }
     </nav>
   </div>

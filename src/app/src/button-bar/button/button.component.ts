@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from "@angular/core";
+import {
+	ChangeDetectionStrategy,
+	Component,
+	EventEmitter,
+	Input,
+	Output,
+} from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { TooltipPosition, MatTooltipModule } from "@angular/material/tooltip";
 
@@ -12,7 +18,11 @@ import { TooltipPosition, MatTooltipModule } from "@angular/material/tooltip";
 export class ButtonComponent {
 	@Input({ required: true }) iconClass = "";
 	@Input({ required: true }) text = "";
+	@Output() clicked = new EventEmitter<void>();
 
+	onClick(): void {
+		this.clicked.emit();
+	}
 	get iconClasses(): string {
 		return `bx ${this.iconClass}`;
 	}
