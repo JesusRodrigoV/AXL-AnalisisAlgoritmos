@@ -1,3 +1,12 @@
+<app-button-bar
+  (moveModeToggled)="onMoveModeToggled($event)"
+  (deleteModeToggled)="onDeleteModeToggled($event)"
+></app-button-bar>
+<!--<div>
+  <label for="colorPicker">Selecciona el color de fondo:</label>
+  <input type="color" id="colorPicker" [(ngModel)]="colorFondo" />
+  <button (click)="cambiarColorFondo()">Aplicar</button>
+</div>-->
 <div class="canvas-container">
-  <canvas id="myCanvas" width="800" height="600"></canvas>
+  <canvas #myCanvas id="myCanvas" width="1200px" height="700px"></canvas>
 </div>

@@ -1,12 +1,16 @@
 import {
 	ChangeDetectionStrategy,
 	Component,
+	ElementRef,
 	inject,
 	OnInit,
+	ViewChild,
 } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatDialog } from "@angular/material/dialog";
 import { ModalContentComponent } from "./modal-content";
+import { ButtonBarComponent } from "../button-bar";
+import { FormsModule } from "@angular/forms";
 
 interface Node {
 	x: number;
@@ -22,12 +26,19 @@ interface Arco {
 
 @Component({
 	selector: "app-my-canvas",
-	imports: [MatButtonModule, ModalContentComponent],
+	imports: [
+		MatButtonModule,
+		ModalContentComponent,
+		ButtonBarComponent,
+		FormsModule,
+	],
 	templateUrl: "./my-canvas.component.html",
 	styleUrl: "./my-canvas.component.scss",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyCanvasComponent implements OnInit {
+	@ViewChild("myCanvas", { static: true })
+	canvas!: ElementRef<HTMLCanvasElement>;
 	readonly dialog = inject(MatDialog);
 	nodes: Node[] = [];
 	selectedNode: Node | null = null;
@@ -38,60 +49,11 @@ export class MyCanvasComponent implements OnInit {
 	moveMode = false;
 	deleteMode = false;
 	draggingNode: Node | null = null;
+	colorFondo: string = "#ffffff";
 
-	//Logica
 	ngOnInit(): void {
 		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 		const context = canvas.getContext("2d") as CanvasRenderingContext2D;
-
-		// Crear contenedor para botones
-		const buttonContainer = document.createElement("div");
-		buttonContainer.style.margin = "10px";
-		canvas.parentNode?.insertBefore(buttonContainer, canvas);
-
-		// Botón de mover
-		const moveButton = document.createElement("button");
-		moveButton.classList.add("node");
-		moveButton.textContent = "Modo Mover";
-		moveButton.style.margin = "0 10px 0 0";
-		moveButton.style.padding = "5px 10px";
-		buttonContainer.appendChild(moveButton);
-
-		// Botón de eliminar
-		const deleteButton = document.createElement("button");
-		deleteButton.textContent = "Modo Eliminar";
-		deleteButton.style.padding = "5px 10px";
-		buttonContainer.appendChild(deleteButton);
-
-		moveButton.addEventListener("click", () => {
-			this.moveMode = !this.moveMode;
-			if (this.moveMode) {
-				this.deleteMode = false;
-				deleteButton.textContent = "Modo Eliminar";
-				deleteButton.style.backgroundColor = "";
-			}
-			moveButton.textContent = this.moveMode
-				? "Desactivar Mover"
-				: "Modo Mover";
-			moveButton.style.backgroundColor = this.moveMode ? "#ff9999" : "";
-			this.selectedNode = null;
-			this.tempNode = null;
-		});
-
-		deleteButton.addEventListener("click", () => {
-			this.deleteMode = !this.deleteMode;
-			if (this.deleteMode) {
-				this.moveMode = false;
-				moveButton.textContent = "Modo Mover";
-				moveButton.style.backgroundColor = "";
-			}
-			deleteButton.textContent = this.deleteMode
-				? "Desactivar Eliminar"
-				: "Modo Eliminar";
-			deleteButton.style.backgroundColor = this.deleteMode ? "#ff9999" : "";
-			this.selectedNode = null;
-			this.tempNode = null;
-		});
 
 		canvas.addEventListener("mousedown", (e) => {
 			if (this.moveMode) {
@@ -234,7 +196,7 @@ export class MyCanvasComponent implements OnInit {
 			this.drawNodes(context, this.nodes);
 		});
 	}
-
+	//ObtnerNodoPorPosicion
 	getNodeAt(x: number, y: number, nodes: Node[]): Node | null {
 		for (const node of nodes) {
 			const a = x - node.x;
@@ -246,22 +208,22 @@ export class MyCanvasComponent implements OnInit {
 		}
 		return null;
 	}
-
+	//DibujarNodos
 	drawNodes(ctx: CanvasRenderingContext2D, nodes: Node[]): void {
 		for (const [index, node] of nodes.entries()) {
 			ctx.strokeStyle = node === this.selectedNode ? "#FF0000" : "#000000";
 			ctx.beginPath();
-			ctx.lineWidth = 2;
+			ctx.lineWidth = 3;
 			ctx.fillStyle = "#FFFFFF";
-			ctx.arc(node.x, node.y, 40, 0, 2 * Math.PI);
+			ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
 			ctx.stroke();
 			ctx.fill();
 			ctx.fillStyle = node === this.selectedNode ? "#FF0000" : "#000000";
-			ctx.font = "30px Arial";
+			ctx.font = "20px Arial";
 			ctx.fillText(index.toString(), node.x - 5, node.y + 5);
 		}
 	}
-
+	//VerificarArcoBidireccional
 	hasBidirectionalConnection(arco: Arco, arcos: Arco[]): boolean {
 		return arcos.some(
 			(a) =>
@@ -270,9 +232,9 @@ export class MyCanvasComponent implements OnInit {
 					(a.node1 === arco.node2 && a.node2 === arco.node1)),
 		);
 	}
-
+	//DibujarArcos
 	drawArcos(ctx: CanvasRenderingContext2D, arcos: Arco[]): void {
-		const radius = 40;
+		const radius = 20;
 
 		for (const arco of arcos) {
 			const isBidirectional = this.hasBidirectionalConnection(arco, arcos);
@@ -410,7 +372,20 @@ export class MyCanvasComponent implements OnInit {
 		}
 		console.log(this.arcos);
 	}
-
+	//CambiarColorFondo
+	cambiarColorFondo() {
+		const contexto = this.canvas.nativeElement.getContext("2d");
+		if (contexto) {
+			contexto.fillStyle = this.colorFondo;
+			contexto.fillRect(
+				0,
+				0,
+				this.canvas.nativeElement.width,
+				this.canvas.nativeElement.height,
+			);
+		}
+	}
+	//MostrarModal
 	showModal(): void {
 		const dialogRef = this.dialog.open(ModalContentComponent, {
 			height: "265px",
@@ -437,5 +412,23 @@ export class MyCanvasComponent implements OnInit {
 				this.drawNodes(context, this.nodes);
 			}
 		});
+	}
+	//ModoMover
+	onMoveModeToggled(active: boolean) {
+		this.moveMode = active;
+		if (this.moveMode) {
+			this.deleteMode = false;
+		}
+		this.selectedNode = null;
+		this.tempNode = null;
+	}
+	//ModoBorrar
+	onDeleteModeToggled(active: boolean) {
+		this.deleteMode = active;
+		if (this.deleteMode) {
+			this.moveMode = false;
+		}
+		this.selectedNode = null;
+		this.tempNode = null;
 	}
 }

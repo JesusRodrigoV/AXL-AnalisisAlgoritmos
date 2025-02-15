@@ -1,11 +1,22 @@
-<button
+<!--<button
   mat-raised-button
   [matTooltip]="text"
   matTooltipPosition="below"
-  routerLinkActive="custom-button-active"
-  class="custom-button"
+  [ngStyle]="{ 'background-color': active ? '#ff9999' : '' }"
   (click)="onClick()"
   type="button"
 >
   <i [class]="iconClasses"></i>
+</button>-->
+
+<button
+  (click)="onClick()"
+  mat-raised-button
+  [matTooltip]="label"
+  matTooltipPosition="below"
+  mat-button
+  [ngStyle]="{ 'background-color': active ? '#ff9999' : '' }"
+>
+  <i [class]="iconClasses"></i>
+  {{ label }}
 </button>

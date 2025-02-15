@@ -9,7 +9,7 @@ import { ButtonComponent } from "./button";
 interface Button {
 	iconClass: string;
 	text: string;
-	action: Function;
+	mode: boolean;
 }
 
 @Component({
@@ -20,25 +20,37 @@ interface Button {
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ButtonBarComponent {
-	@Output() moveMode = new EventEmitter<void>();
-	@Output() connectionMode = new EventEmitter<void>();
-	@Output() removeMode = new EventEmitter<void>();
+	@Output() moveModeToggled = new EventEmitter<boolean>();
+	@Output() deleteModeToggled = new EventEmitter<boolean>();
 
+	moveMode = false;
+	deleteMode = false;
+
+	toggleMoveMode() {
+		this.moveMode = !this.moveMode;
+		if (this.moveMode) {
+			this.deleteMode = false;
+		}
+		this.moveModeToggled.emit(this.moveMode);
+	}
+
+	toggleDeleteMode() {
+		this.deleteMode = !this.deleteMode;
+		if (this.deleteMode) {
+			this.moveMode = false;
+		}
+		this.deleteModeToggled.emit(this.deleteMode);
+	}
 	protected buttons: Button[] = [
 		{
 			iconClass: "bx-move",
 			text: "Mover vertice",
-			action: () => this.moveMode.emit(),
-		},
-		{
-			iconClass: "bx-network-chart",
-			text: "Conectar nodos",
-			action: () => this.connectionMode.emit(),
+			mode: this.moveMode,
 		},
 		{
 			iconClass: "bxs-eraser",
 			text: "Borrar vertices",
-			action: () => this.removeMode.emit(),
+			mode: this.deleteMode,
 		},
 	];
 }

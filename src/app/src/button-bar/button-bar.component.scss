@@ -1,24 +1,16 @@
 .container {
   display: flex;
-  justify-content: center;
-  //align-items: center;
 }
 
 .button-bar {
-  padding: 15px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50px;
-  position: fixed;
+  position: fixed; /* para que flote */
   top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-}
-
-.button-bar nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  left: 50%; /* centrado horizontalmente */
+  transform: translate(-50%); /* ajuste para centrar completamente */
+  padding: 10px; /* un poco de espacio interno */
+  background-color: white; /* color de fondo */
+  border: 1px solid #ccc; /* borde */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* sombra para darle efecto flotante */
+  border-radius: 50px; /* bordes redondeados */
+  z-index: 1000; /* para asegurarnos que quede por encima de otros elementos */
 }

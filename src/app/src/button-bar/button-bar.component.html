@@ -1,13 +1,30 @@
-<div class="container">
+<!--<div class="container">
   <div class="button-bar">
     <nav>
       @for (button of buttons; track button.iconClass) {
         <app-button
           [iconClass]="button.iconClass"
           [text]="button.text"
-          (clicked)="button.action()"
+          [active]="button.mode"
         />
       }
     </nav>
+  </div>
+</div>-->
+
+<div class="container">
+  <div class="button-bar">
+    <app-button
+      label="Modo Mover"
+      iconClass="bx bx-move"
+      [active]="moveMode"
+      (clicked)="toggleMoveMode()"
+    ></app-button>
+    <app-button
+      label="Modo Eliminar"
+      iconClass="bx bxs-eraser"
+      [active]="deleteMode"
+      (clicked)="toggleDeleteMode()"
+    ></app-button>
   </div>
 </div>
