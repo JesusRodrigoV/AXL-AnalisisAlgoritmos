@@ -2,6 +2,19 @@
   (moveModeToggled)="onMoveModeToggled($event)"
   (deleteModeToggled)="onDeleteModeToggled($event)"
 ></app-button-bar>
+<div>
+  <button mat-raised-button color="primary" (click)="exportarJSON()">
+    Exportar
+  </button>
+
+  <button mat-raised-button color="primary" (click)="seleccionarArchivo()">Importar</button>
+  <input
+    type="file"
+    id="fileInput"
+    (change)="onFileSelected($event)"
+    style="display: none;"
+  />
+</div>
 <!--<div>
   <label for="colorPicker">Selecciona el color de fondo:</label>
   <input type="color" id="colorPicker" [(ngModel)]="colorFondo" />
