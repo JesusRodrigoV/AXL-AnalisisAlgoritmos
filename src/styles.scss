@@ -1,0 +1,11 @@
+body {
+  background: linear-gradient(45deg, #4b0082, #003366); /* Violeta oscuro y azul oscuro */
+  color: white;
+  margin: 0;
+  padding: 0;
+  height: 100vh; /* Asegura que el fondo cubra toda la altura de la ventana */
+}
+
+canvas {
+  background: transparent; /* Asegura que el fondo del canvas no se vea afectado */
+}

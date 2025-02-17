@@ -1,0 +1,18 @@
+/* Cambia el fondo de toda la página */
+body {
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);  /* Puedes poner un color sólido, gradiente o imagen */
+    color: white; /* Cambia el color del texto si es necesario */
+    font-family: Arial, sans-serif; /* Si deseas cambiar la fuente */
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Si quieres que el fondo sea una imagen: */
+  /* 
+  body {
+    background-image: url('assets/mi-imagen.jpg');
+    background-size: cover;
+    background-position: center;
+  }
+  */
+  

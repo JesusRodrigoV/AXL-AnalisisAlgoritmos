@@ -1,0 +1,8 @@
+<button class="btn-bonito" (click)="mostrarAyuda()"> Información </button>
+
+<div *ngIf="mostrarVentana" class="ventana-emergente">
+  <div class="ventana-contenido">
+    <img src="assets/ayuda.png" alt="Imagen de ayuda">
+    <button class="btn-cerrar" (click)="cerrarVentana()">✖</button>
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<h1 mat-dialog-title>Configurar Arco</h1>
+<div mat-dialog-content>
+  <form [formGroup]="form">
+    <mat-form-field>
+      <mat-label>Peso</mat-label>
+      <input matInput formControlName="peso" type="number" />
+    </mat-form-field>
+    <mat-checkbox formControlName="dirigido">Dirigido</mat-checkbox>
+  </form>
+</div>
+<div mat-dialog-actions>
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-button (click)="onSave()">Guardar</button>
+</div>
