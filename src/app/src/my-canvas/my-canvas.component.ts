@@ -542,4 +542,11 @@ export class MyCanvasComponent implements OnInit {
 		this.drawArcos(this.ctx, this.arcos);
 		this.drawNodes(this.ctx, this.nodes);
 	}
+	limpiarCanvas() {
+		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
+		const context = canvas.getContext("2d");
+		if (context) {
+			context.clearRect(0, 0, canvas.width, canvas.height);
+		}
+	}
 }

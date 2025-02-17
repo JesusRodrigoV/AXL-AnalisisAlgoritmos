@@ -1,5 +1,9 @@
-<app-button-bar (modeToggled)="onModeToggled($event)"></app-button-bar>
-<div>
+<app-button-bar
+  (modeToggled)="onModeToggled($event)"
+  (exportar)="exportarJSON()"
+  (importar)="seleccionarArchivo()"
+  (limpiar)="limpiarCanvas()"
+>
   <button mat-raised-button color="primary" (click)="exportarJSON()">
     Exportar
   </button>
@@ -7,13 +11,13 @@
   <button mat-raised-button color="primary" (click)="seleccionarArchivo()">
     Importar
   </button>
-  <input
-    type="file"
-    id="fileInput"
-    (change)="onFileSelected($event)"
-    style="display: none"
-  />
-</div>
+</app-button-bar>
+<input
+  type="file"
+  id="fileInput"
+  (change)="onFileSelected($event)"
+  style="display: none"
+/>
 <!--<div>
   <label for="colorPicker">Selecciona el color de fondo:</label>
   <input type="color" id="colorPicker" [(ngModel)]="colorFondo" />
