@@ -14,17 +14,14 @@
 
 <div class="container">
   <div class="button-bar">
-    <app-button
-      label="Modo Mover"
-      iconClass="bx bx-move"
-      [active]="moveMode"
-      (clicked)="toggleMoveMode()"
-    ></app-button>
-    <app-button
-      label="Modo Eliminar"
-      iconClass="bx bxs-eraser"
-      [active]="deleteMode"
-      (clicked)="toggleDeleteMode()"
-    ></app-button>
+    @for (button of buttons; track button.id) {
+      <app-button
+        [label]="button.label"
+        [iconClass]="button.iconClass"
+        [text]="button.text"
+        [active]="button.active"
+        (clicked)="toggleMode(button)"
+      ></app-button>
+    }
   </div>
 </div>

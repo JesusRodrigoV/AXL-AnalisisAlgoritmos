@@ -39,11 +39,11 @@ interface Arco {
 export class MyCanvasComponent implements OnInit {
 	@ViewChild("myCanvas", { static: true })
 	canvas!: ElementRef<HTMLCanvasElement>;
-  //Entrada de archivos
-  @ViewChild('fileInput', { static: false })
-  fileInput!: ElementRef<HTMLInputElement>;
-  //Variable de manejo de canvas
-  private ctx!: CanvasRenderingContext2D;
+	//Entrada de archivos
+	@ViewChild("fileInput", { static: false })
+	fileInput!: ElementRef<HTMLInputElement>;
+	//Variable de manejo de canvas
+	private ctx!: CanvasRenderingContext2D;
 
 	readonly dialog = inject(MatDialog);
 	nodes: Node[] = [];
@@ -56,13 +56,19 @@ export class MyCanvasComponent implements OnInit {
 	deleteMode = false;
 	draggingNode: Node | null = null;
 	colorFondo: string = "#ffffff";
+	modes: { [key: string]: boolean } = {
+		move: false,
+		delete: false,
+		add: false,
+		edit: false,
+	};
 
 	ngOnInit(): void {
 		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 		const context = canvas.getContext("2d") as CanvasRenderingContext2D;
 
 		canvas.addEventListener("mousedown", (e) => {
-			if (this.moveMode) {
+			if (this.modes["move"]) {
 				const x = e.clientX - canvas.offsetLeft;
 				const y = e.clientY - canvas.offsetTop;
 				this.draggingNode = this.getNodeAt(x, y, this.nodes);
@@ -70,7 +76,7 @@ export class MyCanvasComponent implements OnInit {
 		});
 
 		canvas.addEventListener("mousemove", (e) => {
-			if (this.moveMode && this.draggingNode) {
+			if (this.modes["move"] && this.draggingNode) {
 				this.draggingNode.x = e.clientX - canvas.offsetLeft;
 				this.draggingNode.y = e.clientY - canvas.offsetTop;
 
@@ -85,13 +91,13 @@ export class MyCanvasComponent implements OnInit {
 		});
 
 		canvas.addEventListener("click", (e) => {
-			if (this.moveMode) return;
+			if (this.modes["move"]) return;
 
 			const x = e.clientX - canvas.offsetLeft;
 			const y = e.clientY - canvas.offsetTop;
 			const clickedNode = this.getNodeAt(x, y, this.nodes);
 
-			if (this.deleteMode) {
+			if (this.modes["delete"]) {
 				if (clickedNode !== null) {
 					const nodeIndex = this.nodes.indexOf(clickedNode);
 					this.nodes.splice(nodeIndex, 1);
@@ -203,12 +209,12 @@ export class MyCanvasComponent implements OnInit {
 		});
 	}
 
-  ngAfterViewInit() {
-    //Obtener el contexto de canvas para poderlo usar fuera del metodo ngOnInit
-    if (this.canvas) {
-      this.ctx = this.canvas.nativeElement.getContext('2d')!;
-    }
-  }
+	ngAfterViewInit() {
+		//Obtener el contexto de canvas para poderlo usar fuera del metodo ngOnInit
+		if (this.canvas) {
+			this.ctx = this.canvas.nativeElement.getContext("2d")!;
+		}
+	}
 
 	//ObtnerNodoPorPosicion
 	getNodeAt(x: number, y: number, nodes: Node[]): Node | null {
@@ -428,110 +434,112 @@ export class MyCanvasComponent implements OnInit {
 		});
 	}
 
-	//ModoMover
-	onMoveModeToggled(active: boolean) {
-		this.moveMode = active;
-		if (this.moveMode) {
-			this.deleteMode = false;
-		}
-		this.selectedNode = null;
-		this.tempNode = null;
+	onModeToggled(event: { id: string; active: boolean }) {
+		console.log("Button toggled:", event);
+
+		// Reset all modes
+		Object.keys(this.modes).forEach((key) => {
+			this.modes[key] = false;
+		});
+
+		// Set the active mode
+		this.modes[event.id] = event.active;
+
+		console.log("Current modes:", this.modes);
 	}
 
-	//ModoBorrar
-	onDeleteModeToggled(active: boolean) {
-		this.deleteMode = active;
-		if (this.deleteMode) {
-			this.moveMode = false;
+	//Metodo para exportar la informacion
+	exportarJSON(): void {
+		const data = {
+			nodos: this.nodes,
+			arcos: this.arcos,
+		};
+		const jsonData = JSON.stringify(data, null, 2);
+
+		// Entrada de nombre del archivo
+		const fileName = prompt(
+			"Ingrese el nombre del archivo (sin extensión):",
+			"grafo",
+		);
+		if (!fileName) {
+			return;
 		}
-		this.selectedNode = null;
-		this.tempNode = null;
+
+		const blob = new Blob([jsonData], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement("a");
+		a.href = url;
+		a.download = `${fileName}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
 	}
 
-  //Metodo para exportar la informacion
-  exportarJSON(): void {
-    const data = {
-      nodos: this.nodes,
-      arcos: this.arcos,
-    };
-    const jsonData = JSON.stringify(data, null, 2);
+	// Método para activar el selector de archivos
+	seleccionarArchivo() {
+		const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+		fileInput.click();
+	}
 
-    // Entrada de nombre del archivo
-    const fileName = prompt("Ingrese el nombre del archivo (sin extensión):", "grafo");
-    if (!fileName) {
-      return;
-    }
+	// Leer archivo JSON
+	onFileSelected(event: any) {
+		// Cancelar cualquier modo activo (mover o eliminar)
+		this.moveMode = false;
+		this.deleteMode = false;
 
-    const blob = new Blob([jsonData], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${fileName}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+		// Limpiar selecciones
+		this.selectedNode = null;
+		this.tempNode = null;
+		this.draggingNode = null;
 
-  // Método para activar el selector de archivos
-  seleccionarArchivo() {
-    const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-    fileInput.click();
-  }
+		//Proceso de creacion de archivos
+		const file = event.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = (e: any) => {
+				const json = JSON.parse(e.target.result);
 
-  // Leer archivo JSON
-  onFileSelected(event: any) {
-    // Cancelar cualquier modo activo (mover o eliminar)
-    this.moveMode = false;
-    this.deleteMode = false;
+				// Limpiar los nodos y arcos existentes
+				this.nodes = [];
+				this.arcos = [];
 
-    // Limpiar selecciones
-    this.selectedNode = null;
-    this.tempNode = null;
-    this.draggingNode = null;
+				// Agregar los nodos importados
+				this.nodes.push(...json.nodos);
 
-    //Proceso de creacion de archivos
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        const json = JSON.parse(e.target.result);
+				// Mapear los nodos en los arcos a los nodos en la lista nodes
+				json.arcos.forEach((arco: any) => {
+					const node1 = this.nodes.find(
+						(node) => node.x === arco.node1.x && node.y === arco.node1.y,
+					);
+					const node2 = this.nodes.find(
+						(node) => node.x === arco.node2.x && node.y === arco.node2.y,
+					);
 
-        // Limpiar los nodos y arcos existentes
-        this.nodes = [];
-        this.arcos = [];
+					if (node1 && node2) {
+						this.arcos.push({
+							node1,
+							node2,
+							dirigido: arco.dirigido,
+							peso: arco.peso,
+						});
+					}
+				});
 
-        // Agregar los nodos importados
-        this.nodes.push(...json.nodos);
+				this.dibujar();
+			};
+			reader.readAsText(file);
+		}
+	}
 
-        // Mapear los nodos en los arcos a los nodos en la lista nodes
-        json.arcos.forEach((arco: any) => {
-          const node1 = this.nodes.find(
-            (node) => node.x === arco.node1.x && node.y === arco.node1.y
-          );
-          const node2 = this.nodes.find(
-            (node) => node.x === arco.node2.x && node.y === arco.node2.y
-          );
-
-          if (node1 && node2) {
-            this.arcos.push({
-              node1,
-              node2,
-              dirigido: arco.dirigido,
-              peso: arco.peso,
-            });
-          }
-        });
-
-        this.dibujar();
-      };
-      reader.readAsText(file);
-    }
-  }
-
-  // Dibujar nodos y arcos a partir del json importado
-  dibujar() {
-    if (!this.ctx) return;
-    this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
-    this.drawArcos(this.ctx, this.arcos);
-    this.drawNodes(this.ctx, this.nodes);
-  }
+	// Dibujar nodos y arcos a partir del json importado
+	dibujar() {
+		if (!this.ctx) return;
+		this.ctx.clearRect(
+			0,
+			0,
+			this.canvas.nativeElement.width,
+			this.canvas.nativeElement.height,
+		);
+		this.drawArcos(this.ctx, this.arcos);
+		this.drawNodes(this.ctx, this.nodes);
+	}
 }
