@@ -11,6 +11,9 @@ import { ModalContentComponent } from './modal-content';
 import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
+import { MatMenu, MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-my-canvas',
@@ -19,12 +22,23 @@ import { Conexion, Nodo } from '@app/models';
     ModalContentComponent,
     ButtonBarComponent,
     FormsModule,
+    MatMenuModule,
+    MatIconModule,
+    NgIf,
   ],
   templateUrl: './my-canvas.component.html',
   styleUrl: './my-canvas.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyCanvasComponent {
+  @ViewChild('canvasMenu') canvasMenu!: MatMenu;
+  @ViewChild('nodeMenu') nodeMenu!: MatMenu;
+  @ViewChild('connectionMenu') connectionMenu!: MatMenu;
+  @ViewChild('menuTrigger', { static: true }) menuTrigger: any;
+  @ViewChild(MatMenu) menu!: MatMenu;
+  menuPosition = { x: '0px', y: '0px' };
+  selectedElement: { type: 'node' | 'connection'; data: any } | null = null;
+
   @ViewChild('myCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('fileInput', { static: false })
@@ -49,9 +63,8 @@ export class MyCanvasComponent {
   colorFondo: string = '#ffffff';
   private radio: number = 30;
 
+  // Maneja el cambio de modo de la herramienta seleccionada
   onModeToggled(event: { id: string; active: boolean }) {
-    console.log('Button toggled:', event);
-
     Object.keys(this.modes).forEach((key) => {
       this.modes[key] = false;
     });
@@ -60,17 +73,14 @@ export class MyCanvasComponent {
     this.nodos.forEach((c) => (c.selected = false));
     this.primerNodoSeleccionado = null;
 
-    // redibujar canvas
     const canvas = document.querySelector('canvas');
     const ctx = canvas?.getContext('2d');
     if (ctx) {
       this.dibujarNodo(ctx);
     }
-
-    console.log('Current modes:', this.modes);
   }
 
-  // método de doble clic en el canvas
+  // Crea un nuevo nodo en la posición donde se realizó doble clic
   dobleClickCanvas(event: MouseEvent): void {
     const canvas = <HTMLCanvasElement>event.target;
     const ctx = canvas.getContext('2d');
@@ -79,22 +89,29 @@ export class MyCanvasComponent {
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       this.contador++;
-      this.nodos.push(new Nodo(x, y, this.radio, this.contador, false));
-      this.dibujarNodo(ctx); // redibujar el nodo
+      this.nodos.push(
+        new Nodo(
+          x,
+          y,
+          this.radio,
+          this.contador,
+          false,
+          'Nodo ' + this.contador,
+        ),
+      );
+      this.dibujarNodo(ctx);
     }
   }
 
-  // método de un clic sobre el nodo
+  // Maneja los eventos de clic en el canvas para diferentes modos (conexión, eliminación)
   clickCanvas(event: MouseEvent): void {
     const canvas = <HTMLCanvasElement>event.target;
     const ctx = canvas.getContext('2d');
-    // verificamos si el contexto (ctx) se obtuvo correctamente
     if (ctx) {
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       if (this.modes['connect']) {
-        console.log('Es tamos e el modo conexion');
         this.manejarConexion(x, y, ctx);
       } else if (this.modes['delete']) {
         this.manejarEliminacion(x, y, ctx);
@@ -102,30 +119,7 @@ export class MyCanvasComponent {
     }
   }
 
-  // método para manejar las conexiones entre nodos
-  /*
-	private manejarConexion(
-		x: number,
-		y: number,
-		ctx: CanvasRenderingContext2D,
-	): void {
-		const nodoSeleccionado = this.nodos.find(
-			(nodo) =>
-				Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) <
-				nodo.radio,
-		);
-		if (nodoSeleccionado) {
-			if (this.primerNodoSeleccionado === null) {
-				this.primerNodoSeleccionado = nodoSeleccionado.contador;
-				nodoSeleccionado.selected = true;
-			} else if (this.primerNodoSeleccionado !== nodoSeleccionado.contador) {
-				this.segundoNodoSeleccionado = nodoSeleccionado.contador;
-				this.mostrarModal = true;
-			}
-			this.dibujarNodo(ctx);
-		}
-	}*/
-
+  // Gestiona la selección de nodos para crear conexiones entre ellos
   private manejarConexion(
     x: number,
     y: number,
@@ -148,7 +142,7 @@ export class MyCanvasComponent {
     }
   }
 
-  // método para manejar la eliminación de conexiones y nodos
+  // Elimina nodos y sus conexiones asociadas o elimina conexiones individuales
   private manejarEliminacion(
     x: number,
     y: number,
@@ -195,6 +189,7 @@ export class MyCanvasComponent {
     this.dibujarNodo(ctx);
   }
 
+  // Verifica si un punto (x,y) está cerca de una conexión, ya sea recta o curva
   private estaCercaDeConexion(
     x: number,
     y: number,
@@ -215,6 +210,7 @@ export class MyCanvasComponent {
     return this.estaCercaDeLinea(x, y, x1, y1, x2, y2);
   }
 
+  // Calcula la distancia entre un punto y una línea recta
   private estaCercaDeLinea(
     x: number,
     y: number,
@@ -223,13 +219,13 @@ export class MyCanvasComponent {
     x2: number,
     y2: number,
   ): boolean {
-    // calculamos la distancia entre el punto (x, y) y la línea (x1, y1 → x2, y2)
     const distancia =
       Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) /
-      Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2)); // fórmula de distancia punto-línea, derivada de la ecuación de la recta
-    return distancia < 5; // si distancia es menor a 5, esto permite hacer clic cerca de la línea para seleccionarla
+      Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+    return distancia < 5;
   }
 
+  // Determina si un punto está cerca de una curva cuadrática
   private estaCercaDeCurva(
     x: number,
     y: number,
@@ -250,9 +246,8 @@ export class MyCanvasComponent {
     return false;
   }
 
-  // método para confirmar la conexión
+  // Crea una nueva conexión entre dos nodos seleccionados
   confirmarConexion(datos: { peso: number; dirigido: boolean }) {
-    // verificamos si hay dos nodos seleccionados
     if (
       this.primerNodoSeleccionado !== null &&
       this.segundoNodoSeleccionado !== null
@@ -269,11 +264,12 @@ export class MyCanvasComponent {
     this.limpiarSeleccion();
   }
 
-  // método para cancelar la conexión
+  //Cancela la conexión en proceso y limpia la selección
   cancelarConexion() {
     this.limpiarSeleccion();
   }
 
+  //Limpia el estado de selección de nodos y actualiza el canvas
   private limpiarSeleccion() {
     this.nodos.forEach((c) => (c.selected = false));
     this.primerNodoSeleccionado = null;
@@ -287,16 +283,14 @@ export class MyCanvasComponent {
     }
   }
 
-  // método de dibujar nodo
+  //Dibuja todos los nodos y conexiones en el canvas
   dibujarNodo(ctx: CanvasRenderingContext2D): void {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // Dibujar conexiones
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
       if (desde && hasta) {
-        console.log('Dibujando conexión desde:', desde, 'hasta:', hasta);
         const bidireccional = this.conexiones.some(
           (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
         );
@@ -332,8 +326,7 @@ export class MyCanvasComponent {
             controlY,
           );
         }
-        // Dibujar peso de cada conexión en su propia posición
-        const peso = conexion.peso ?? 0; // Si el peso es undefined, usar 0 como valor por defecto
+        const peso = conexion.peso ?? 0;
         ctx.fillStyle = 'white';
         ctx.fillRect(midX - 10, midY - 10, 20, 20);
         ctx.font = '12px Arial';
@@ -344,9 +337,7 @@ export class MyCanvasComponent {
       }
     });
 
-    // Dibujar nodos
     this.nodos.forEach((circulo) => {
-      console.log('Dibujando nodo:', circulo);
       ctx.beginPath();
       ctx.arc(circulo.x, circulo.y, circulo.radio, 0, Math.PI * 2);
       ctx.fillStyle = circulo.selected ? '#ff9800' : 'yellow';
@@ -356,10 +347,15 @@ export class MyCanvasComponent {
       ctx.fillStyle = 'black';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(circulo.contador.toString(), circulo.x, circulo.y);
+      ctx.fillText(
+        circulo.nombre || circulo.contador.toString(),
+        circulo.x,
+        circulo.y,
+      );
     });
   }
 
+  //Dibuja una flecha curva en el extremo de una conexión dirigida
   private dibujarFlechaCurva(
     ctx: CanvasRenderingContext2D,
     fromX: number,
@@ -369,7 +365,7 @@ export class MyCanvasComponent {
     ctrlX: number,
     ctrlY: number,
   ): void {
-    const t = 0.9; // Punto cercano al final de la curva
+    const t = 0.9;
     const x = (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * ctrlX + t * t * toX;
     const y = (1 - t) * (1 - t) * fromY + 2 * (1 - t) * t * ctrlY + t * t * toY;
     const angle = Math.atan2(toY - y, toX - x);
@@ -389,6 +385,7 @@ export class MyCanvasComponent {
     ctx.stroke();
   }
 
+  // Cambia el color de fondo del canvas
   cambiarColorFondo() {
     const contexto = this.canvas.nativeElement.getContext('2d');
     if (contexto) {
@@ -402,7 +399,7 @@ export class MyCanvasComponent {
     }
   }
 
-  //MostrarModal
+  // Abre un modal para configurar una nueva conexión
   showModal(): void {
     const dialogRef = this.dialog.open(ModalContentComponent, {
       height: '265px',
@@ -422,7 +419,7 @@ export class MyCanvasComponent {
     });
   }
 
-  //Metodo para exportar la informacion
+  // Exporta el grafo actual a un archivo JSON
   exportarJSON(): void {
     const data = {
       nodos: this.nodos,
@@ -430,7 +427,6 @@ export class MyCanvasComponent {
     };
     const jsonData = JSON.stringify(data, null, 2);
 
-    // Entrada de nombre del archivo
     const fileName = prompt(
       'Ingrese el nombre del archivo (sin extensión):',
       'grafo',
@@ -448,12 +444,13 @@ export class MyCanvasComponent {
     URL.revokeObjectURL(url);
   }
 
-  // Método para activar el selector de archivos
+  // Activa el selector de archivos para importar un grafo
   seleccionarArchivo() {
     const fileInput = document.getElementById('fileInput') as HTMLInputElement;
     fileInput.click();
   }
 
+  // Procesa el archivo seleccionado y carga el grafo
   onFileSelected(event: any) {
     Object.keys(this.modes).forEach((key) => {
       this.modes[key] = false;
@@ -466,11 +463,9 @@ export class MyCanvasComponent {
         try {
           const json = JSON.parse(e.target.result);
 
-          // Limpiar los arrays existentes
           this.nodos = [];
           this.conexiones = [];
 
-          // Procesar nodos
           if (Array.isArray(json.nodos)) {
             json.nodos.forEach((nodo: any) => {
               this.nodos.push(
@@ -480,6 +475,7 @@ export class MyCanvasComponent {
                   this.radio,
                   nodo.contador || this.nodos.length + 1,
                   false,
+                  nodo._nombre,
                 ),
               );
             });
@@ -487,12 +483,11 @@ export class MyCanvasComponent {
 
           this.contador = this.nodos.length;
 
-          // Procesar conexiones
           if (Array.isArray(json.conexiones)) {
             json.conexiones.forEach((conexion: any) => {
               const desde = conexion._desde || conexion.desde;
               const hasta = conexion._hasta || conexion.hasta;
-              const peso = conexion._peso ?? conexion.peso ?? 0; // Si ambos son undefined, usar 0
+              const peso = conexion._peso ?? conexion.peso ?? 0;
               const dirigido = conexion._dirigido ?? conexion.dirigido ?? false;
 
               if (desde !== undefined && hasta !== undefined) {
@@ -503,10 +498,6 @@ export class MyCanvasComponent {
             });
           }
 
-          console.log('Nodos cargados:', this.nodos);
-          console.log('Conexiones cargadas:', this.conexiones);
-
-          // Usar setTimeout para asegurar que el canvas esté listo
           setTimeout(() => {
             this.dibujar();
           }, 100);
@@ -518,28 +509,156 @@ export class MyCanvasComponent {
     }
   }
 
+  // Dibuja el grafo completo en el canvas
   dibujar() {
-    console.log('Iniciando dibujo...');
     const canvas = this.canvas.nativeElement;
     const ctx = canvas.getContext('2d');
 
     if (!ctx) {
-      console.error('No se pudo obtener el contexto del canvas');
       return;
     }
 
-    // Limpiar el canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (this.nodos.length === 0) {
-      console.log('No hay nodos para dibujar');
       return;
     }
 
-    console.log('Dibujando', this.nodos.length, 'nodos');
     this.dibujarNodo(ctx);
   }
 
+  // Maneja el menú contextual al hacer clic derecho en el canvas
+  menuContexto(event: MouseEvent) {
+    event.preventDefault();
+
+    const canvas = <HTMLCanvasElement>event.target;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    this.menuPosition = {
+      x: `${event.clientX + window.scrollX}px`,
+      y: `${event.clientY + window.scrollY}px`,
+    };
+
+    const nodo = this.nodos.find(
+      (n) => Math.sqrt(Math.pow(x - n.x, 2) + Math.pow(y - n.y, 2)) <= n.radio,
+    );
+
+    if (nodo) {
+      this.selectedElement = { type: 'node', data: nodo };
+      if (this.menuTrigger) {
+        this.menuTrigger.openMenu();
+      }
+      return;
+    }
+
+    const conexion = this.conexiones.find((c) => {
+      const desde = this.nodos.find((n) => n.contador === c.desde);
+      const hasta = this.nodos.find((n) => n.contador === c.hasta);
+      if (desde && hasta) {
+        return this.estaCercaDeConexion(
+          x,
+          y,
+          desde.x,
+          desde.y,
+          hasta.x,
+          hasta.y,
+          c,
+        );
+      }
+      return false;
+    });
+
+    if (conexion) {
+      this.selectedElement = { type: 'connection', data: conexion };
+      if (this.menuTrigger) {
+        this.menuTrigger.openMenu();
+      }
+      return;
+    }
+
+    this.selectedElement = null;
+    if (this.menuTrigger) {
+      this.menuTrigger.openMenu();
+    }
+  }
+
+  // Permite editar el nombre de un nodo seleccionado
+  editarNombre(): void {
+    if (this.selectedElement?.type === 'node') {
+      const nodo = this.selectedElement.data;
+      const nuevoNombre = prompt('Ingrese el nuevo nombre:', nodo.nombre);
+      if (nuevoNombre !== null) {
+        nodo.nombre = nuevoNombre;
+        const ctx = this.canvas.nativeElement.getContext('2d');
+        if (ctx) {
+          this.dibujarNodo(ctx);
+        }
+      }
+    }
+  }
+
+  // Elimina un nodo seleccionado y sus conexiones
+  eliminarNodo(): void {
+    if (this.selectedElement?.type === 'node') {
+      const nodo = this.selectedElement.data;
+      this.nodos = this.nodos.filter((n) => n.contador !== nodo.contador);
+      this.conexiones = this.conexiones.filter(
+        (c) => c.desde !== nodo.contador && c.hasta !== nodo.contador,
+      );
+      const ctx = this.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.dibujarNodo(ctx);
+      }
+    }
+  }
+
+  // Edita el peso de una conexión seleccionada
+  editarPeso(): void {
+    if (this.selectedElement?.type === 'connection') {
+      const conexion = this.selectedElement.data;
+      const nuevoPeso = prompt(
+        'Ingrese el nuevo peso:',
+        conexion.peso?.toString(),
+      );
+      if (nuevoPeso !== null) {
+        conexion.peso = Number(nuevoPeso);
+        const ctx = this.canvas.nativeElement.getContext('2d');
+        if (ctx) {
+          this.dibujarNodo(ctx);
+        }
+      }
+    }
+  }
+
+  // Cambia la dirección de una conexión seleccionada
+  toggleDirigido(): void {
+    if (this.selectedElement?.type === 'connection') {
+      const conexion = this.selectedElement.data;
+      conexion.dirigido = !conexion.dirigido;
+      const ctx = this.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.dibujarNodo(ctx);
+      }
+    }
+  }
+
+  // Elimina una conexión seleccionada
+  eliminarConexion(): void {
+    if (this.selectedElement?.type === 'connection') {
+      const conexion = this.selectedElement.data;
+      this.conexiones = this.conexiones.filter(
+        (c) => !(c.desde === conexion.desde && c.hasta === conexion.hasta),
+      );
+      const ctx = this.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.dibujarNodo(ctx);
+      }
+    }
+  }
+
+  // Limpia completamente el canvas y reinicia el estado del grafo
   limpiarCanvas() {
     const canvas = document.getElementById('myCanvas') as HTMLCanvasElement;
     const context = canvas.getContext('2d');

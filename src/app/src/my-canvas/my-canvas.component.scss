@@ -1,3 +1,145 @@
+::ng-deep .mat-menu-item {
+  font-size: 16px !important; // Ajusta este valor según el tamaño que desees
+  height: 40px !important; // Ajusta la altura del botón si es necesario
+  line-height: 40px !important; // Mantén igual que la altura
+
+  i {
+    font-size: 20px; // Ajusta el tamaño de los iconos
+    margin-right: 8px;
+  }
+
+  span {
+    font-size: 16px; // Ajusta el tamaño del texto
+  }
+}
+
+// Si quieres diferentes tamaños para diferentes tipos de menú
+::ng-deep .mat-menu-item {
+  &:has(i.bx) {
+    font-size: 16px !important;
+  }
+}
+::ng-deep .mat-menu-item {
+  font-size: 16px !important; // Ajusta este valor según el tamaño que desees
+  height: 40px !important; // Ajusta la altura del botón si es necesario
+  line-height: 40px !important; // Mantén igual que la altura
+
+  i {
+    font-size: 20px; // Ajusta el tamaño de los iconos
+    margin-right: 8px;
+  }
+
+  span {
+    font-size: 16px; // Ajusta el tamaño del texto
+  }
+}
+
+// Si quieres diferentes tamaños para diferentes tipos de menú
+::ng-deep .mat-menu-item {
+  &:has(i.bx) {
+    font-size: 16px !important;
+  }
+}
+.canvas-container {
+  position: relative;
+  width: 1200px;
+  height: 700px;
+}
+
+.menu-trigger {
+  position: fixed;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.myCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.canvas-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-trigger {
+  position: fixed;
+  visibility: hidden;
+  z-index: 1000;
+  width: 1px;
+  height: 1px;
+}
+
+.myCanvas {
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+::ng-deep .mat-menu-panel {
+  min-width: 200px;
+}
+
+::ng-deep .mat-menu-item {
+  line-height: 36px;
+  height: 36px;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+.canvas-container {
+  position: relative;
+  display: inline-block;
+}
+
+.menu-trigger {
+  position: fixed;
+  visibility: hidden;
+  z-index: 1000;
+  width: 1px;
+  height: 1px;
+}
+
+.myCanvas {
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+::ng-deep .mat-menu-panel {
+  min-width: 200px;
+}
+
+::ng-deep .mat-menu-item {
+  line-height: 36px;
+  height: 36px;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+.canvas-container {
+  position: relative;
+  display: inline-block;
+}
+
+canvas {
+  border: 1px solid #ccc;
+  background-color: white;
+}
+
+::ng-deep .mat-menu-panel {
+  min-width: 150px !important;
+}
+
+::ng-deep .mat-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+::ng-deep .mat-menu-item .mat-icon {
+  margin-right: 8px;
+}
 body {
   display: flex;
   justify-content: center;
@@ -28,20 +170,6 @@ body {
   padding: 20px;
   border-radius: 5px;
   text-align: center;
-}
-
-button {
-  margin: 10px;
-  padding: 10px;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #45a049;
 }
 .canvas-container {
   display: flex;
