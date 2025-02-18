@@ -12,8 +12,6 @@ import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
-import { MatIconModule } from '@angular/material/icon';
-import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-my-canvas',
@@ -23,8 +21,6 @@ import { NgIf } from '@angular/common';
     ButtonBarComponent,
     FormsModule,
     MatMenuModule,
-    MatIconModule,
-    NgIf,
   ],
   templateUrl: './my-canvas.component.html',
   styleUrl: './my-canvas.component.scss',
@@ -510,20 +506,11 @@ export class MyCanvasComponent {
   }
 
   // Dibuja el grafo completo en el canvas
-  dibujar() {
-    const canvas = this.canvas.nativeElement;
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) {
+  dibujar(): void {
+    const ctx = this.canvas.nativeElement.getContext('2d');
+    if (!ctx || this.nodos.length === 0) {
       return;
     }
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (this.nodos.length === 0) {
-      return;
-    }
-
     this.dibujarNodo(ctx);
   }
 

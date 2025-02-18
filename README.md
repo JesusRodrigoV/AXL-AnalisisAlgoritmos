@@ -1,39 +1,34 @@
-# Proyecto Algoritmos
+# Algoritmos - Proyecto de Análisis
 
-Para iniciar el proyecto primero en consola:
+## Requisitos previos
 
-```bash
-bun install
-```
+Antes de comenzar, asegúrate de tener instalado Bun.js en tu sistema.
 
-Si Bun no está instalado, instalarlo con:
+### Instalación de Bun
 
-Para Linux o mac:
+#### Para Linux/macOS
 
-```bash
+````bash
 curl -fsSL https://bun.sh/install | bash
-```
 
-Para Windows:
-
-```Bash
+#### Para Windows
+Opción 1 (usando npm):
+```bash
 npm install -g bun
-```
 
-ó
-
-```PowerShell
+Opción 2 (usando PowerShell):
+```powershell
 powershell -c "irm bun.sh/install.ps1|iex"
-```
 
-Ejecutar
+## Instalación del proyecto
 
+1. Instalar las dependencias del proyecto:
 ```bash
 bun install
-```
 
-Iniciar :
-
+2. Iniciar el servidor de desarrollo:
 ```bash
 ng serve
-```
+
+El servidor se iniciará en `http://localhost:4200`. La aplicación se recargará automáticamente si cambias alguno de los archivos fuente.
+````
