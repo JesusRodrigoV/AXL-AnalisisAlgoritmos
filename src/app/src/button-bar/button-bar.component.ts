@@ -37,7 +37,14 @@ export class ButtonBarComponent {
 			active: false,
 			toggeable: true,
 		},
-
+		{
+			id: "connect",
+			label: "Modo Conexión",
+			iconClass: "bx-link",
+			text: "Activar/Desactivar Modo Conexión",
+			active: false,
+			toggeable: true,
+		},
 		{
 			id: "delete",
 			label: "Delete",

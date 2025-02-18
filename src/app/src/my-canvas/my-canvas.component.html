@@ -23,6 +23,15 @@
   <input type="color" id="colorPicker" [(ngModel)]="colorFondo" />
   <button (click)="cambiarColorFondo()">Aplicar</button>
 </div>-->
-<div class="canvas-container">
-  <canvas #myCanvas id="myCanvas" width="1200px" height="700px"></canvas>
+<div class="container-canvas">
+  <canvas
+    #myCanvas
+    class="myCanvas"
+    id="myCanvas"
+    width="1200px"
+    height="700px"
+    (dblclick)="dobleClickCanvas($event)"
+    (click)="clickCanvas($event)"
+  >
+  </canvas>
 </div>

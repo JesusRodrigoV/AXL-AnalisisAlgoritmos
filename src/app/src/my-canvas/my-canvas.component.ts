@@ -3,7 +3,6 @@ import {
 	Component,
 	ElementRef,
 	inject,
-	OnInit,
 	ViewChild,
 } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
@@ -11,18 +10,7 @@ import { MatDialog } from "@angular/material/dialog";
 import { ModalContentComponent } from "./modal-content";
 import { ButtonBarComponent } from "../button-bar";
 import { FormsModule } from "@angular/forms";
-
-interface Node {
-	x: number;
-	y: number;
-}
-
-interface Arco {
-	node1: Node;
-	node2: Node;
-	dirigido: boolean;
-	peso: number;
-}
+import { Conexion, Nodo } from "@app/models";
 
 @Component({
 	selector: "app-my-canvas",
@@ -36,363 +24,370 @@ interface Arco {
 	styleUrl: "./my-canvas.component.scss",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MyCanvasComponent implements OnInit {
+export class MyCanvasComponent {
 	@ViewChild("myCanvas", { static: true })
 	canvas!: ElementRef<HTMLCanvasElement>;
-	//Entrada de archivos
 	@ViewChild("fileInput", { static: false })
 	fileInput!: ElementRef<HTMLInputElement>;
-	//Variable de manejo de canvas
-	private ctx!: CanvasRenderingContext2D;
-
 	readonly dialog = inject(MatDialog);
-	nodes: Node[] = [];
-	selectedNode: Node | null = null;
-	arcos: Arco[] = [];
-	arcoDirigido = false;
-	peso = 0;
-	tempNode: Node | null = null;
-	moveMode = false;
-	deleteMode = false;
-	draggingNode: Node | null = null;
-	colorFondo: string = "#ffffff";
 	modes: { [key: string]: boolean } = {
 		move: false,
 		delete: false,
+		connect: false,
 		add: false,
 		edit: false,
 	};
+	modoConexion: boolean = false;
+	private contador: number = 0;
+	private nodos: Nodo[] = [];
+	private conexiones: Conexion[] = [];
+	arcoDirigido = false;
+	peso = 0;
+	private primerNodoSeleccionado: number | null = null;
+	private segundoNodoSeleccionado: number | null = null;
+	mostrarModal = false;
+	colorFondo: string = "#ffffff";
+	private radio: number = 30;
 
-	ngOnInit(): void {
-		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
-		const context = canvas.getContext("2d") as CanvasRenderingContext2D;
+	onModeToggled(event: { id: string; active: boolean }) {
+		console.log("Button toggled:", event);
 
-		canvas.addEventListener("mousedown", (e) => {
-			if (this.modes["move"]) {
-				const x = e.clientX - canvas.offsetLeft;
-				const y = e.clientY - canvas.offsetTop;
-				this.draggingNode = this.getNodeAt(x, y, this.nodes);
-			}
+		Object.keys(this.modes).forEach((key) => {
+			this.modes[key] = false;
 		});
 
-		canvas.addEventListener("mousemove", (e) => {
-			if (this.modes["move"] && this.draggingNode) {
-				this.draggingNode.x = e.clientX - canvas.offsetLeft;
-				this.draggingNode.y = e.clientY - canvas.offsetTop;
+		this.modes[event.id] = event.active;
+		this.nodos.forEach((c) => (c.selected = false));
+		this.primerNodoSeleccionado = null;
 
-				context.clearRect(0, 0, canvas.width, canvas.height);
-				this.drawArcos(context, this.arcos);
-				this.drawNodes(context, this.nodes);
+		// redibujar canvas
+		const canvas = document.querySelector("canvas");
+		const ctx = canvas?.getContext("2d");
+		if (ctx) {
+			this.dibujarNodo(ctx);
+		}
+
+		console.log("Current modes:", this.modes);
+	}
+
+	// método de doble clic en el canvas
+	dobleClickCanvas(event: MouseEvent): void {
+		const canvas = <HTMLCanvasElement>event.target;
+		const ctx = canvas.getContext("2d");
+		if (ctx) {
+			const rect = canvas.getBoundingClientRect();
+			const x = event.clientX - rect.left;
+			const y = event.clientY - rect.top;
+			this.contador++;
+			this.nodos.push(new Nodo(x, y, this.radio, this.contador, false));
+			this.dibujarNodo(ctx); // redibujar el nodo
+		}
+	}
+
+	// método de un clic sobre el nodo
+	clickCanvas(event: MouseEvent): void {
+		const canvas = <HTMLCanvasElement>event.target;
+		const ctx = canvas.getContext("2d");
+		// verificamos si el contexto (ctx) se obtuvo correctamente
+		if (ctx) {
+			const rect = canvas.getBoundingClientRect();
+			const x = event.clientX - rect.left;
+			const y = event.clientY - rect.top;
+			if (this.modes["connect"]) {
+				console.log("Es tamos e el modo conexion");
+				this.manejarConexion(x, y, ctx);
+			} else if (this.modes["delete"]) {
+				this.manejarEliminacion(x, y, ctx);
 			}
-		});
+		}
+	}
 
-		canvas.addEventListener("mouseup", () => {
-			this.draggingNode = null;
-		});
-
-		canvas.addEventListener("click", (e) => {
-			if (this.modes["move"]) return;
-
-			const x = e.clientX - canvas.offsetLeft;
-			const y = e.clientY - canvas.offsetTop;
-			const clickedNode = this.getNodeAt(x, y, this.nodes);
-
-			if (this.modes["delete"]) {
-				if (clickedNode !== null) {
-					const nodeIndex = this.nodes.indexOf(clickedNode);
-					this.nodes.splice(nodeIndex, 1);
-					this.arcos = this.arcos.filter(
-						(arco) => arco.node1 !== clickedNode && arco.node2 !== clickedNode,
-					);
-				} else {
-					let arcToDelete: number | null = null;
-					let minDistance = Infinity;
-
-					for (let i = 0; i < this.arcos.length; i++) {
-						const arco = this.arcos[i];
-						let distance: number;
-
-						if (this.hasBidirectionalConnection(arco, this.arcos)) {
-							const steps = 20;
-							let minCurveDistance = Infinity;
-
-							for (let t = 0; t <= 1; t += 1 / steps) {
-								const midX = (arco.node1.x + arco.node2.x) / 2;
-								const midY = (arco.node1.y + arco.node2.y) / 2;
-
-								const dx = arco.node2.x - arco.node1.x;
-								const dy = arco.node2.y - arco.node1.y;
-								const normalX = -dy;
-								const normalY = dx;
-								const length = Math.sqrt(normalX * normalX + normalY * normalY);
-								const curveOffset = 50;
-
-								const controlX = midX + (normalX / length) * curveOffset;
-								const controlY = midY + (normalY / length) * curveOffset;
-
-								const curveX =
-									Math.pow(1 - t, 2) * arco.node1.x +
-									2 * (1 - t) * t * controlX +
-									Math.pow(t, 2) * arco.node2.x;
-								const curveY =
-									Math.pow(1 - t, 2) * arco.node1.y +
-									2 * (1 - t) * t * controlY +
-									Math.pow(t, 2) * arco.node2.y;
-
-								const curveDistance = Math.sqrt(
-									Math.pow(x - curveX, 2) + Math.pow(y - curveY, 2),
-								);
-
-								minCurveDistance = Math.min(minCurveDistance, curveDistance);
-							}
-
-							distance = minCurveDistance;
-						} else {
-							const A = { x: arco.node1.x, y: arco.node1.y };
-							const B = { x: arco.node2.x, y: arco.node2.y };
-							const P = { x: x, y: y };
-
-							const AB = { x: B.x - A.x, y: B.y - A.y };
-							const AP = { x: P.x - A.x, y: P.y - A.y };
-							const ab2 = AB.x * AB.x + AB.y * AB.y;
-							const ap_ab = AP.x * AB.x + AP.y * AB.y;
-							let t = ap_ab / ab2;
-							t = Math.max(0, Math.min(1, t));
-
-							const closest = {
-								x: A.x + AB.x * t,
-								y: A.y + AB.y * t,
-							};
-
-							distance = Math.sqrt(
-								Math.pow(P.x - closest.x, 2) + Math.pow(P.y - closest.y, 2),
-							);
-						}
-
-						if (distance < minDistance && distance < 20) {
-							minDistance = distance;
-							arcToDelete = i;
-						}
-					}
-
-					if (arcToDelete !== null) {
-						this.arcos.splice(arcToDelete, 1);
-					}
-				}
-
-				context.clearRect(0, 0, canvas.width, canvas.height);
-				this.drawArcos(context, this.arcos);
-				this.drawNodes(context, this.nodes);
-				return;
+	// método para manejar las conexiones entre nodos
+	/*
+	private manejarConexion(
+		x: number,
+		y: number,
+		ctx: CanvasRenderingContext2D,
+	): void {
+		const nodoSeleccionado = this.nodos.find(
+			(nodo) =>
+				Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) <
+				nodo.radio,
+		);
+		if (nodoSeleccionado) {
+			if (this.primerNodoSeleccionado === null) {
+				this.primerNodoSeleccionado = nodoSeleccionado.contador;
+				nodoSeleccionado.selected = true;
+			} else if (this.primerNodoSeleccionado !== nodoSeleccionado.contador) {
+				this.segundoNodoSeleccionado = nodoSeleccionado.contador;
+				this.mostrarModal = true;
 			}
+			this.dibujarNodo(ctx);
+		}
+	}*/
 
-			if (clickedNode !== null) {
-				if (this.selectedNode === null) {
-					this.selectedNode = clickedNode;
-				} else {
-					this.tempNode = clickedNode;
-				}
-			} else if (this.selectedNode === null) {
-				this.nodes.push({ x, y });
-			}
-
-			context.clearRect(0, 0, canvas.width, canvas.height);
-
-			if (this.selectedNode !== null && this.tempNode !== null) {
-				this.peso = 0;
-				this.arcoDirigido = false;
+	private manejarConexion(
+		x: number,
+		y: number,
+		ctx: CanvasRenderingContext2D,
+	): void {
+		const nodoSeleccionado = this.nodos.find(
+			(nodo) =>
+				Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) <
+				nodo.radio,
+		);
+		if (nodoSeleccionado) {
+			if (this.primerNodoSeleccionado === null) {
+				this.primerNodoSeleccionado = nodoSeleccionado.contador;
+				nodoSeleccionado.selected = true;
+			} else if (this.primerNodoSeleccionado !== nodoSeleccionado.contador) {
+				this.segundoNodoSeleccionado = nodoSeleccionado.contador;
 				this.showModal();
 			}
+			this.dibujarNodo(ctx);
+		}
+	}
 
-			this.drawArcos(context, this.arcos);
-			this.drawNodes(context, this.nodes);
+	// método para manejar la eliminación de conexiones y nodos
+	private manejarEliminacion(
+		x: number,
+		y: number,
+		ctx: CanvasRenderingContext2D,
+	): void {
+		const nodoIndex = this.nodos.findIndex(
+			(circulo) =>
+				Math.sqrt(Math.pow(x - circulo.x, 2) + Math.pow(y - circulo.y, 2)) <=
+				circulo.radio,
+		);
+
+		if (nodoIndex !== -1) {
+			const nodoEliminado = this.nodos[nodoIndex];
+
+			this.conexiones = this.conexiones.filter(
+				(conexion) =>
+					conexion.desde !== nodoEliminado.contador &&
+					conexion.hasta !== nodoEliminado.contador,
+			);
+
+			this.nodos.splice(nodoIndex, 1);
+		} else {
+			const conexionIndex = this.conexiones.findIndex((conexion) => {
+				const desde = this.nodos.find((c) => c.contador === conexion.desde);
+				const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
+				if (desde && hasta) {
+					return this.estaCercaDeConexion(
+						x,
+						y,
+						desde.x,
+						desde.y,
+						hasta.x,
+						hasta.y,
+						conexion,
+					);
+				}
+				return false;
+			});
+
+			if (conexionIndex !== -1) {
+				this.conexiones.splice(conexionIndex, 1);
+			}
+		}
+		this.dibujarNodo(ctx);
+	}
+
+	private estaCercaDeConexion(
+		x: number,
+		y: number,
+		x1: number,
+		y1: number,
+		x2: number,
+		y2: number,
+		conexion: { desde: number; hasta: number },
+	): boolean {
+		const bidireccional = this.conexiones.some(
+			(c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
+		);
+		if (bidireccional) {
+			const controlX = (x1 + x2) / 2 + (y1 - y2) * 0.3;
+			const controlY = (y1 + y2) / 2 + (x2 - x1) * 0.3;
+			return this.estaCercaDeCurva(x, y, x1, y1, controlX, controlY, x2, y2);
+		}
+		return this.estaCercaDeLinea(x, y, x1, y1, x2, y2);
+	}
+
+	private estaCercaDeLinea(
+		x: number,
+		y: number,
+		x1: number,
+		y1: number,
+		x2: number,
+		y2: number,
+	): boolean {
+		// calculamos la distancia entre el punto (x, y) y la línea (x1, y1 → x2, y2)
+		const distancia =
+			Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) /
+			Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2)); // fórmula de distancia punto-línea, derivada de la ecuación de la recta
+		return distancia < 5; // si distancia es menor a 5, esto permite hacer clic cerca de la línea para seleccionarla
+	}
+
+	private estaCercaDeCurva(
+		x: number,
+		y: number,
+		x1: number,
+		y1: number,
+		cx: number,
+		cy: number,
+		x2: number,
+		y2: number,
+	): boolean {
+		for (let t = 0; t <= 1; t += 0.05) {
+			const px = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2;
+			const py = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2;
+			if (Math.sqrt((px - x) ** 2 + (py - y) ** 2) < 5) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// método para confirmar la conexión
+	confirmarConexion(datos: { peso: number; dirigido: boolean }) {
+		// verificamos si hay dos nodos seleccionados
+		if (
+			this.primerNodoSeleccionado !== null &&
+			this.segundoNodoSeleccionado !== null
+		) {
+			this.conexiones.push(
+				new Conexion(
+					this.primerNodoSeleccionado,
+					this.segundoNodoSeleccionado,
+					datos.peso,
+					datos.dirigido,
+				),
+			);
+		}
+		this.limpiarSeleccion();
+	}
+
+	// método para cancelar la conexión
+	cancelarConexion() {
+		this.limpiarSeleccion();
+	}
+
+	private limpiarSeleccion() {
+		this.nodos.forEach((c) => (c.selected = false));
+		this.primerNodoSeleccionado = null;
+		this.segundoNodoSeleccionado = null;
+		this.mostrarModal = false;
+
+		const canvas = document.querySelector("canvas");
+		const ctx = canvas?.getContext("2d");
+		if (ctx) {
+			this.dibujarNodo(ctx);
+		}
+	}
+
+	// método de dibujar nodo
+	dibujarNodo(ctx: CanvasRenderingContext2D): void {
+		ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+		// Dibujar conexiones
+		this.conexiones.forEach((conexion) => {
+			const desde = this.nodos.find((c) => c.contador === conexion.desde);
+			const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
+			if (desde && hasta) {
+				console.log("Dibujando conexión desde:", desde, "hasta:", hasta);
+				const bidireccional = this.conexiones.some(
+					(c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
+				);
+				ctx.beginPath();
+				let midX, midY, controlX, controlY;
+				if (bidireccional) {
+					controlX = (desde.x + hasta.x) / 2 + (desde.y - hasta.y) * 0.3;
+					controlY = (desde.y + hasta.y) / 2 + (hasta.x - desde.x) * 0.3;
+					ctx.moveTo(desde.x, desde.y);
+					ctx.quadraticCurveTo(controlX, controlY, hasta.x, hasta.y);
+					midX = (desde.x + 2 * controlX + hasta.x) / 4;
+					midY = (desde.y + 2 * controlY + hasta.y) / 4;
+				} else {
+					controlX = (desde.x + hasta.x) / 2;
+					controlY = (desde.y + hasta.y) / 2;
+					ctx.moveTo(desde.x, desde.y);
+					ctx.lineTo(hasta.x, hasta.y);
+					midX = controlX;
+					midY = controlY;
+				}
+				ctx.strokeStyle = "#666";
+				ctx.lineWidth = 2;
+				ctx.stroke();
+
+				if (conexion.dirigido) {
+					this.dibujarFlechaCurva(
+						ctx,
+						desde.x,
+						desde.y,
+						hasta.x,
+						hasta.y,
+						controlX,
+						controlY,
+					);
+				}
+				// Dibujar peso de cada conexión en su propia posición
+				ctx.fillStyle = "white";
+				ctx.fillRect(midX - 10, midY - 10, 20, 20);
+				ctx.font = "12px Arial";
+				ctx.fillStyle = "black";
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				ctx.fillText(conexion.peso.toString(), midX, midY);
+			}
+		});
+
+		// Dibujar nodos
+		this.nodos.forEach((circulo) => {
+			console.log("Dibujando nodo:", circulo);
+			ctx.beginPath();
+			ctx.arc(circulo.x, circulo.y, circulo.radio, 0, Math.PI * 2);
+			ctx.fillStyle = circulo.selected ? "#ff9800" : "yellow";
+			ctx.fill();
+			ctx.stroke();
+			ctx.font = "20px Source Sans Pro,Arial,sans-serif";
+			ctx.fillStyle = "black";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText(circulo.contador.toString(), circulo.x, circulo.y);
 		});
 	}
 
-	ngAfterViewInit() {
-		//Obtener el contexto de canvas para poderlo usar fuera del metodo ngOnInit
-		if (this.canvas) {
-			this.ctx = this.canvas.nativeElement.getContext("2d")!;
-		}
-	}
-
-	//ObtnerNodoPorPosicion
-	getNodeAt(x: number, y: number, nodes: Node[]): Node | null {
-		for (const node of nodes) {
-			const a = x - node.x;
-			const b = y - node.y;
-			const c = Math.sqrt(a * a + b * b);
-			if (c < 90) {
-				return node;
-			}
-		}
-		return null;
-	}
-	//DibujarNodos
-	drawNodes(ctx: CanvasRenderingContext2D, nodes: Node[]): void {
-		for (const [index, node] of nodes.entries()) {
-			ctx.strokeStyle = node === this.selectedNode ? "#FF0000" : "#000000";
-			ctx.beginPath();
-			ctx.lineWidth = 3;
-			ctx.fillStyle = "#FFFFFF";
-			ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
-			ctx.stroke();
-			ctx.fill();
-			ctx.fillStyle = node === this.selectedNode ? "#FF0000" : "#000000";
-			ctx.font = "20px Arial";
-			ctx.fillText(index.toString(), node.x - 5, node.y + 5);
-		}
-	}
-	//VerificarArcoBidireccional
-	hasBidirectionalConnection(arco: Arco, arcos: Arco[]): boolean {
-		return arcos.some(
-			(a) =>
-				a !== arco &&
-				((a.node1 === arco.node1 && a.node2 === arco.node2) ||
-					(a.node1 === arco.node2 && a.node2 === arco.node1)),
+	private dibujarFlechaCurva(
+		ctx: CanvasRenderingContext2D,
+		fromX: number,
+		fromY: number,
+		toX: number,
+		toY: number,
+		ctrlX: number,
+		ctrlY: number,
+	): void {
+		const t = 0.9; // Punto cercano al final de la curva
+		const x = (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * ctrlX + t * t * toX;
+		const y = (1 - t) * (1 - t) * fromY + 2 * (1 - t) * t * ctrlY + t * t * toY;
+		const angle = Math.atan2(toY - y, toX - x);
+		const headLen = 10;
+		ctx.beginPath();
+		ctx.moveTo(
+			x - headLen * Math.cos(angle - Math.PI / 6),
+			y - headLen * Math.sin(angle - Math.PI / 6),
 		);
+		ctx.lineTo(x, y);
+		ctx.lineTo(
+			x - headLen * Math.cos(angle + Math.PI / 6),
+			y - headLen * Math.sin(angle + Math.PI / 6),
+		);
+		ctx.strokeStyle = "#666";
+		ctx.lineWidth = 2;
+		ctx.stroke();
 	}
-	//DibujarArcos
-	drawArcos(ctx: CanvasRenderingContext2D, arcos: Arco[]): void {
-		const radius = 20;
 
-		for (const arco of arcos) {
-			const isBidirectional = this.hasBidirectionalConnection(arco, arcos);
-
-			let angle = Math.atan2(
-				arco.node2.y - arco.node1.y,
-				arco.node2.x - arco.node1.x,
-			);
-
-			let startX = arco.node1.x;
-			let startY = arco.node1.y;
-			let endX = arco.node2.x;
-			let endY = arco.node2.y;
-
-			ctx.beginPath();
-			if (isBidirectional) {
-				const midX = (startX + endX) / 2;
-				const midY = (startY + endY) / 2;
-				const dx = endX - startX;
-				const dy = endY - startY;
-				const normalX = -dy;
-				const normalY = dx;
-				const length = Math.sqrt(normalX * normalX + normalY * normalY);
-				const curveOffset = 50;
-
-				const controlX = midX + (normalX / length) * curveOffset;
-				const controlY = midY + (normalY / length) * curveOffset;
-
-				const startAngle = Math.atan2(controlY - startY, controlX - startX);
-				const endAngle = Math.atan2(controlY - endY, controlX - endX);
-
-				startX = arco.node1.x + radius * Math.cos(startAngle);
-				startY = arco.node1.y + radius * Math.sin(startAngle);
-				endX = arco.node2.x + radius * Math.cos(endAngle);
-				endY = arco.node2.y + radius * Math.sin(endAngle);
-
-				ctx.moveTo(startX, startY);
-				ctx.quadraticCurveTo(controlX, controlY, endX, endY);
-
-				if (arco.dirigido) {
-					const t = 0.95;
-					const arrowX =
-						(1 - t) * (1 - t) * startX +
-						2 * (1 - t) * t * controlX +
-						t * t * endX;
-					const arrowY =
-						(1 - t) * (1 - t) * startY +
-						2 * (1 - t) * t * controlY +
-						t * t * endY;
-
-					const tangentX =
-						2 * (1 - t) * (controlX - startX) + 2 * t * (endX - controlX);
-					const tangentY =
-						2 * (1 - t) * (controlY - startY) + 2 * t * (endY - controlY);
-					const arrowAngle = Math.atan2(tangentY, tangentX);
-
-					const arrowSize = 10;
-					ctx.moveTo(arrowX, arrowY);
-					ctx.lineTo(
-						arrowX - arrowSize * Math.cos(arrowAngle - Math.PI / 6),
-						arrowY - arrowSize * Math.sin(arrowAngle - Math.PI / 6),
-					);
-					ctx.moveTo(arrowX, arrowY);
-					ctx.lineTo(
-						arrowX - arrowSize * Math.cos(arrowAngle + Math.PI / 6),
-						arrowY - arrowSize * Math.sin(arrowAngle + Math.PI / 6),
-					);
-				}
-			} else {
-				startX = arco.node1.x + radius * Math.cos(angle);
-				startY = arco.node1.y + radius * Math.sin(angle);
-				endX = arco.node2.x - radius * Math.cos(angle);
-				endY = arco.node2.y - radius * Math.sin(angle);
-
-				ctx.moveTo(startX, startY);
-				ctx.lineTo(endX, endY);
-
-				if (arco.dirigido) {
-					const arrowSize = 10;
-					ctx.lineTo(
-						endX - arrowSize * Math.cos(angle - Math.PI / 6),
-						endY - arrowSize * Math.sin(angle - Math.PI / 6),
-					);
-					ctx.moveTo(endX, endY);
-					ctx.lineTo(
-						endX - arrowSize * Math.cos(angle + Math.PI / 6),
-						endY - arrowSize * Math.sin(angle + Math.PI / 6),
-					);
-				}
-			}
-
-			ctx.strokeStyle = "#000000";
-			ctx.stroke();
-
-			if (arco.peso !== undefined && arco.peso !== 0) {
-				ctx.font = "20px Arial";
-
-				let textX, textY;
-				if (isBidirectional) {
-					const midT = 0.5;
-					textX =
-						(1 - midT) * (1 - midT) * startX +
-						2 *
-							(1 - midT) *
-							midT *
-							((startX + endX) / 2 + (endY - startY) / 4) +
-						midT * midT * endX;
-					textY =
-						(1 - midT) * (1 - midT) * startY +
-						2 *
-							(1 - midT) *
-							midT *
-							((startY + endY) / 2 - (endX - startX) / 4) +
-						midT * midT * endY;
-				} else {
-					textX = (startX + endX) / 2;
-					textY = (startY + endY) / 2 - 10;
-				}
-
-				const padding = 4;
-				const textWidth = ctx.measureText(arco.peso.toString()).width;
-				ctx.fillStyle = "#FFFFFF";
-				ctx.fillRect(
-					textX - textWidth / 2 - padding,
-					textY - 10 - padding,
-					textWidth + padding * 2,
-					20 + padding * 2,
-				);
-
-				ctx.fillStyle = "#000000";
-				ctx.textAlign = "center";
-				ctx.textBaseline = "middle";
-				ctx.fillText(arco.peso.toString(), textX, textY);
-			}
-		}
-		console.log(this.arcos);
-	}
-	//CambiarColorFondo
 	cambiarColorFondo() {
 		const contexto = this.canvas.nativeElement.getContext("2d");
 		if (contexto) {
@@ -405,6 +400,7 @@ export class MyCanvasComponent implements OnInit {
 			);
 		}
 	}
+
 	//MostrarModal
 	showModal(): void {
 		const dialogRef = this.dialog.open(ModalContentComponent, {
@@ -415,44 +411,21 @@ export class MyCanvasComponent implements OnInit {
 
 		dialogRef.afterClosed().subscribe((result) => {
 			if (result) {
-				this.arcoDirigido = result.dirigido;
-				this.peso = result.peso;
-				this.arcos.push({
-					node1: this.selectedNode!,
-					node2: this.tempNode!,
-					dirigido: this.arcoDirigido,
-					peso: this.peso,
+				this.confirmarConexion({
+					peso: result.peso,
+					dirigido: result.dirigido,
 				});
-				this.selectedNode = null;
-				this.tempNode = null;
-				const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
-				const context = canvas.getContext("2d") as CanvasRenderingContext2D;
-				context.clearRect(0, 0, canvas.width, canvas.height);
-				this.drawArcos(context, this.arcos);
-				this.drawNodes(context, this.nodes);
+			} else {
+				this.cancelarConexion();
 			}
 		});
-	}
-
-	onModeToggled(event: { id: string; active: boolean }) {
-		console.log("Button toggled:", event);
-
-		// Reset all modes
-		Object.keys(this.modes).forEach((key) => {
-			this.modes[key] = false;
-		});
-
-		// Set the active mode
-		this.modes[event.id] = event.active;
-
-		console.log("Current modes:", this.modes);
 	}
 
 	//Metodo para exportar la informacion
 	exportarJSON(): void {
 		const data = {
-			nodos: this.nodes,
-			arcos: this.arcos,
+			nodos: this.nodos,
+			conexiones: this.conexiones,
 		};
 		const jsonData = JSON.stringify(data, null, 2);
 
@@ -482,47 +455,46 @@ export class MyCanvasComponent implements OnInit {
 
 	// Leer archivo JSON
 	onFileSelected(event: any) {
-		// Cancelar cualquier modo activo (mover o eliminar)
-		this.moveMode = false;
-		this.deleteMode = false;
-
-		// Limpiar selecciones
-		this.selectedNode = null;
-		this.tempNode = null;
-		this.draggingNode = null;
-
-		//Proceso de creacion de archivos
+		Object.keys(this.modes).forEach((key) => {
+			this.modes[key] = false;
+		});
+		this.limpiarCanvas();
 		const file = event.target.files[0];
 		if (file) {
 			const reader = new FileReader();
 			reader.onload = (e: any) => {
 				const json = JSON.parse(e.target.result);
 
-				// Limpiar los nodos y arcos existentes
-				this.nodes = [];
-				this.arcos = [];
+				console.log("JSON importado:", json); // Verifica la estructura importada
 
-				// Agregar los nodos importados
-				this.nodes.push(...json.nodos);
+				// Limpiar los nodos y conexiones existentes
+				this.nodos = [];
+				this.conexiones = [];
 
-				// Mapear los nodos en los arcos a los nodos en la lista nodes
-				json.arcos.forEach((arco: any) => {
-					const node1 = this.nodes.find(
-						(node) => node.x === arco.node1.x && node.y === arco.node1.y,
-					);
-					const node2 = this.nodes.find(
-						(node) => node.x === arco.node2.x && node.y === arco.node2.y,
-					);
+				// Agregar el contador a cada nodo al importar
+				json.nodos.forEach((nodo: any, index: number) => {
+					nodo.contador = index + 1;
+				});
+				this.nodos.push(...json.nodos);
 
-					if (node1 && node2) {
-						this.arcos.push({
-							node1,
-							node2,
-							dirigido: arco.dirigido,
-							peso: arco.peso,
-						});
+				this.contador = this.nodos.length;
+				console.log("Nodos después de importar:", this.nodos);
+
+				// Mapear los nodos en las conexiones
+				json.conexiones.forEach((conexion: any) => {
+					const node1 = conexion._desde;
+					const node2 = conexion._hasta;
+
+					if (node1 !== -1 && node2 !== -1) {
+						this.conexiones.push(
+							new Conexion(node1, node2, conexion._peso, conexion._dirigido),
+						);
+					} else {
+						console.warn("No se encontró una conexión válida para:", conexion);
 					}
 				});
+
+				console.log("Conexiones después de importar:", this.conexiones);
 
 				this.dibujar();
 			};
@@ -530,23 +502,34 @@ export class MyCanvasComponent implements OnInit {
 		}
 	}
 
-	// Dibujar nodos y arcos a partir del json importado
+	// Dibujar nodos y arcos a partir del JSON importado
 	dibujar() {
-		if (!this.ctx) return;
-		this.ctx.clearRect(
-			0,
-			0,
-			this.canvas.nativeElement.width,
-			this.canvas.nativeElement.height,
-		);
-		this.drawArcos(this.ctx, this.arcos);
-		this.drawNodes(this.ctx, this.nodes);
+		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return;
+
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		// Verificar si hay nodos antes de dibujar
+		if (this.nodos.length === 0) {
+			console.warn("No hay nodos para dibujar");
+			return;
+		}
+		console.log(this.nodos);
+		console.log(this.conexiones);
+
+		this.dibujarNodo(ctx);
 	}
+
 	limpiarCanvas() {
 		const canvas = document.getElementById("myCanvas") as HTMLCanvasElement;
 		const context = canvas.getContext("2d");
 		if (context) {
 			context.clearRect(0, 0, canvas.width, canvas.height);
 		}
+		console.log("Estoy limpiando");
+		this.nodos = [];
+		this.conexiones = [];
+		this.contador = 0;
 	}
 }
