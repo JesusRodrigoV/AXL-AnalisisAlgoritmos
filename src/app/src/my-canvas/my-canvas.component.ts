@@ -376,59 +376,61 @@ export class MyCanvasComponent {
     });
   }
 
+  // Dibuja el bucle
   private dibujarBucle(
     ctx: CanvasRenderingContext2D,
     nodo: Nodo,
     conexion: Conexion,
-): void {
+  ): void {
     const radio = nodo.radio;
     const centerX = nodo.x;
     const centerY = nodo.y;
-    
-    // Dibujamos un óvalo por encima del nodo
+        
+    // Hacemos el óvalo más redondeado ajustando la escala vertical
     ctx.beginPath();
     ctx.save();
     ctx.translate(centerX, centerY - radio);
-    ctx.scale(1, 0.5);
-    ctx.arc(0, 0, radio, 0, Math.PI * 2);
+    // Cambiamos el factor de escala de 0.5 a 0.8 para hacer el óvalo más redondeado
+    ctx.scale(1, 0.8);
+    // Aumentamos ligeramente el radio del óvalo
+    ctx.arc(0, 0, radio * 1.2, 0, Math.PI * 2);
     ctx.restore();
     ctx.strokeStyle = '#666';
     ctx.lineWidth = 2;
     ctx.stroke();
-  
+      
     // Si es dirigido, dibujamos la flecha
     if (conexion.dirigido) {
-        // Calculamos el punto donde irá la flecha (en el borde inferior derecho del óvalo)
-        const angle = Math.PI / 6; // 30 grados
-        const arrowX = centerX + radio * Math.cos(angle);
-        const arrowY = centerY - radio - (radio * Math.sin(angle) * 0.5); // Multiplicamos por 0.5 debido al scale del óvalo
-        
-        // Calculamos el ángulo de la flecha basado en la tangente del óvalo en ese punto
-        const tangentAngle = Math.PI / 2 - angle;
-        
-        // Dibujamos la punta de la flecha
-        const headLen = 10;
-        ctx.beginPath();
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(
-            arrowX - headLen * Math.cos(tangentAngle - Math.PI / 6),
-            arrowY + headLen * Math.sin(tangentAngle - Math.PI / 6)
-        );
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(
-            arrowX - headLen * Math.cos(tangentAngle + Math.PI / 6),
-            arrowY + headLen * Math.sin(tangentAngle + Math.PI / 6)
-        );
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+      // Ajustamos el ángulo y posición de la flecha para el nuevo óvalo
+      const angle = Math.PI / 6; // 30 grados
+      const arrowX = centerX + radio * 1.2 * Math.cos(angle);
+      const arrowY = centerY - radio - (radio * 1.2 * Math.sin(angle) * 0.8);
+            
+      const tangentAngle = Math.PI / 2 - angle;
+            
+      const headLen = 10;
+      ctx.beginPath();
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(
+        arrowX - headLen * Math.cos(tangentAngle - Math.PI / 6),
+        arrowY + headLen * Math.sin(tangentAngle - Math.PI / 6)
+      );
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(
+        arrowX - headLen * Math.cos(tangentAngle + Math.PI / 6),
+        arrowY + headLen * Math.sin(tangentAngle + Math.PI / 6)
+      );
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
-  
-    // Dibujamos el peso en el centro superior del bucle
+      
+    // Ajustamos la posición del peso para el nuevo óvalo
     const peso = conexion.peso ?? 0;
     const pesoX = centerX;
-    const pesoY = centerY - radio * 2;
-    
+    // Ajustamos la posición vertical del peso
+    const pesoY = centerY - radio * 2.4;
+        
     ctx.fillStyle = 'white';
     ctx.fillRect(pesoX - 10, pesoY - 10, 20, 20);
     ctx.font = '12px Arial';
@@ -436,7 +438,9 @@ export class MyCanvasComponent {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(peso.toString(), pesoX, pesoY);
-}
+  }
+
+  
 
   //Dibuja una flecha curva en el extremo de una conexión dirigida
   private dibujarFlechaCurva(
@@ -447,26 +451,47 @@ export class MyCanvasComponent {
     toY: number,
     ctrlX: number,
     ctrlY: number,
+    radio: number = this.radio,
+    bidireccional: boolean = false
   ): void {
-    const t = 0.9;
-    const x = (1 - t) * (1 - t) * fromX + 2 * (1 - t) * t * ctrlX + t * t * toX;
-    const y = (1 - t) * (1 - t) * fromY + 2 * (1 - t) * t * ctrlY + t * t * toY;
-    const angle = Math.atan2(toY - y, toX - x);
+    // Calcular dirección de la línea
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const distancia = Math.sqrt(dx * dx + dy * dy);
+  
+    // Ajustar el punto final de la flecha al borde del nodo destino
+    const ajusteX = (dx / distancia) * radio;
+    const ajusteY = (dy / distancia) * radio;
+    const finalX = toX - ajusteX;
+    const finalY = toY - ajusteY;
+  
+    // Evitar dibujar la conexión dos veces en caso de bidireccionalidad
+    if (bidireccional && fromX > toX) {
+      return;
+    }
+  
+    // Redibujar la línea con el ajuste
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.quadraticCurveTo(ctrlX, ctrlY, finalX, finalY);
+    ctx.stroke();
+  
+    // Dibujar la punta de la flecha
+    const angle = Math.atan2(finalY - ctrlY, finalX - ctrlX);
     const headLen = 10;
     ctx.beginPath();
-    ctx.moveTo(
-      x - headLen * Math.cos(angle - Math.PI / 6),
-      y - headLen * Math.sin(angle - Math.PI / 6),
-    );
-    ctx.lineTo(x, y);
+    ctx.moveTo(finalX, finalY);
     ctx.lineTo(
-      x - headLen * Math.cos(angle + Math.PI / 6),
-      y - headLen * Math.sin(angle + Math.PI / 6),
+      finalX - headLen * Math.cos(angle - Math.PI / 6),
+      finalY - headLen * Math.sin(angle - Math.PI / 6)
     );
-    ctx.strokeStyle = '#666';
-    ctx.lineWidth = 2;
+    ctx.moveTo(finalX, finalY);
+    ctx.lineTo(
+      finalX - headLen * Math.cos(angle + Math.PI / 6),
+      finalY - headLen * Math.sin(angle + Math.PI / 6)
+    );
     ctx.stroke();
-  }
+  }  
 
   // Cambia el color de fondo del canvas
   cambiarColorFondo() {
