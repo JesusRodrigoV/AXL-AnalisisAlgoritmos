@@ -15,13 +15,7 @@ import { MatMenu, MatMenuModule } from '@angular/material/menu';
 
 @Component({
   selector: 'app-my-canvas',
-  imports: [
-    MatButtonModule,
-    ModalContentComponent,
-    ButtonBarComponent,
-    FormsModule,
-    MatMenuModule,
-  ],
+  imports: [MatButtonModule, ButtonBarComponent, FormsModule, MatMenuModule],
   templateUrl: './my-canvas.component.html',
   styleUrl: './my-canvas.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,7 +27,10 @@ export class MyCanvasComponent {
   @ViewChild('menuTrigger', { static: true }) menuTrigger: any;
   @ViewChild(MatMenu) menu!: MatMenu;
   menuPosition = { x: '0px', y: '0px' };
-  selectedElement: { type: 'node' | 'connection'; data: any } | null = null;
+  selectedElement: {
+    type: 'node' | 'connection' | 'canvas';
+    data: any;
+  } | null = null;
 
   @ViewChild('myCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
@@ -116,10 +113,15 @@ export class MyCanvasComponent {
   }
 
   // Gestiona la selección de nodos para crear conexiones entre ellos
-  private manejarConexion(x: number, y: number, ctx: CanvasRenderingContext2D): void {
+  private manejarConexion(
+    x: number,
+    y: number,
+    ctx: CanvasRenderingContext2D,
+  ): void {
     const nodoSeleccionado = this.nodos.find(
       (nodo) =>
-        Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) < nodo.radio,
+        Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) <
+        nodo.radio,
     );
     if (nodoSeleccionado) {
       if (this.primerNodoSeleccionado === null) {
@@ -193,26 +195,27 @@ export class MyCanvasComponent {
   ): boolean {
     // Si es una autoconexión (bucle)
     if (conexion.desde === conexion.hasta) {
-      const nodo = this.nodos.find(n => n.contador === conexion.desde);
+      const nodo = this.nodos.find((n) => n.contador === conexion.desde);
       if (nodo) {
         // Verificar si el punto está cerca del peso del bucle
         const pesoX = nodo.x;
         const pesoY = nodo.y - nodo.radio * 2;
         const distanciaPeso = Math.sqrt(
-          Math.pow(x - pesoX, 2) + Math.pow(y - pesoY, 2)
+          Math.pow(x - pesoX, 2) + Math.pow(y - pesoY, 2),
         );
-        if (distanciaPeso <= 10) { // 10 pixels de tolerancia para detectar clic en el peso
+        if (distanciaPeso <= 10) {
+          // 10 pixels de tolerancia para detectar clic en el peso
           return true;
         }
-        
+
         // Verificar si el punto está cerca del óvalo del bucle
         const dx = x - nodo.x;
         const dy = (y - (nodo.y - nodo.radio)) * 2;
-        return (dx * dx + dy * dy) <= (nodo.radio * nodo.radio + 25);
+        return dx * dx + dy * dy <= nodo.radio * nodo.radio + 25;
       }
       return false;
     }
-    
+
     // Código existente para conexiones normales
     const bidireccional = this.conexiones.some(
       (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
@@ -333,7 +336,7 @@ export class MyCanvasComponent {
           ctx.strokeStyle = '#666';
           ctx.lineWidth = 2;
           ctx.stroke();
-  
+
           if (conexion.dirigido) {
             this.dibujarFlechaCurva(
               ctx,
@@ -380,11 +383,11 @@ export class MyCanvasComponent {
     ctx: CanvasRenderingContext2D,
     nodo: Nodo,
     conexion: Conexion,
-): void {
+  ): void {
     const radio = nodo.radio;
     const centerX = nodo.x;
     const centerY = nodo.y;
-    
+
     // Dibujamos un óvalo por encima del nodo
     ctx.beginPath();
     ctx.save();
@@ -395,40 +398,40 @@ export class MyCanvasComponent {
     ctx.strokeStyle = '#666';
     ctx.lineWidth = 2;
     ctx.stroke();
-  
+
     // Si es dirigido, dibujamos la flecha
     if (conexion.dirigido) {
-        // Calculamos el punto donde irá la flecha (en el borde inferior derecho del óvalo)
-        const angle = Math.PI / 6; // 30 grados
-        const arrowX = centerX + radio * Math.cos(angle);
-        const arrowY = centerY - radio - (radio * Math.sin(angle) * 0.5); // Multiplicamos por 0.5 debido al scale del óvalo
-        
-        // Calculamos el ángulo de la flecha basado en la tangente del óvalo en ese punto
-        const tangentAngle = Math.PI / 2 - angle;
-        
-        // Dibujamos la punta de la flecha
-        const headLen = 10;
-        ctx.beginPath();
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(
-            arrowX - headLen * Math.cos(tangentAngle - Math.PI / 6),
-            arrowY + headLen * Math.sin(tangentAngle - Math.PI / 6)
-        );
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(
-            arrowX - headLen * Math.cos(tangentAngle + Math.PI / 6),
-            arrowY + headLen * Math.sin(tangentAngle + Math.PI / 6)
-        );
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+      // Calculamos el punto donde irá la flecha (en el borde inferior derecho del óvalo)
+      const angle = Math.PI / 6; // 30 grados
+      const arrowX = centerX + radio * Math.cos(angle);
+      const arrowY = centerY - radio - radio * Math.sin(angle) * 0.5; // Multiplicamos por 0.5 debido al scale del óvalo
+
+      // Calculamos el ángulo de la flecha basado en la tangente del óvalo en ese punto
+      const tangentAngle = Math.PI / 2 - angle;
+
+      // Dibujamos la punta de la flecha
+      const headLen = 10;
+      ctx.beginPath();
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(
+        arrowX - headLen * Math.cos(tangentAngle - Math.PI / 6),
+        arrowY + headLen * Math.sin(tangentAngle - Math.PI / 6),
+      );
+      ctx.moveTo(arrowX, arrowY);
+      ctx.lineTo(
+        arrowX - headLen * Math.cos(tangentAngle + Math.PI / 6),
+        arrowY + headLen * Math.sin(tangentAngle + Math.PI / 6),
+      );
+      ctx.strokeStyle = '#666';
+      ctx.lineWidth = 2;
+      ctx.stroke();
     }
-  
+
     // Dibujamos el peso en el centro superior del bucle
     const peso = conexion.peso ?? 0;
     const pesoX = centerX;
     const pesoY = centerY - radio * 2;
-    
+
     ctx.fillStyle = 'white';
     ctx.fillRect(pesoX - 10, pesoY - 10, 20, 20);
     ctx.font = '12px Arial';
@@ -436,7 +439,7 @@ export class MyCanvasComponent {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(peso.toString(), pesoX, pesoY);
-}
+  }
 
   //Dibuja una flecha curva en el extremo de una conexión dirigida
   private dibujarFlechaCurva(
@@ -469,16 +472,42 @@ export class MyCanvasComponent {
   }
 
   // Cambia el color de fondo del canvas
-  cambiarColorFondo() {
-    const contexto = this.canvas.nativeElement.getContext('2d');
-    if (contexto) {
-      contexto.fillStyle = this.colorFondo;
-      contexto.fillRect(
-        0,
-        0,
-        this.canvas.nativeElement.width,
-        this.canvas.nativeElement.height,
-      );
+  cambiarColorFondo(): void {
+    if (this.selectedElement?.type === 'canvas') {
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = this.colorFondo || '#ffffff'; // Color blanco por defecto
+
+      colorInput.addEventListener('change', (event) => {
+        this.colorFondo = (event.target as HTMLInputElement).value;
+        const ctx = this.canvas.nativeElement.getContext('2d');
+        if (ctx) {
+          // Guardar el estado actual
+          const imageData = ctx.getImageData(
+            0,
+            0,
+            this.canvas.nativeElement.width,
+            this.canvas.nativeElement.height,
+          );
+
+          // Limpiar el canvas con el nuevo color
+          ctx.fillStyle = this.colorFondo;
+          ctx.fillRect(
+            0,
+            0,
+            this.canvas.nativeElement.width,
+            this.canvas.nativeElement.height,
+          );
+
+          // Restaurar el contenido
+          ctx.putImageData(imageData, 0, 0);
+
+          // Redibujar todo
+          this.dibujarNodo(ctx);
+        }
+      });
+
+      colorInput.click();
     }
   }
 
