@@ -116,21 +116,17 @@ export class MyCanvasComponent {
   }
 
   // Gestiona la selección de nodos para crear conexiones entre ellos
-  private manejarConexion(
-    x: number,
-    y: number,
-    ctx: CanvasRenderingContext2D,
-  ): void {
+  private manejarConexion(x: number, y: number, ctx: CanvasRenderingContext2D): void {
     const nodoSeleccionado = this.nodos.find(
       (nodo) =>
-        Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) <
-        nodo.radio,
+        Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) < nodo.radio,
     );
     if (nodoSeleccionado) {
       if (this.primerNodoSeleccionado === null) {
         this.primerNodoSeleccionado = nodoSeleccionado.contador;
         nodoSeleccionado.selected = true;
-      } else if (this.primerNodoSeleccionado !== nodoSeleccionado.contador) {
+      } else {
+        // Permitimos que el segundo nodo sea el mismo que el primero
         this.segundoNodoSeleccionado = nodoSeleccionado.contador;
         this.showModal();
       }
@@ -195,6 +191,29 @@ export class MyCanvasComponent {
     y2: number,
     conexion: { desde: number; hasta: number },
   ): boolean {
+    // Si es una autoconexión (bucle)
+    if (conexion.desde === conexion.hasta) {
+      const nodo = this.nodos.find(n => n.contador === conexion.desde);
+      if (nodo) {
+        // Verificar si el punto está cerca del peso del bucle
+        const pesoX = nodo.x;
+        const pesoY = nodo.y - nodo.radio * 2;
+        const distanciaPeso = Math.sqrt(
+          Math.pow(x - pesoX, 2) + Math.pow(y - pesoY, 2)
+        );
+        if (distanciaPeso <= 10) { // 10 pixels de tolerancia para detectar clic en el peso
+          return true;
+        }
+        
+        // Verificar si el punto está cerca del óvalo del bucle
+        const dx = x - nodo.x;
+        const dy = (y - (nodo.y - nodo.radio)) * 2;
+        return (dx * dx + dy * dy) <= (nodo.radio * nodo.radio + 25);
+      }
+      return false;
+    }
+    
+    // Código existente para conexiones normales
     const bidireccional = this.conexiones.some(
       (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
     );
@@ -287,49 +306,55 @@ export class MyCanvasComponent {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
       if (desde && hasta) {
-        const bidireccional = this.conexiones.some(
-          (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
-        );
-        ctx.beginPath();
-        let midX, midY, controlX, controlY;
-        if (bidireccional) {
-          controlX = (desde.x + hasta.x) / 2 + (desde.y - hasta.y) * 0.3;
-          controlY = (desde.y + hasta.y) / 2 + (hasta.x - desde.x) * 0.3;
-          ctx.moveTo(desde.x, desde.y);
-          ctx.quadraticCurveTo(controlX, controlY, hasta.x, hasta.y);
-          midX = (desde.x + 2 * controlX + hasta.x) / 4;
-          midY = (desde.y + 2 * controlY + hasta.y) / 4;
+        // Caso especial para autoconexiones
+        if (conexion.desde === conexion.hasta) {
+          this.dibujarBucle(ctx, desde, conexion);
         } else {
-          controlX = (desde.x + hasta.x) / 2;
-          controlY = (desde.y + hasta.y) / 2;
-          ctx.moveTo(desde.x, desde.y);
-          ctx.lineTo(hasta.x, hasta.y);
-          midX = controlX;
-          midY = controlY;
-        }
-        ctx.strokeStyle = '#666';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        if (conexion.dirigido) {
-          this.dibujarFlechaCurva(
-            ctx,
-            desde.x,
-            desde.y,
-            hasta.x,
-            hasta.y,
-            controlX,
-            controlY,
+          const bidireccional = this.conexiones.some(
+            (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
           );
+          ctx.beginPath();
+          let midX, midY, controlX, controlY;
+          if (bidireccional) {
+            controlX = (desde.x + hasta.x) / 2 + (desde.y - hasta.y) * 0.3;
+            controlY = (desde.y + hasta.y) / 2 + (hasta.x - desde.x) * 0.3;
+            ctx.moveTo(desde.x, desde.y);
+            ctx.quadraticCurveTo(controlX, controlY, hasta.x, hasta.y);
+            midX = (desde.x + 2 * controlX + hasta.x) / 4;
+            midY = (desde.y + 2 * controlY + hasta.y) / 4;
+          } else {
+            controlX = (desde.x + hasta.x) / 2;
+            controlY = (desde.y + hasta.y) / 2;
+            ctx.moveTo(desde.x, desde.y);
+            ctx.lineTo(hasta.x, hasta.y);
+            midX = controlX;
+            midY = controlY;
+          }
+          ctx.strokeStyle = '#666';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+  
+          if (conexion.dirigido) {
+            this.dibujarFlechaCurva(
+              ctx,
+              desde.x,
+              desde.y,
+              hasta.x,
+              hasta.y,
+              controlX,
+              controlY,
+            );
+          }
+          // Dibujar el peso
+          const peso = conexion.peso ?? 0;
+          ctx.fillStyle = 'white';
+          ctx.fillRect(midX - 10, midY - 10, 20, 20);
+          ctx.font = '12px Arial';
+          ctx.fillStyle = 'black';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(peso.toString(), midX, midY);
         }
-        const peso = conexion.peso ?? 0;
-        ctx.fillStyle = 'white';
-        ctx.fillRect(midX - 10, midY - 10, 20, 20);
-        ctx.font = '12px Arial';
-        ctx.fillStyle = 'black';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(peso.toString(), midX, midY);
       }
     });
 
@@ -350,6 +375,68 @@ export class MyCanvasComponent {
       );
     });
   }
+
+  private dibujarBucle(
+    ctx: CanvasRenderingContext2D,
+    nodo: Nodo,
+    conexion: Conexion,
+): void {
+    const radio = nodo.radio;
+    const centerX = nodo.x;
+    const centerY = nodo.y;
+    
+    // Dibujamos un óvalo por encima del nodo
+    ctx.beginPath();
+    ctx.save();
+    ctx.translate(centerX, centerY - radio);
+    ctx.scale(1, 0.5);
+    ctx.arc(0, 0, radio, 0, Math.PI * 2);
+    ctx.restore();
+    ctx.strokeStyle = '#666';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  
+    // Si es dirigido, dibujamos la flecha
+    if (conexion.dirigido) {
+        // Calculamos el punto donde irá la flecha (en el borde inferior derecho del óvalo)
+        const angle = Math.PI / 6; // 30 grados
+        const arrowX = centerX + radio * Math.cos(angle);
+        const arrowY = centerY - radio - (radio * Math.sin(angle) * 0.5); // Multiplicamos por 0.5 debido al scale del óvalo
+        
+        // Calculamos el ángulo de la flecha basado en la tangente del óvalo en ese punto
+        const tangentAngle = Math.PI / 2 - angle;
+        
+        // Dibujamos la punta de la flecha
+        const headLen = 10;
+        ctx.beginPath();
+        ctx.moveTo(arrowX, arrowY);
+        ctx.lineTo(
+            arrowX - headLen * Math.cos(tangentAngle - Math.PI / 6),
+            arrowY + headLen * Math.sin(tangentAngle - Math.PI / 6)
+        );
+        ctx.moveTo(arrowX, arrowY);
+        ctx.lineTo(
+            arrowX - headLen * Math.cos(tangentAngle + Math.PI / 6),
+            arrowY + headLen * Math.sin(tangentAngle + Math.PI / 6)
+        );
+        ctx.strokeStyle = '#666';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+  
+    // Dibujamos el peso en el centro superior del bucle
+    const peso = conexion.peso ?? 0;
+    const pesoX = centerX;
+    const pesoY = centerY - radio * 2;
+    
+    ctx.fillStyle = 'white';
+    ctx.fillRect(pesoX - 10, pesoY - 10, 20, 20);
+    ctx.font = '12px Arial';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(peso.toString(), pesoX, pesoY);
+}
 
   //Dibuja una flecha curva en el extremo de una conexión dirigida
   private dibujarFlechaCurva(
