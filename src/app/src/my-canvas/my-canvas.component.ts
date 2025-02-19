@@ -511,6 +511,26 @@ export class MyCanvasComponent {
     }
   }
 
+  cambiarColorNodo(): void {
+    if (this.selectedElement?.type === 'node') {
+      const nodo = this.selectedElement.data;
+      const colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.value = nodo.color || '#ffff00'; // Color amarillo por defecto
+
+      colorInput.addEventListener('change', (event) => {
+        const nuevoColor = (event.target as HTMLInputElement).value;
+        nodo.color = nuevoColor;
+        const ctx = this.canvas.nativeElement.getContext('2d');
+        if (ctx) {
+          this.dibujarNodo(ctx);
+        }
+      });
+
+      colorInput.click();
+    }
+  }
+
   // Abre un modal para configurar una nueva conexión
   showModal(): void {
     const dialogRef = this.dialog.open(ModalContentComponent, {
