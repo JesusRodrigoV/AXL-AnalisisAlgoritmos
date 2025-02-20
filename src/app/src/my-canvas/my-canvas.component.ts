@@ -351,7 +351,7 @@ export class MyCanvasComponent {
           }
           // Dibujar el peso
           const peso = conexion.peso ?? 0;
-          ctx.fillStyle = 'white';
+          ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
           ctx.font = '12px Arial';
           ctx.fillStyle = 'black';
@@ -433,7 +433,7 @@ export class MyCanvasComponent {
     const pesoX = centerX;
     const pesoY = centerY - radio * 2;
 
-    ctx.fillStyle = 'white';
+    ctx.fillStyle = this.colorFondo;
     ctx.fillRect(pesoX - 10, pesoY - 10, 20, 20);
     ctx.font = '12px Arial';
     ctx.fillStyle = 'black';
