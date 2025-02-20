@@ -6,26 +6,35 @@
 >
 </app-button-bar>
 
+<div class="container">
+  <div class="canvas-container">
+    <canvas
+      #myCanvas
+      class="myCanvas"
+      id="myCanvas"
+      width="1200px"
+      height="400px"
+      (dblclick)="dobleClickCanvas($event)"
+      (click)="clickCanvas($event)"
+      (contextmenu)="menuContexto($event)"
+    >
+    </canvas>
+  </div>
+  <div class="matrix-container">
+    <app-adjacency-matrix
+      [nodos]="nodos"
+      [conexiones]="conexiones"
+      [actualizarMatriz$]="actualizarMatriz"
+    ></app-adjacency-matrix>
+  </div>
+</div>
+
 <input
   type="file"
   id="fileInput"
   (change)="onFileSelected($event)"
   style="display: none"
 />
-<div class="canvas-container">
-  <canvas
-    #myCanvas
-    class="myCanvas"
-    id="myCanvas"
-    width="1200px"
-    height="400px"
-    (dblclick)="dobleClickCanvas($event)"
-    (click)="clickCanvas($event)"
-    (contextmenu)="menuContexto($event)"
-  >
-  </canvas>
-</div>
-
 <!-- Menú contextual general -->
 <div
   class="menu-trigger"
@@ -81,8 +90,3 @@
     </button>
   }
 </mat-menu>
-<app-adjacency-matrix
-  [nodos]="nodos"
-  [conexiones]="conexiones"
-  [actualizarMatriz$]="actualizarMatriz"
-></app-adjacency-matrix>

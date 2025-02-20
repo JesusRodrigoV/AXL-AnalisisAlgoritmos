@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -14,7 +15,7 @@ import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import { AdjacencyMatrixComponent } from "../adjacency-matrix/adjacency-matrix.component";
+import { AdjacencyMatrixComponent } from '../adjacency-matrix/adjacency-matrix.component';
 
 @Component({
   selector: 'app-my-canvas',
@@ -24,13 +25,14 @@ import { AdjacencyMatrixComponent } from "../adjacency-matrix/adjacency-matrix.c
     ButtonBarComponent,
     FormsModule,
     MatMenuModule,
-    AdjacencyMatrixComponent
-],
+    AdjacencyMatrixComponent,
+  ],
   templateUrl: './my-canvas.component.html',
   styleUrl: './my-canvas.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyCanvasComponent {
+  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
   @ViewChild('connectionMenu') connectionMenu!: MatMenu;
@@ -459,7 +461,7 @@ export class MyCanvasComponent {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(peso.toString(), pesoX, pesoY);
-		this.actualizarMatriz.emit();
+    this.actualizarMatriz.emit();
   }
 
   //Dibuja una flecha curva en el extremo de una conexión dirigida
@@ -624,6 +626,7 @@ export class MyCanvasComponent {
                   nodo.contador || loadedNodos.length + 1,
                   false,
                   nodo._nombre,
+                  nodo._color,
                 ),
               );
             });
@@ -655,8 +658,8 @@ export class MyCanvasComponent {
           setTimeout(() => {
             this.dibujar();
             this.actualizarMatriz.emit();
-          }, 100);
-
+            this.cdr.detectChanges();
+          }, 10);
         } catch (error) {
           console.error('Error al procesar el archivo:', error);
         }
@@ -664,8 +667,6 @@ export class MyCanvasComponent {
       reader.readAsText(file);
     }
   }
-
-
 
   // Dibuja el grafo completo en el canvas
   dibujar(): void {
@@ -675,7 +676,6 @@ export class MyCanvasComponent {
       return;
     }
     this.dibujarNodo(ctx);
-
   }
 
   // Maneja el menú contextual al hacer clic derecho en el canvas
