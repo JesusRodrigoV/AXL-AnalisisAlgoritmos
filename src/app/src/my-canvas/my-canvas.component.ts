@@ -653,12 +653,6 @@ export class MyCanvasComponent {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
-    // Actualiza la posición del menú
-    this.menuPosition = {
-      x: event.clientX.toString(),
-      y: event.clientY.toString(),
-    };
-
     // Primero verifica si se hizo clic en un nodo
     const nodo = this.nodos.find(
       (n) => Math.sqrt(Math.pow(x - n.x, 2) + Math.pow(y - n.y, 2)) <= n.radio,
@@ -688,22 +682,18 @@ export class MyCanvasComponent {
       if (conexion) {
         this.selectedElement = { type: 'connection', data: conexion };
       } else {
-        // Si no es ni nodo ni conexión, es el canvas
         this.selectedElement = { type: 'canvas', data: null };
       }
     }
 
-    // Asegura que el menú se abra en la posición correcta
-    setTimeout(() => {
+    if (this.menuTrigger) {
+      this.menuTrigger.menuData = { selectedElement: this.selectedElement };
       this.menuPosition = {
-        x: event.clientX.toString(),
-        y: event.clientY.toString(),
+        x: `${event.clientX}px`,
+        y: `${event.clientY}px`,
       };
-      if (this.menuTrigger) {
-        this.menuTrigger.menuData = { selectedElement: this.selectedElement };
-        this.menuTrigger.openMenu();
-      }
-    });
+      this.menuTrigger.openMenu();
+    }
   }
   // Permite editar el nombre de un nodo seleccionado
   editarNombre(): void {
