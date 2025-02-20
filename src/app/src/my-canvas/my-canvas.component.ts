@@ -817,6 +817,7 @@ export class MyCanvasComponent {
     this.nodos = [];
     this.conexiones = [];
     this.contador = 0;
+    //this.colorFondo = '#fff';
     if (ctx) {
       this.dibujarNodo(ctx);
     }
