@@ -26,6 +26,15 @@
   </canvas>
 </div>
 
+<!-- Menú contextual general -->
+<div
+  class="menu-trigger"
+  #menuTrigger="matMenuTrigger"
+  [matMenuTriggerFor]="contextMenu"
+  [style.left]="menuPosition.x"
+  [style.top]="menuPosition.y"
+></div>
+
 <!-- Menú contextual dinámico -->
 <mat-menu #contextMenu="matMenu">
   <!-- Opciones para el Canvas -->
