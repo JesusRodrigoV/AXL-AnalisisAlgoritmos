@@ -48,19 +48,11 @@ export class ButtonBarComponent {
     },
     {
       id: 'delete',
-      label: 'Delete',
+      label: 'Eliminar',
       iconClass: 'bxs-eraser',
       text: 'Borrar vertices',
       active: false,
       toggeable: true,
-    },
-    {
-      id: 'matrizAdyacencia',
-      label: 'Matriz Adyacencia',
-      iconClass: 'bx-table',
-      text: 'Mostrar matriz de adyacencia',
-      active: false,
-      toggeable: false,
     },
     {
       id: 'export',
