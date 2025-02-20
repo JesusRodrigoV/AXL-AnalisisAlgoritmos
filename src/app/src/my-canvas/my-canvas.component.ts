@@ -364,7 +364,7 @@ export class MyCanvasComponent {
     this.nodos.forEach((circulo) => {
       ctx.beginPath();
       ctx.arc(circulo.x, circulo.y, circulo.radio, 0, Math.PI * 2);
-      ctx.fillStyle = circulo.selected ? '#ff9800' : 'yellow';
+      ctx.fillStyle = circulo.selected ? '#ff9800' : circulo.color; // Aquí se aplica el color
       ctx.fill();
       ctx.stroke();
       ctx.font = '20px Source Sans Pro,Arial,sans-serif';
