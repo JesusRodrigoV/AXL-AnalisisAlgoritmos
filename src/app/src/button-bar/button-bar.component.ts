@@ -2,9 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  inject,
   Output,
 } from '@angular/core';
 import { ButtonComponent } from './button';
+import { MatDialog } from '@angular/material/dialog';
+import { ModalMatrixComponent } from '../my-canvas/modal-matrix';
 
 interface Button {
   id: string;
@@ -28,7 +31,7 @@ export class ButtonBarComponent {
   @Output() exportar = new EventEmitter<void>();
   @Output() importar = new EventEmitter<void>();
   @Output() limpiar = new EventEmitter<void>();
-
+  readonly dialog = inject(MatDialog);
   protected buttons: Button[] = [
     /*{
 			id: "move",
@@ -80,6 +83,15 @@ export class ButtonBarComponent {
     },
   ];
 
+  openDialog(): void {
+    this.dialog.open(ModalMatrixComponent, {
+      maxHeight: '90vh',
+      width: 'auto',
+      autoFocus: false,
+      maxWidth: '90vw',
+      height: 'auto',
+    });
+  }
   toggleMode(button: Button) {
     if (button.toggeable) {
       button.active = !button.active;
@@ -98,6 +110,8 @@ export class ButtonBarComponent {
       this.importar.emit();
     } else if (button.id === 'clear') {
       this.limpiar.emit();
+    } else if (button.id === 'matrizAdyacencia') {
+      this.openDialog();
     }
   }
 }

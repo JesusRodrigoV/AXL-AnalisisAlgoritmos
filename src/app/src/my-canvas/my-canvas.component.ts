@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   EventEmitter,
@@ -31,6 +32,7 @@ import { AdjacencyMatrixComponent } from '../adjacency-matrix/adjacency-matrix.c
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyCanvasComponent {
+  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
   @ViewChild('connectionMenu') connectionMenu!: MatMenu;
@@ -624,6 +626,7 @@ export class MyCanvasComponent {
                   nodo.contador || loadedNodos.length + 1,
                   false,
                   nodo._nombre,
+                  nodo._color,
                 ),
               );
             });
@@ -655,7 +658,8 @@ export class MyCanvasComponent {
           setTimeout(() => {
             this.dibujar();
             this.actualizarMatriz.emit();
-          }, 100);
+            this.cdr.detectChanges();
+          }, 10);
         } catch (error) {
           console.error('Error al procesar el archivo:', error);
         }
