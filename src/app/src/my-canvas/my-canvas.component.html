@@ -5,6 +5,7 @@
   (limpiar)="limpiarCanvas()"
 >
 </app-button-bar>
+
 <input
   type="file"
   id="fileInput"
@@ -17,7 +18,7 @@
     class="myCanvas"
     id="myCanvas"
     width="1200px"
-    height="700px"
+    height="400px"
     (dblclick)="dobleClickCanvas($event)"
     (click)="clickCanvas($event)"
     (contextmenu)="menuContexto($event)"
@@ -80,3 +81,8 @@
     </button>
   }
 </mat-menu>
+<app-adjacency-matrix
+  [nodos]="nodos"
+  [conexiones]="conexiones"
+  [actualizarMatriz$]="actualizarMatriz"
+></app-adjacency-matrix>

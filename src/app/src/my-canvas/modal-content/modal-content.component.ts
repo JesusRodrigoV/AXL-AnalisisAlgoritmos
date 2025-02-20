@@ -17,6 +17,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-modal-content',
+  standalone: true,
   imports: [
     MatDialogTitle,
     MatDialogContent,

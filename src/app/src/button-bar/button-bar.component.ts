@@ -17,6 +17,7 @@ interface Button {
 
 @Component({
 	selector: "app-button-bar",
+  standalone: true,
 	imports: [ButtonComponent],
 	templateUrl: "./button-bar.component.html",
 	styleUrl: "./button-bar.component.scss",
