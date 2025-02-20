@@ -770,6 +770,10 @@ export class MyCanvasComponent {
         conexion.peso?.toString(),
       );
       if (nuevoPeso !== null) {
+        if (isNaN(Number(nuevoPeso))) {
+          alert('Ingrese un numero valido');
+          return;
+        }
         conexion.peso = Number(nuevoPeso);
         const ctx = this.canvas.nativeElement.getContext('2d');
         if (ctx) {
