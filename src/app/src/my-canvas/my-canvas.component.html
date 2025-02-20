@@ -11,11 +11,6 @@
   (change)="onFileSelected($event)"
   style="display: none"
 />
-<!--<div>
-  <label for="colorPicker">Selecciona el color de fondo:</label>
-  <input type="color" id="colorPicker" [(ngModel)]="colorFondo" />
-  <button (click)="cambiarColorFondo()">Aplicar</button>
-</div>-->
 <div class="canvas-container">
   <canvas
     #myCanvas
@@ -42,7 +37,7 @@
 <!-- Menú contextual dinámico -->
 <mat-menu #contextMenu="matMenu">
   <!-- Opciones para el Canvas -->
-  @if (!selectedElement) {
+  @if (selectedElement?.type === "canvas") {
     <button mat-menu-item (click)="cambiarColorFondo()">
       <i class="bx bxs-color-fill"></i>
       <span>Cambiar Color de Fondo</span>

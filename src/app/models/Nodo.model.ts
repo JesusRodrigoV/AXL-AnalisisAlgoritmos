@@ -5,6 +5,7 @@ export class Nodo {
   private _contador: number;
   private _selected: boolean;
   private _nombre: string;
+  private _color: string;
 
   constructor(
     x: number,
@@ -13,6 +14,7 @@ export class Nodo {
     contador: number,
     selected: boolean,
     nombre: string,
+    color: string = 'yellow',
   ) {
     this._x = x;
     this._y = y;
@@ -20,6 +22,7 @@ export class Nodo {
     this._contador = contador;
     this._selected = selected;
     this._nombre = nombre;
+    this._color = color;
   }
 
   get x(): number {
@@ -68,5 +71,13 @@ export class Nodo {
 
   set nombre(value: string) {
     this._nombre = value;
+  }
+
+  get color(): string {
+    return this._color;
+  }
+
+  set color(value: string) {
+    this._color = value;
   }
 }

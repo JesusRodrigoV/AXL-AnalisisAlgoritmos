@@ -3,14 +3,14 @@
 }
 
 .button-bar {
-  position: fixed; /* para que flote */
+  position: fixed;
   top: 10px;
-  left: 50%; /* centrado horizontalmente */
-  transform: translate(-50%); /* ajuste para centrar completamente */
-  padding: 10px; /* un poco de espacio interno */
-  background-color: white; /* color de fondo */
-  border: 1px solid #ccc; /* borde */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* sombra para darle efecto flotante */
-  border-radius: 50px; /* bordes redondeados */
-  z-index: 1000; /* para asegurarnos que quede por encima de otros elementos */
+  left: 50%;
+  transform: translate(-50%);
+  padding: 10px;
+  background-color: white;
+  border: 1px solid #ccc;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 50px;
+  z-index: 1000;
 }

@@ -11,7 +11,7 @@ import { ModalContentComponent } from './modal-content';
 import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
-import { MatMenu, MatMenuModule } from '@angular/material/menu';
+import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 
 @Component({
   selector: 'app-my-canvas',
@@ -24,9 +24,8 @@ export class MyCanvasComponent {
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
   @ViewChild('connectionMenu') connectionMenu!: MatMenu;
-  @ViewChild('menuTrigger', { static: true }) menuTrigger: any;
-  @ViewChild(MatMenu) menu!: MatMenu;
-  menuPosition = { x: '0px', y: '0px' };
+  @ViewChild('menuTrigger') menuTrigger!: MatMenuTrigger;
+  menuPosition = { x: '0', y: '0' };
   selectedElement: {
     type: 'node' | 'connection' | 'canvas';
     data: any;
@@ -305,6 +304,8 @@ export class MyCanvasComponent {
   dibujarNodo(ctx: CanvasRenderingContext2D): void {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+    ctx.fillStyle = this.colorFondo;
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
@@ -473,42 +474,35 @@ export class MyCanvasComponent {
 
   // Cambia el color de fondo del canvas
   cambiarColorFondo(): void {
-    if (this.selectedElement?.type === 'canvas') {
-      const colorInput = document.createElement('input');
-      colorInput.type = 'color';
-      colorInput.value = this.colorFondo || '#ffffff'; // Color blanco por defecto
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = this.colorFondo || '#ffffff'; // Color blanco por defecto
 
-      colorInput.addEventListener('change', (event) => {
-        this.colorFondo = (event.target as HTMLInputElement).value;
-        const ctx = this.canvas.nativeElement.getContext('2d');
-        if (ctx) {
-          // Guardar el estado actual
-          const imageData = ctx.getImageData(
-            0,
-            0,
-            this.canvas.nativeElement.width,
-            this.canvas.nativeElement.height,
-          );
+    // Agregamos el input al DOM
+    document.body.appendChild(colorInput);
 
-          // Limpiar el canvas con el nuevo color
-          ctx.fillStyle = this.colorFondo;
-          ctx.fillRect(
-            0,
-            0,
-            this.canvas.nativeElement.width,
-            this.canvas.nativeElement.height,
-          );
+    colorInput.addEventListener('change', (event) => {
+      this.colorFondo = (event.target as HTMLInputElement).value;
+      const ctx = this.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        // Limpiar el canvas con el nuevo color
+        ctx.fillStyle = this.colorFondo;
+        ctx.fillRect(
+          0,
+          0,
+          this.canvas.nativeElement.width,
+          this.canvas.nativeElement.height,
+        );
 
-          // Restaurar el contenido
-          ctx.putImageData(imageData, 0, 0);
+        // Redibujar todo
+        this.dibujarNodo(ctx);
+      }
 
-          // Redibujar todo
-          this.dibujarNodo(ctx);
-        }
-      });
+      // Removemos el input después de usarlo
+      document.body.removeChild(colorInput);
+    });
 
-      colorInput.click();
-    }
+    colorInput.click();
   }
 
   cambiarColorNodo(): void {
@@ -659,54 +653,58 @@ export class MyCanvasComponent {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
 
+    // Actualiza la posición del menú
     this.menuPosition = {
-      x: `${event.clientX + window.scrollX}px`,
-      y: `${event.clientY + window.scrollY}px`,
+      x: event.clientX.toString(),
+      y: event.clientY.toString(),
     };
 
+    // Primero verifica si se hizo clic en un nodo
     const nodo = this.nodos.find(
       (n) => Math.sqrt(Math.pow(x - n.x, 2) + Math.pow(y - n.y, 2)) <= n.radio,
     );
 
     if (nodo) {
       this.selectedElement = { type: 'node', data: nodo };
-      if (this.menuTrigger) {
-        this.menuTrigger.openMenu();
+    } else {
+      // Si no es un nodo, verifica si es una conexión
+      const conexion = this.conexiones.find((c) => {
+        const desde = this.nodos.find((n) => n.contador === c.desde);
+        const hasta = this.nodos.find((n) => n.contador === c.hasta);
+        if (desde && hasta) {
+          return this.estaCercaDeConexion(
+            x,
+            y,
+            desde.x,
+            desde.y,
+            hasta.x,
+            hasta.y,
+            c,
+          );
+        }
+        return false;
+      });
+
+      if (conexion) {
+        this.selectedElement = { type: 'connection', data: conexion };
+      } else {
+        // Si no es ni nodo ni conexión, es el canvas
+        this.selectedElement = { type: 'canvas', data: null };
       }
-      return;
     }
 
-    const conexion = this.conexiones.find((c) => {
-      const desde = this.nodos.find((n) => n.contador === c.desde);
-      const hasta = this.nodos.find((n) => n.contador === c.hasta);
-      if (desde && hasta) {
-        return this.estaCercaDeConexion(
-          x,
-          y,
-          desde.x,
-          desde.y,
-          hasta.x,
-          hasta.y,
-          c,
-        );
+    // Asegura que el menú se abra en la posición correcta
+    setTimeout(() => {
+      this.menuPosition = {
+        x: event.clientX.toString(),
+        y: event.clientY.toString(),
+      };
+      if (this.menuTrigger) {
+        this.menuTrigger.menuData = { selectedElement: this.selectedElement };
+        this.menuTrigger.openMenu();
       }
-      return false;
     });
-
-    if (conexion) {
-      this.selectedElement = { type: 'connection', data: conexion };
-      if (this.menuTrigger) {
-        this.menuTrigger.openMenu();
-      }
-      return;
-    }
-
-    this.selectedElement = null;
-    if (this.menuTrigger) {
-      this.menuTrigger.openMenu();
-    }
   }
-
   // Permite editar el nombre de un nodo seleccionado
   editarNombre(): void {
     if (this.selectedElement?.type === 'node') {
@@ -783,13 +781,12 @@ export class MyCanvasComponent {
 
   // Limpia completamente el canvas y reinicia el estado del grafo
   limpiarCanvas() {
-    const canvas = document.getElementById('myCanvas') as HTMLCanvasElement;
-    const context = canvas.getContext('2d');
-    if (context) {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    const ctx = this.canvas.nativeElement.getContext('2d');
     this.nodos = [];
     this.conexiones = [];
     this.contador = 0;
+    if (ctx) {
+      this.dibujarNodo(ctx);
+    }
   }
 }
