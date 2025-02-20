@@ -1,0 +1,29 @@
+td {
+  border: 1px solid #000000; /* Bordes para las celdas */
+  text-align: center; /* Centrar el texto en las celdas */
+}
+
+th {
+  border: 1px solid #000000; /* Bordes para los encabezados */
+  background-color: #f0f0f0; /* Color de fondo gris claro para los encabezados */
+  text-align: center; /* Centrar el texto en los encabezados */
+}
+
+.nodo-nombre {
+  background-color: #ffffff; /* Fondo blanco para los nombres de los nodos */
+  font-weight: bold; /* Hacer en negrita los nombres de los nodos */
+}
+
+.suma-columna-fila {
+  background-color: #f0f0f0; /* Fondo gris claro para la columna de sumas y fila de sumas */
+  font-weight: normal; /* No en negrita las sumas */
+}
+
+th:nth-child(1), td:nth-child(1) {
+  font-weight: bold; /* Hacer en negrita la primera columna de nombres de nodos */
+}
+
+th, td {
+  padding: 5px; /* Añadir algo de espacio entre el texto y el borde */
+}
+

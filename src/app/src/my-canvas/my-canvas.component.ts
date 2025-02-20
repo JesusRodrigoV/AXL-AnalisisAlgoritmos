@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  EventEmitter,
   inject,
+  Output,
   ViewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,16 +14,19 @@ import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
 import { MatMenu, MatMenuModule } from '@angular/material/menu';
+import { AdjacencyMatrixComponent } from "../adjacency-matrix/adjacency-matrix.component";
 
 @Component({
   selector: 'app-my-canvas',
+  standalone: true,
   imports: [
     MatButtonModule,
-    ModalContentComponent,
+    //ModalContentComponent,
     ButtonBarComponent,
     FormsModule,
     MatMenuModule,
-  ],
+    AdjacencyMatrixComponent
+],
   templateUrl: './my-canvas.component.html',
   styleUrl: './my-canvas.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,8 +54,8 @@ export class MyCanvasComponent {
   };
   modoConexion: boolean = false;
   private contador: number = 0;
-  private nodos: Nodo[] = [];
-  private conexiones: Conexion[] = [];
+  public nodos: Nodo[] = [];
+  public conexiones: Conexion[] = [];
   arcoDirigido = false;
   peso = 0;
   private primerNodoSeleccionado: number | null = null;
@@ -58,6 +63,8 @@ export class MyCanvasComponent {
   mostrarModal = false;
   colorFondo: string = '#ffffff';
   private radio: number = 30;
+
+  @Output() actualizarMatriz = new EventEmitter<void>();
 
   // Maneja el cambio de modo de la herramienta seleccionada
   onModeToggled(event: { id: string; active: boolean }) {
@@ -131,6 +138,7 @@ export class MyCanvasComponent {
         this.showModal();
       }
       this.dibujarNodo(ctx);
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -179,6 +187,7 @@ export class MyCanvasComponent {
       }
     }
     this.dibujarNodo(ctx);
+    this.actualizarMatriz.emit();
   }
 
   // Verifica si un punto (x,y) está cerca de una conexión, ya sea recta o curva
@@ -204,7 +213,7 @@ export class MyCanvasComponent {
         if (distanciaPeso <= 10) { // 10 pixels de tolerancia para detectar clic en el peso
           return true;
         }
-        
+
         // Verificar si el punto está cerca del óvalo del bucle
         const dx = x - nodo.x;
         const dy = (y - (nodo.y - nodo.radio)) * 2;
@@ -212,7 +221,7 @@ export class MyCanvasComponent {
       }
       return false;
     }
-    
+
     // Código existente para conexiones normales
     const bidireccional = this.conexiones.some(
       (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
@@ -277,6 +286,7 @@ export class MyCanvasComponent {
       );
     }
     this.limpiarSeleccion();
+    this.actualizarMatriz.emit();
   }
 
   //Cancela la conexión en proceso y limpia la selección
@@ -296,6 +306,7 @@ export class MyCanvasComponent {
     if (ctx) {
       this.dibujarNodo(ctx);
     }
+    this.actualizarMatriz.emit();
   }
 
   //Dibuja todos los nodos y conexiones en el canvas
@@ -333,7 +344,7 @@ export class MyCanvasComponent {
           ctx.strokeStyle = '#666';
           ctx.lineWidth = 2;
           ctx.stroke();
-  
+
           if (conexion.dirigido) {
             this.dibujarFlechaCurva(
               ctx,
@@ -374,6 +385,8 @@ export class MyCanvasComponent {
         circulo.y,
       );
     });
+
+    this.actualizarMatriz.emit();
   }
 
   private dibujarBucle(
@@ -384,7 +397,7 @@ export class MyCanvasComponent {
     const radio = nodo.radio;
     const centerX = nodo.x;
     const centerY = nodo.y;
-    
+
     // Dibujamos un óvalo por encima del nodo
     ctx.beginPath();
     ctx.save();
@@ -395,17 +408,17 @@ export class MyCanvasComponent {
     ctx.strokeStyle = '#666';
     ctx.lineWidth = 2;
     ctx.stroke();
-  
+
     // Si es dirigido, dibujamos la flecha
     if (conexion.dirigido) {
         // Calculamos el punto donde irá la flecha (en el borde inferior derecho del óvalo)
         const angle = Math.PI / 6; // 30 grados
         const arrowX = centerX + radio * Math.cos(angle);
         const arrowY = centerY - radio - (radio * Math.sin(angle) * 0.5); // Multiplicamos por 0.5 debido al scale del óvalo
-        
+
         // Calculamos el ángulo de la flecha basado en la tangente del óvalo en ese punto
         const tangentAngle = Math.PI / 2 - angle;
-        
+
         // Dibujamos la punta de la flecha
         const headLen = 10;
         ctx.beginPath();
@@ -423,12 +436,12 @@ export class MyCanvasComponent {
         ctx.lineWidth = 2;
         ctx.stroke();
     }
-  
+
     // Dibujamos el peso en el centro superior del bucle
     const peso = conexion.peso ?? 0;
     const pesoX = centerX;
     const pesoY = centerY - radio * 2;
-    
+
     ctx.fillStyle = 'white';
     ctx.fillRect(pesoX - 10, pesoY - 10, 20, 20);
     ctx.font = '12px Arial';
@@ -436,6 +449,8 @@ export class MyCanvasComponent {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(peso.toString(), pesoX, pesoY);
+
+    this.actualizarMatriz.emit();
 }
 
   //Dibuja una flecha curva en el extremo de una conexión dirigida
@@ -539,6 +554,7 @@ export class MyCanvasComponent {
       this.modes[key] = false;
     });
     this.limpiarCanvas();
+
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -546,17 +562,18 @@ export class MyCanvasComponent {
         try {
           const json = JSON.parse(e.target.result);
 
-          this.nodos = [];
-          this.conexiones = [];
+          // Crear nuevos arrays para forzar el cambio de referencia
+          let loadedNodos: Nodo[] = [];
+          let loadedConexiones: Conexion[] = [];
 
           if (Array.isArray(json.nodos)) {
             json.nodos.forEach((nodo: any) => {
-              this.nodos.push(
+              loadedNodos.push(
                 new Nodo(
                   nodo._x,
                   nodo._y,
                   this.radio,
-                  nodo.contador || this.nodos.length + 1,
+                  nodo.contador || loadedNodos.length + 1,
                   false,
                   nodo._nombre,
                 ),
@@ -564,26 +581,34 @@ export class MyCanvasComponent {
             });
           }
 
-          this.contador = this.nodos.length;
-
           if (Array.isArray(json.conexiones)) {
             json.conexiones.forEach((conexion: any) => {
               const desde = conexion._desde || conexion.desde;
               const hasta = conexion._hasta || conexion.hasta;
               const peso = conexion._peso ?? conexion.peso ?? 0;
               const dirigido = conexion._dirigido ?? conexion.dirigido ?? false;
-
               if (desde !== undefined && hasta !== undefined) {
-                this.conexiones.push(
+                loadedConexiones.push(
                   new Conexion(desde, hasta, peso, dirigido),
                 );
               }
             });
           }
 
+          // Reasigna los arrays completos para que cambie la referencia
+          this.nodos = loadedNodos;
+          this.conexiones = loadedConexiones;
+          this.contador = this.nodos.length;
+
+          // Emitir el evento para actualizar la matriz
+          this.actualizarMatriz.emit();
+
+          // Opcional: redibujar el canvas después de un breve retardo
           setTimeout(() => {
             this.dibujar();
+            this.actualizarMatriz.emit();
           }, 100);
+
         } catch (error) {
           console.error('Error al procesar el archivo:', error);
         }
@@ -592,13 +617,17 @@ export class MyCanvasComponent {
     }
   }
 
+
+
   // Dibuja el grafo completo en el canvas
   dibujar(): void {
+    this.actualizarMatriz.emit();
     const ctx = this.canvas.nativeElement.getContext('2d');
     if (!ctx || this.nodos.length === 0) {
       return;
     }
     this.dibujarNodo(ctx);
+
   }
 
   // Maneja el menú contextual al hacer clic derecho en el canvas
@@ -669,6 +698,7 @@ export class MyCanvasComponent {
         if (ctx) {
           this.dibujarNodo(ctx);
         }
+        this.actualizarMatriz.emit();
       }
     }
   }
@@ -685,6 +715,7 @@ export class MyCanvasComponent {
       if (ctx) {
         this.dibujarNodo(ctx);
       }
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -703,6 +734,7 @@ export class MyCanvasComponent {
           this.dibujarNodo(ctx);
         }
       }
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -715,6 +747,7 @@ export class MyCanvasComponent {
       if (ctx) {
         this.dibujarNodo(ctx);
       }
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -742,5 +775,6 @@ export class MyCanvasComponent {
     this.nodos = [];
     this.conexiones = [];
     this.contador = 0;
+    this.actualizarMatriz.emit();
   }
 }

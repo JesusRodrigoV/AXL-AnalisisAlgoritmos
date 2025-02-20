@@ -5,24 +5,22 @@
   (limpiar)="limpiarCanvas()"
 >
 </app-button-bar>
+
 <input
   type="file"
   id="fileInput"
   (change)="onFileSelected($event)"
   style="display: none"
 />
-<!--<div>
-  <label for="colorPicker">Selecciona el color de fondo:</label>
-  <input type="color" id="colorPicker" [(ngModel)]="colorFondo" />
-  <button (click)="cambiarColorFondo()">Aplicar</button>
-</div>-->
+
+<!-- Canvas donde se dibujan los nodos y conexiones -->
 <div class="canvas-container">
   <canvas
     #myCanvas
     class="myCanvas"
     id="myCanvas"
     width="1200px"
-    height="700px"
+    height="400px"
     (dblclick)="dobleClickCanvas($event)"
     (click)="clickCanvas($event)"
     (contextmenu)="menuContexto($event)"
@@ -30,54 +28,44 @@
   </canvas>
 </div>
 
-<!-- Menú contextual general -->
-<div
-  class="menu-trigger"
-  #menuTrigger="matMenuTrigger"
-  [matMenuTriggerFor]="contextMenu"
-  [style.left]="menuPosition.x"
-  [style.top]="menuPosition.y"
-></div>
-
 <!-- Menú contextual dinámico -->
 <mat-menu #contextMenu="matMenu">
-  <!-- Opciones para el Canvas -->
-  @if (!selectedElement) {
-    <button mat-menu-item (click)="cambiarColorFondo()">
-      <i class="bx bxs-color-fill"></i>
-      <span>Cambiar Color de Fondo</span>
-    </button>
-    <button mat-menu-item (click)="limpiarCanvas()">
-      <i class="bx bx-x"></i>
-      <span>Limpiar Canvas</span>
-    </button>
-  }
-
-  <!-- Opciones para Nodos -->
-  @if (selectedElement?.type === "node") {
-    <button mat-menu-item (click)="editarNombre()">
-      <i class="bx bx-edit"></i>
-      <span>Editar Nombre</span>
-    </button>
-    <button mat-menu-item (click)="eliminarNodo()">
-      <i class="bx bx-trash"></i>
-      <span>Eliminar Nodo</span>
-    </button>
-  }
-
-  <!-- Opciones para Conexiones -->
-  @if (selectedElement?.type === "connection") {
-    <button mat-menu-item (click)="editarPeso()">
-      <i class="bx bx-edit"></i>
-      <span>Editar Peso</span>
-    </button>
-    <button mat-menu-item (click)="toggleDirigido()">
-      <i class="bx bx-transfer"></i>
-      <span>Cambiar Dirección</span>
-    </button>
-    <button mat-menu-item (click)="eliminarConexion()">
-      <i class="bx bx-trash"></i>
-      <span>Eliminar Conexión</span>
-    </button>
-  }
+  <button mat-menu-item (click)="cambiarColorFondo()">
+    <i class="bx bxs-color-fill"></i>
+    <span>Cambiar Color de Fondo</span>
+  </button>
+  <button mat-menu-item (click)="limpiarCanvas()">
+    <i class="bx bx-x"></i>
+    <span>Limpiar Canvas</span>
+  </button>
+  <button mat-menu-item (click)="editarNombre()">
+    <i class="bx bx-edit"></i>
+    <span>Editar Nombre</span>
+  </button>
+  <button mat-menu-item (click)="eliminarNodo()">
+    <i class="bx bx-trash"></i>
+    <span>Eliminar Nodo</span>
+  </button>
+  <button mat-menu-item (click)="editarPeso()">
+    <i class="bx bx-edit"></i>
+    <span>Editar Peso</span>
+  </button>
+  <button mat-menu-item (click)="toggleDirigido()">
+    <i class="bx bx-transfer"></i>
+    <span>Cambiar Dirección</span>
+  </button>
+  <button mat-menu-item (click)="eliminarConexion()">
+    <i class="bx bx-trash"></i>
+    <span>Eliminar Conexión</span>
+  </button>
 </mat-menu>
+
+<!-- Componente de la matriz de adyacencia -->
+<app-adjacency-matrix
+  [nodos]="nodos"
+  [conexiones]="conexiones"
+  [actualizarMatriz$]="actualizarMatriz"
+></app-adjacency-matrix>
+
+<!-- Mensaje de prueba fuera del canvas -->
+<p>Mensaje de prueba fuera del canvas</p>

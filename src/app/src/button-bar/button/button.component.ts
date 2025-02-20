@@ -11,6 +11,7 @@ import { TooltipPosition, MatTooltipModule } from "@angular/material/tooltip";
 
 @Component({
 	selector: "app-button",
+  standalone: true,
 	imports: [MatButtonModule, MatTooltipModule, NgStyle],
 	templateUrl: "./button.component.html",
 	styleUrl: "./button.component.scss",
