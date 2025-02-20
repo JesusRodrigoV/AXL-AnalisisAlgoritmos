@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  EventEmitter,
   inject,
+  Output,
   ViewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,10 +14,18 @@ import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
+import { AdjacencyMatrixComponent } from "../adjacency-matrix/adjacency-matrix.component";
 
 @Component({
   selector: 'app-my-canvas',
-  imports: [MatButtonModule, ButtonBarComponent, FormsModule, MatMenuModule],
+  standalone: true,
+  imports: [
+    MatButtonModule,
+    ButtonBarComponent,
+    FormsModule,
+    MatMenuModule,
+    AdjacencyMatrixComponent
+],
   templateUrl: './my-canvas.component.html',
   styleUrl: './my-canvas.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -45,8 +55,8 @@ export class MyCanvasComponent {
   };
   modoConexion: boolean = false;
   private contador: number = 0;
-  private nodos: Nodo[] = [];
-  private conexiones: Conexion[] = [];
+  public nodos: Nodo[] = [];
+  public conexiones: Conexion[] = [];
   arcoDirigido = false;
   peso = 0;
   private primerNodoSeleccionado: number | null = null;
@@ -54,6 +64,8 @@ export class MyCanvasComponent {
   mostrarModal = false;
   colorFondo: string = '#ffffff';
   private radio: number = 30;
+
+  @Output() actualizarMatriz = new EventEmitter<void>();
 
   // Maneja el cambio de modo de la herramienta seleccionada
   onModeToggled(event: { id: string; active: boolean }) {
@@ -132,6 +144,7 @@ export class MyCanvasComponent {
         this.showModal();
       }
       this.dibujarNodo(ctx);
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -180,6 +193,7 @@ export class MyCanvasComponent {
       }
     }
     this.dibujarNodo(ctx);
+    this.actualizarMatriz.emit();
   }
 
   // Verifica si un punto (x,y) está cerca de una conexión, ya sea recta o curva
@@ -279,6 +293,7 @@ export class MyCanvasComponent {
       );
     }
     this.limpiarSeleccion();
+    this.actualizarMatriz.emit();
   }
 
   //Cancela la conexión en proceso y limpia la selección
@@ -298,6 +313,7 @@ export class MyCanvasComponent {
     if (ctx) {
       this.dibujarNodo(ctx);
     }
+    this.actualizarMatriz.emit();
   }
 
   //Dibuja todos los nodos y conexiones en el canvas
@@ -378,6 +394,8 @@ export class MyCanvasComponent {
         circulo.y,
       );
     });
+
+    this.actualizarMatriz.emit();
   }
 
   private dibujarBucle(
@@ -434,12 +452,14 @@ export class MyCanvasComponent {
     const pesoY = centerY - radio * 2;
 
     ctx.fillStyle = this.colorFondo;
+
     ctx.fillRect(pesoX - 10, pesoY - 10, 20, 20);
     ctx.font = '12px Arial';
     ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(peso.toString(), pesoX, pesoY);
+		this.actualizarMatriz.emit();
   }
 
   //Dibuja una flecha curva en el extremo de una conexión dirigida
@@ -582,6 +602,7 @@ export class MyCanvasComponent {
       this.modes[key] = false;
     });
     this.limpiarCanvas();
+
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -589,17 +610,18 @@ export class MyCanvasComponent {
         try {
           const json = JSON.parse(e.target.result);
 
-          this.nodos = [];
-          this.conexiones = [];
+          // Crear nuevos arrays para forzar el cambio de referencia
+          let loadedNodos: Nodo[] = [];
+          let loadedConexiones: Conexion[] = [];
 
           if (Array.isArray(json.nodos)) {
             json.nodos.forEach((nodo: any) => {
-              this.nodos.push(
+              loadedNodos.push(
                 new Nodo(
                   nodo._x,
                   nodo._y,
                   this.radio,
-                  nodo.contador || this.nodos.length + 1,
+                  nodo.contador || loadedNodos.length + 1,
                   false,
                   nodo._nombre,
                 ),
@@ -607,26 +629,34 @@ export class MyCanvasComponent {
             });
           }
 
-          this.contador = this.nodos.length;
-
           if (Array.isArray(json.conexiones)) {
             json.conexiones.forEach((conexion: any) => {
               const desde = conexion._desde || conexion.desde;
               const hasta = conexion._hasta || conexion.hasta;
               const peso = conexion._peso ?? conexion.peso ?? 0;
               const dirigido = conexion._dirigido ?? conexion.dirigido ?? false;
-
               if (desde !== undefined && hasta !== undefined) {
-                this.conexiones.push(
+                loadedConexiones.push(
                   new Conexion(desde, hasta, peso, dirigido),
                 );
               }
             });
           }
 
+          // Reasigna los arrays completos para que cambie la referencia
+          this.nodos = loadedNodos;
+          this.conexiones = loadedConexiones;
+          this.contador = this.nodos.length;
+
+          // Emitir el evento para actualizar la matriz
+          this.actualizarMatriz.emit();
+
+          // Opcional: redibujar el canvas después de un breve retardo
           setTimeout(() => {
             this.dibujar();
+            this.actualizarMatriz.emit();
           }, 100);
+
         } catch (error) {
           console.error('Error al procesar el archivo:', error);
         }
@@ -635,13 +665,17 @@ export class MyCanvasComponent {
     }
   }
 
+
+
   // Dibuja el grafo completo en el canvas
   dibujar(): void {
+    this.actualizarMatriz.emit();
     const ctx = this.canvas.nativeElement.getContext('2d');
     if (!ctx || this.nodos.length === 0) {
       return;
     }
     this.dibujarNodo(ctx);
+
   }
 
   // Maneja el menú contextual al hacer clic derecho en el canvas
@@ -706,6 +740,7 @@ export class MyCanvasComponent {
         if (ctx) {
           this.dibujarNodo(ctx);
         }
+        this.actualizarMatriz.emit();
       }
     }
   }
@@ -722,6 +757,7 @@ export class MyCanvasComponent {
       if (ctx) {
         this.dibujarNodo(ctx);
       }
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -740,6 +776,7 @@ export class MyCanvasComponent {
           this.dibujarNodo(ctx);
         }
       }
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -752,6 +789,7 @@ export class MyCanvasComponent {
       if (ctx) {
         this.dibujarNodo(ctx);
       }
+      this.actualizarMatriz.emit();
     }
   }
 
@@ -778,5 +816,6 @@ export class MyCanvasComponent {
     if (ctx) {
       this.dibujarNodo(ctx);
     }
+    this.actualizarMatriz.emit();
   }
 }

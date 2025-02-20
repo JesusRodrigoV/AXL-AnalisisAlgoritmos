@@ -5,6 +5,7 @@
   (limpiar)="limpiarCanvas()"
 >
 </app-button-bar>
+
 <input
   type="file"
   id="fileInput"
@@ -17,22 +18,13 @@
     class="myCanvas"
     id="myCanvas"
     width="1200px"
-    height="700px"
+    height="400px"
     (dblclick)="dobleClickCanvas($event)"
     (click)="clickCanvas($event)"
     (contextmenu)="menuContexto($event)"
   >
   </canvas>
 </div>
-
-<!-- Menú contextual general -->
-<div
-  class="menu-trigger"
-  #menuTrigger="matMenuTrigger"
-  [matMenuTriggerFor]="contextMenu"
-  [style.left]="menuPosition.x"
-  [style.top]="menuPosition.y"
-></div>
 
 <!-- Menú contextual dinámico -->
 <mat-menu #contextMenu="matMenu">
@@ -80,3 +72,8 @@
     </button>
   }
 </mat-menu>
+<app-adjacency-matrix
+  [nodos]="nodos"
+  [conexiones]="conexiones"
+  [actualizarMatriz$]="actualizarMatriz"
+></app-adjacency-matrix>
