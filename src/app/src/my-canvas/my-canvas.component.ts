@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   inject,
   Output,
   ViewChild,
@@ -16,6 +17,9 @@ import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
 import { AdjacencyMatrixComponent } from '../adjacency-matrix/adjacency-matrix.component';
+import { ColorService } from '@app/services/color';
+import { ExportImportService } from '@app/services/export-import';
+import { UndoRedoService } from '@app/services/undo-redo';
 
 @Component({
   selector: 'app-my-canvas',
@@ -33,6 +37,11 @@ import { AdjacencyMatrixComponent } from '../adjacency-matrix/adjacency-matrix.c
 })
 export class MyCanvasComponent {
   private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
+  private colorService: ColorService = inject(ColorService);
+  private exportImportService: ExportImportService =
+    inject(ExportImportService);
+  private undoRedoService: UndoRedoService = inject(UndoRedoService);
+
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
   @ViewChild('connectionMenu') connectionMenu!: MatMenu;
@@ -84,6 +93,7 @@ export class MyCanvasComponent {
     if (ctx) {
       this.dibujarNodo(ctx);
     }
+    this.guardarEstado();
   }
 
   // Crea un nuevo nodo en la posición donde se realizó doble clic
@@ -106,6 +116,7 @@ export class MyCanvasComponent {
         ),
       );
       this.dibujarNodo(ctx);
+      this.guardarEstado();
     }
   }
 
@@ -147,6 +158,7 @@ export class MyCanvasComponent {
       }
       this.dibujarNodo(ctx);
       this.actualizarMatriz.emit();
+      this.guardarEstado();
     }
   }
 
@@ -196,6 +208,7 @@ export class MyCanvasComponent {
     }
     this.dibujarNodo(ctx);
     this.actualizarMatriz.emit();
+    this.guardarEstado();
   }
 
   // Verifica si un punto (x,y) está cerca de una conexión, ya sea recta o curva
@@ -316,6 +329,7 @@ export class MyCanvasComponent {
       this.dibujarNodo(ctx);
     }
     this.actualizarMatriz.emit();
+    this.guardarEstado();
   }
 
   //Dibuja todos los nodos y conexiones en el canvas
@@ -493,57 +507,33 @@ export class MyCanvasComponent {
     ctx.lineWidth = 2;
     ctx.stroke();
   }
-
   // Cambia el color de fondo del canvas
   cambiarColorFondo(): void {
-    const colorInput = document.createElement('input');
-    colorInput.type = 'color';
-    colorInput.value = this.colorFondo || '#ffffff'; // Color blanco por defecto
-
-    // Agregamos el input al DOM
-    document.body.appendChild(colorInput);
-
-    colorInput.addEventListener('change', (event) => {
-      this.colorFondo = (event.target as HTMLInputElement).value;
-      const ctx = this.canvas.nativeElement.getContext('2d');
-      if (ctx) {
-        // Limpiar el canvas con el nuevo color
-        ctx.fillStyle = this.colorFondo;
-        ctx.fillRect(
-          0,
-          0,
-          this.canvas.nativeElement.width,
-          this.canvas.nativeElement.height,
-        );
-
-        // Redibujar todo
-        this.dibujarNodo(ctx);
-      }
-
-      // Removemos el input después de usarlo
-      document.body.removeChild(colorInput);
-    });
-
-    colorInput.click();
-  }
-
-  cambiarColorNodo(): void {
-    if (this.selectedElement?.type === 'node') {
-      const nodo = this.selectedElement.data;
-      const colorInput = document.createElement('input');
-      colorInput.type = 'color';
-      colorInput.value = nodo.color || '#ffff00'; // Color amarillo por defecto
-
-      colorInput.addEventListener('change', (event) => {
-        const nuevoColor = (event.target as HTMLInputElement).value;
-        nodo.color = nuevoColor;
+    this.colorService.cambiarColorFondo(
+      this.canvas.nativeElement,
+      this.colorFondo,
+      (color: string) => {
+        this.colorFondo = color;
         const ctx = this.canvas.nativeElement.getContext('2d');
         if (ctx) {
           this.dibujarNodo(ctx);
         }
-      });
 
-      colorInput.click();
+        this.guardarEstado();
+      },
+    );
+  }
+  //Cambiar el color de un nodo
+  cambiarColorNodo(): void {
+    if (this.selectedElement?.type === 'node') {
+      this.colorService.cambiarColorNodo(this.selectedElement.data, () => {
+        const ctx = this.canvas.nativeElement.getContext('2d');
+        if (ctx) {
+          this.dibujarNodo(ctx);
+        }
+
+        this.guardarEstado();
+      });
     }
   }
 
@@ -568,28 +558,8 @@ export class MyCanvasComponent {
   }
 
   // Exporta el grafo actual a un archivo JSON
-  exportarJSON(): void {
-    const data = {
-      nodos: this.nodos,
-      conexiones: this.conexiones,
-    };
-    const jsonData = JSON.stringify(data, null, 2);
-
-    const fileName = prompt(
-      'Ingrese el nombre del archivo (sin extensión):',
-      'grafo',
-    );
-    if (!fileName) {
-      return;
-    }
-
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${fileName}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+  async exportarJSON(): Promise<void> {
+    await this.exportImportService.exportToJSON(this.nodos, this.conexiones);
   }
 
   // Activa el selector de archivos para importar un grafo
@@ -599,7 +569,7 @@ export class MyCanvasComponent {
   }
 
   // Procesa el archivo seleccionado y carga el grafo
-  onFileSelected(event: any) {
+  async onFileSelected(event: any) {
     Object.keys(this.modes).forEach((key) => {
       this.modes[key] = false;
     });
@@ -607,64 +577,26 @@ export class MyCanvasComponent {
 
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        try {
-          const json = JSON.parse(e.target.result);
+      try {
+        const result = await this.exportImportService.importFromJSON(
+          file,
+          this.radio,
+        );
 
-          // Crear nuevos arrays para forzar el cambio de referencia
-          let loadedNodos: Nodo[] = [];
-          let loadedConexiones: Conexion[] = [];
+        this.nodos = result.nodos;
+        this.conexiones = result.conexiones;
+        this.contador = this.nodos.length;
 
-          if (Array.isArray(json.nodos)) {
-            json.nodos.forEach((nodo: any) => {
-              loadedNodos.push(
-                new Nodo(
-                  nodo._x,
-                  nodo._y,
-                  this.radio,
-                  nodo.contador || loadedNodos.length + 1,
-                  false,
-                  nodo._nombre,
-                  nodo._color,
-                ),
-              );
-            });
-          }
+        this.actualizarMatriz.emit();
 
-          if (Array.isArray(json.conexiones)) {
-            json.conexiones.forEach((conexion: any) => {
-              const desde = conexion._desde || conexion.desde;
-              const hasta = conexion._hasta || conexion.hasta;
-              const peso = conexion._peso ?? conexion.peso ?? 0;
-              const dirigido = conexion._dirigido ?? conexion.dirigido ?? false;
-              if (desde !== undefined && hasta !== undefined) {
-                loadedConexiones.push(
-                  new Conexion(desde, hasta, peso, dirigido),
-                );
-              }
-            });
-          }
-
-          // Reasigna los arrays completos para que cambie la referencia
-          this.nodos = loadedNodos;
-          this.conexiones = loadedConexiones;
-          this.contador = this.nodos.length;
-
-          // Emitir el evento para actualizar la matriz
+        setTimeout(() => {
+          this.dibujar();
           this.actualizarMatriz.emit();
-
-          // Opcional: redibujar el canvas después de un breve retardo
-          setTimeout(() => {
-            this.dibujar();
-            this.actualizarMatriz.emit();
-            this.cdr.detectChanges();
-          }, 10);
-        } catch (error) {
-          console.error('Error al procesar el archivo:', error);
-        }
-      };
-      reader.readAsText(file);
+          this.cdr.detectChanges();
+        }, 10);
+      } catch (error) {
+        console.error('Error al procesar el archivo:', error);
+      }
     }
   }
 
@@ -676,6 +608,7 @@ export class MyCanvasComponent {
       return;
     }
     this.dibujarNodo(ctx);
+    this.guardarEstado();
   }
 
   // Maneja el menú contextual al hacer clic derecho en el canvas
@@ -741,6 +674,7 @@ export class MyCanvasComponent {
           this.dibujarNodo(ctx);
         }
         this.actualizarMatriz.emit();
+        this.guardarEstado();
       }
     }
   }
@@ -758,6 +692,7 @@ export class MyCanvasComponent {
         this.dibujarNodo(ctx);
       }
       this.actualizarMatriz.emit();
+      this.guardarEstado();
     }
   }
 
@@ -781,6 +716,7 @@ export class MyCanvasComponent {
         }
       }
       this.actualizarMatriz.emit();
+      this.guardarEstado();
     }
   }
 
@@ -794,6 +730,7 @@ export class MyCanvasComponent {
         this.dibujarNodo(ctx);
       }
       this.actualizarMatriz.emit();
+      this.guardarEstado();
     }
   }
 
@@ -808,6 +745,7 @@ export class MyCanvasComponent {
       if (ctx) {
         this.dibujarNodo(ctx);
       }
+      this.guardarEstado();
     }
   }
 
@@ -822,5 +760,48 @@ export class MyCanvasComponent {
       this.dibujarNodo(ctx);
     }
     this.actualizarMatriz.emit();
+    this.guardarEstado();
+  }
+
+  undo(): void {
+    const estadoAnterior = this.undoRedoService.undo();
+    if (estadoAnterior) {
+      this.nodos = estadoAnterior.nodos;
+      this.conexiones = estadoAnterior.conexiones;
+      this.contador = estadoAnterior.contador;
+
+      const ctx = this.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.dibujarNodo(ctx);
+      }
+      this.actualizarMatriz.emit();
+      this.guardarEstado();
+    }
+  }
+
+  // Método para rehacer la última acción deshecha
+  redo(): void {
+    const estadoSiguiente = this.undoRedoService.redo();
+    if (estadoSiguiente) {
+      this.nodos = estadoSiguiente.nodos;
+      this.conexiones = estadoSiguiente.conexiones;
+      this.contador = estadoSiguiente.contador;
+
+      const ctx = this.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.dibujarNodo(ctx);
+      }
+      this.actualizarMatriz.emit();
+      this.guardarEstado();
+    }
+  }
+
+  // Método para guardar el estado actual
+  private guardarEstado(): void {
+    this.undoRedoService.guardarEstado(
+      this.nodos,
+      this.conexiones,
+      this.contador,
+    );
   }
 }
