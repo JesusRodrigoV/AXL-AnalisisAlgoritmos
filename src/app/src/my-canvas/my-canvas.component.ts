@@ -359,7 +359,7 @@ export class MyCanvasComponent {
           let startY = desde.y + offsetY;
           let endX = hasta.x - offsetX * 1.5;
           let endY = hasta.y - offsetY * 1.5;
-          
+
           let midX, midY, controlX, controlY;
           const peso = conexion.peso ?? 0;
           if (bidireccional) {
@@ -378,13 +378,13 @@ export class MyCanvasComponent {
             midY = controlY;
           }
           if (midX !== undefined && midY !== undefined) {
-            ctx.fillStyle = "white";
+            ctx.fillStyle = 'white';
             ctx.fillRect(midX - 10, midY - 10, 20, 20);
-            ctx.fillStyle = "black";
+            ctx.fillStyle = 'black';
             ctx.fillText(peso.toString(), midX, midY);
-        }
+          }
           ctx.stroke(); // Asegura que la arista se dibuje
-          
+
           // Dibujar flecha en el punto final
           this.dibujarFlecha(ctx, endX, endY, dx, dy);
 
@@ -392,19 +392,20 @@ export class MyCanvasComponent {
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          if (conexion.dirigido) {
-            this.dibujarFlechaCurva(
-              ctx,
-              desde.x,
-              desde.y,
-              hasta.x,
-              hasta.y,
-              controlX,
-              controlY,
-            );
-          }
+          // Dibuja la flecha de Andres
+          //if (conexion.dirigido) {
+          //  this.dibujarFlechaCurva(
+          //    ctx,
+          //    desde.x,
+          //    desde.y,
+          //    hasta.x,
+          //    hasta.y,
+          //    controlX,
+          //    controlY,
+          //  );
+          //}
+
           // Dibujar el peso
-          
           ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
           ctx.font = '12px Arial';
@@ -436,14 +437,26 @@ export class MyCanvasComponent {
     this.actualizarMatriz.emit();
   }
 
-  dibujarFlecha(ctx: CanvasRenderingContext2D, x: number, y: number, dx: number, dy: number): void {
+  dibujarFlecha(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ): void {
     const angulo = Math.atan2(dy, dx);
     const tamañoFlecha = 8;
     ctx.beginPath();
     ctx.moveTo(x, y);
-    ctx.lineTo(x - tamañoFlecha * Math.cos(angulo - Math.PI / 6), y - tamañoFlecha * Math.sin(angulo - Math.PI / 6));
+    ctx.lineTo(
+      x - tamañoFlecha * Math.cos(angulo - Math.PI / 6),
+      y - tamañoFlecha * Math.sin(angulo - Math.PI / 6),
+    );
     ctx.moveTo(x, y);
-    ctx.lineTo(x - tamañoFlecha * Math.cos(angulo + Math.PI / 6), y - tamañoFlecha * Math.sin(angulo + Math.PI / 6));
+    ctx.lineTo(
+      x - tamañoFlecha * Math.cos(angulo + Math.PI / 6),
+      y - tamañoFlecha * Math.sin(angulo + Math.PI / 6),
+    );
     ctx.stroke();
   }
 
