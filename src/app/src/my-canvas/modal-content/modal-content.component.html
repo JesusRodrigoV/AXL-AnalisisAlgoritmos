@@ -2,10 +2,24 @@
 <div mat-dialog-content>
   <form [formGroup]="form">
     <mat-form-field>
-      <mat-label>Peso de la conexion</mat-label>
-      <input matInput formControlName="peso" type="number" />
+      <mat-label>Peso</mat-label>
+      <input
+        matInput
+        type="text"
+        formControlName="peso"
+        [class.is-invalid]="
+          form.get('peso')?.invalid && (enviado || form.get('peso')?.touched)
+        "
+      />
+      <mat-error
+        *ngIf="
+          form.get('peso')?.invalid && (enviado || form.get('peso')?.touched)
+        "
+      >
+        {{ getMensajeError() }}
+      </mat-error>
     </mat-form-field>
-    <mat-checkbox formControlName="dirigido">Conexion Dirigido</mat-checkbox>
+    <mat-checkbox formControlName="dirigido">Conexion Dirigida</mat-checkbox>
   </form>
 </div>
 <div mat-dialog-actions>

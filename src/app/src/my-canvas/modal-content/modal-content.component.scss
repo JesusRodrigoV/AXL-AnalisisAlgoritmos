@@ -1,0 +1,13 @@
+.is-invalid {
+  border-color: #dc3545;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.mat-mdc-form-field-error {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+}

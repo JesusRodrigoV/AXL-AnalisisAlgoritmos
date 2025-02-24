@@ -15,14 +15,13 @@ import { ButtonBarComponent } from '../button-bar';
 import { FormsModule } from '@angular/forms';
 import { Conexion, Nodo } from '@app/models';
 import { MatMenu, MatMenuModule, MatMenuTrigger } from '@angular/material/menu';
-import { AdjacencyMatrixComponent } from '../adjacency-matrix/adjacency-matrix.component';
+import { AdjacencyMatrixComponent } from '../adjacency-matrix';
 import { ColorService } from '@app/services/color';
 import { ExportImportService } from '@app/services/export-import';
 import { UndoRedoService } from '@app/services/undo-redo';
 
 @Component({
   selector: 'app-my-canvas',
-  standalone: true,
   imports: [
     MatButtonModule,
     ButtonBarComponent,
