@@ -13,7 +13,7 @@
 }
 
 .navbar-spacer {
-  height: 64px; // Mismo alto que el navbar
+  height: 64px;
 }
 
 .brand {
@@ -23,7 +23,7 @@
   color: white;
   font-size: 1.2rem;
 
-  mat-icon {
+  i {
     margin-right: 8px;
     font-size: 24px;
   }
@@ -41,7 +41,7 @@
     opacity: 0.9;
     transition: all 0.3s ease;
 
-    mat-icon {
+    i {
       margin-right: 4px;
       font-size: 20px;
     }
