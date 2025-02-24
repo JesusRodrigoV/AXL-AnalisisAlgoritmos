@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ReactiveFormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-modal-content',
@@ -27,6 +28,7 @@ import { ReactiveFormsModule } from '@angular/forms';
     MatInputModule,
     MatCheckboxModule,
     ReactiveFormsModule,
+    CommonModule,
   ],
   templateUrl: './modal-content.component.html',
   styleUrl: './modal-content.component.scss',
