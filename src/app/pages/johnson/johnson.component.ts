@@ -10,3 +10,4 @@ import { JohnsonCanvasComponent } from 'src/app/pages/johnson/components/johnson
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JohnsonComponent {}
+//comentario pa hacer el commit
