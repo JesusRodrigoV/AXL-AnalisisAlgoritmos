@@ -1,15 +1,13 @@
-import { Component } from "@angular/core";
-import { RouterOutlet } from "@angular/router";
-import { MyCanvasComponent } from "./src/my-canvas";
-import { HelpComponent } from './components/help/help.component';
-import { AdjacencyMatrixComponent } from "./src/adjacency-matrix/adjacency-matrix.component";
+import { Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { NavbarComponent } from './src/navbar';
 
 @Component({
-	selector: "app-root",
-	imports: [RouterOutlet, MyCanvasComponent,HelpComponent],
-	templateUrl: "./app.component.html",
-	styleUrl: "./app.component.scss",
+  selector: 'app-root',
+  imports: [RouterOutlet, NavbarComponent],
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
-	title = "Analisis-Algoritmos";
+  title = 'Analisis-Algoritmos';
 }

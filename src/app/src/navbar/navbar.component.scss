@@ -1,0 +1,104 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  background: linear-gradient(135deg, #1976d2 0%, #3f51b5 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-spacer {
+  height: 64px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  font-size: 1.2rem;
+
+  i {
+    margin-right: 8px;
+    font-size: 24px;
+  }
+}
+
+.nav-links {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    color: white;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+
+    i {
+      margin-right: 4px;
+      font-size: 20px;
+    }
+
+    &:hover {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+.active-link {
+  opacity: 1 !important;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu-mobile {
+  display: none;
+  margin-left: auto;
+}
+
+.route-description {
+  display: block;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .nav-links {
+    display: none;
+  }
+
+  .menu-mobile {
+    display: block;
+  }
+
+  .brand span {
+    font-size: 1rem;
+  }
+}
+
+// Animaciones
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nav-link {
+  animation: fadeIn 0.3s ease-out;
+}

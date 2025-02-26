@@ -15,9 +15,8 @@ export class HelpComponent {
 
   menuOptions = [
     /*
-
     { label: 'Move', image: 'assets/move.png' },
-     * */
+    */
     { label: 'Modo Conexión', image: 'assets/conexion.png' },
     { label: 'Eliminar', image: 'assets/delete.png' },
     { label: 'Exportar', image: 'assets/export.png' },
