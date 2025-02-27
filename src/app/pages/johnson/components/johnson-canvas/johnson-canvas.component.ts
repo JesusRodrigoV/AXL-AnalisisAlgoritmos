@@ -1,17 +1,27 @@
 import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Nodo } from 'src/app/pages/johnson/models/nodo.model.jonson';
-import { Conexion } from 'src/app/pages/johnson/models/conexion.model.jonson'; // Ruta correcta al modelo Conexion
-import { ChangeDetectionStrategy } from '@angular/core';
+import { Conexion } from 'src/app/pages/johnson/models/conexion.model.jonson';
+import { CommonModule } from '@angular/common'; // Importa CommonModule
+import { FormsModule } from '@angular/forms'; // Importa FormsModule
+
+interface Actividad {
+  nombre: string;
+  secuencia: string;
+  peso: number;
+}
+
 @Component({
   selector: 'app-johnson-canvas',
+  standalone: true, // Indica que es un componente independiente
+  imports: [CommonModule, FormsModule], // Importa CommonModule y FormsModule
   templateUrl: './johnson-canvas.component.html',
   styleUrls: ['./johnson-canvas.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class JohnsonCanvasComponent implements OnInit {
-  @ViewChild('johnsonCanvas', { static: true }) canvasRef: ElementRef<HTMLCanvasElement>;
-  private ctx: CanvasRenderingContext2D;
+  @ViewChild('johnsonCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  private ctx!: CanvasRenderingContext2D;
 
+  actividades: Actividad[] = [{ nombre: '', secuencia: '', peso: 0 }]; // Lista de actividades
   nodos: Nodo[] = []; // Lista de nodos
   conexiones: Conexion[] = []; // Lista de conexiones
   selectedNodo: Nodo | null = null; // Nodo seleccionado para crear conexiones
@@ -26,17 +36,154 @@ export class JohnsonCanvasComponent implements OnInit {
     }
   }
 
+  // Agrega una nueva actividad a la tabla
+  agregarActividad(): void {
+    this.actividades.push({ nombre: '', secuencia: '', peso: 0 });
+  }
+
+  // Genera el grafo a partir de la tabla
+  generarGrafo(): void {
+    this.nodos = [];
+    this.conexiones = [];
+  
+    // Crear nodos únicos basados en la columna "Actividad"
+    const nodosUnicos: { [key: string]: Nodo } = {};
+  
+    this.actividades.forEach((actividad) => {
+      if (!nodosUnicos[actividad.nombre]) {
+        const id = `nodo-${actividad.nombre}`;
+        const label = actividad.nombre;
+        const nuevoNodo = new Nodo(id, 0, 0, label); // Las coordenadas se ajustarán más tarde
+        nodosUnicos[actividad.nombre] = nuevoNodo;
+        this.nodos.push(nuevoNodo);
+      }
+  
+      if (actividad.secuencia && !nodosUnicos[actividad.secuencia]) {
+        const id = `nodo-${actividad.secuencia}`;
+        const label = actividad.secuencia;
+        const nuevoNodo = new Nodo(id, 0, 0, label); // Las coordenadas se ajustarán más tarde
+        nodosUnicos[actividad.secuencia] = nuevoNodo;
+        this.nodos.push(nuevoNodo);
+      }
+    });
+  
+    // Crear conexiones basadas en la columna "Secuencia"
+    this.actividades.forEach((actividad) => {
+      const origen = nodosUnicos[actividad.nombre];
+      const destino = nodosUnicos[actividad.secuencia];
+  
+      if (origen && destino) {
+        const nuevaConexion = new Conexion(origen, destino, actividad.peso);
+        this.conexiones.push(nuevaConexion);
+      }
+    });
+  
+    // Ajustar las coordenadas de los nodos
+    this.ajustarCoordenadas();
+  
+    // Dibujar el grafo
+    this.dibujarGrafo();
+  
+    // Calcular la ruta crítica
+    this.calcularRutaCritica();
+  }
+
+  // Ajusta las coordenadas de los nodos para que no se superpongan
+  ajustarCoordenadas(): void {
+    const espacioHorizontal = 150; // Espacio horizontal entre nodos
+    const espacioVertical = 100; // Espacio vertical entre niveles
+    const niveles: { [key: number]: Nodo[] } = {};
+  
+    // Asignar niveles a los nodos
+    this.nodos.forEach((nodo) => {
+      const nivel = this.obtenerNivel(nodo);
+      if (!niveles[nivel]) {
+        niveles[nivel] = [];
+      }
+      niveles[nivel].push(nodo);
+    });
+  
+    // Calcular las coordenadas de los nodos
+    Object.keys(niveles).forEach((nivelStr) => {
+      const nivel = parseInt(nivelStr, 10);
+      const nodosEnNivel = niveles[nivel];
+      const startY = (600 - (nodosEnNivel.length - 1) * espacioVertical) / 2; // Centrar verticalmente
+  
+      nodosEnNivel.forEach((nodo, index) => {
+        nodo.x = 100 + nivel * espacioHorizontal; // Mover de izquierda a derecha
+        nodo.y = startY + index * espacioVertical;
+      });
+    });
+  }
+  
+  // Obtener el nivel de un nodo (basado en la distancia desde el inicio)
+  obtenerNivel(nodo: Nodo): number {
+    let nivel = 0;
+    let actual: Nodo | null = nodo;
+  
+    while (actual) {
+      const conexionesEntrantes = this.conexiones.filter((c) => c.destino.id === actual!.id);
+      if (conexionesEntrantes.length > 0) {
+        actual = conexionesEntrantes[0].origen;
+        nivel++;
+      } else {
+        actual = null;
+      }
+    }
+  
+    return nivel;
+  }
+
+  // Calcula la ruta crítica
+  calcularRutaCritica(): void {
+    const tiemposTempranos: { [key: string]: number } = {};
+    this.nodos.forEach((nodo) => (tiemposTempranos[nodo.id] = 0));
+
+    this.conexiones.forEach((conexion) => {
+      const tiempoLlegada = tiemposTempranos[conexion.origen.id] + conexion.peso;
+      if (tiempoLlegada > tiemposTempranos[conexion.destino.id]) {
+        tiemposTempranos[conexion.destino.id] = tiempoLlegada;
+      }
+    });
+
+    const tiemposTardios: { [key: string]: number } = {};
+    const ultimoNodo = this.nodos[this.nodos.length - 1];
+    tiemposTardios[ultimoNodo.id] = tiemposTempranos[ultimoNodo.id];
+
+    for (let i = this.nodos.length - 2; i >= 0; i--) {
+      const nodo = this.nodos[i];
+      tiemposTardios[nodo.id] = Infinity;
+
+      this.conexiones.forEach((conexion) => {
+        if (conexion.origen.id === nodo.id) {
+          const tiempoSalida = tiemposTardios[conexion.destino.id] - conexion.peso;
+          if (tiempoSalida < tiemposTardios[nodo.id]) {
+            tiemposTardios[nodo.id] = tiempoSalida;
+          }
+        }
+      });
+    }
+
+    this.conexiones.forEach((conexion) => {
+      const holgura = tiemposTardios[conexion.destino.id] - (tiemposTempranos[conexion.origen.id] + conexion.peso);
+      conexion.holgura = holgura;
+
+      if (holgura === 0) {
+        conexion.rutaCritica = true; // Marcar como ruta crítica
+      }
+    });
+
+    this.dibujarGrafo();
+  }
 
   // Dibuja todos los nodos y conexiones
   dibujarGrafo(): void {
     this.limpiarCanvas();
 
-    // Dibujar conexiones
     this.conexiones.forEach((conexion) => {
       this.dibujarConexion(conexion);
     });
 
-    // Dibujar nodos
     this.nodos.forEach((nodo) => {
       this.dibujarNodo(nodo);
     });
@@ -44,34 +191,29 @@ export class JohnsonCanvasComponent implements OnInit {
 
   // Dibuja un nodo en el canvas
   dibujarNodo(nodo: Nodo): void {
-    const radio = 20; // Radio del nodo
-    const mitadY = nodo.y + radio / 2; // Línea divisoria en la mitad inferior
+    const radio = 20;
+    const mitadY = nodo.y + radio / 2;
 
-    // Dibujar el círculo completo
     this.ctx.beginPath();
     this.ctx.arc(nodo.x, nodo.y, radio, 0, Math.PI * 2);
     this.ctx.strokeStyle = 'black';
     this.ctx.stroke();
 
-    // Dibujar la línea horizontal que divide el círculo en dos mitades
     this.ctx.beginPath();
     this.ctx.moveTo(nodo.x - radio, nodo.y);
     this.ctx.lineTo(nodo.x + radio, nodo.y);
     this.ctx.stroke();
 
-    // Dibujar la línea vertical que divide la mitad inferior en dos partes
     this.ctx.beginPath();
     this.ctx.moveTo(nodo.x, nodo.y);
     this.ctx.lineTo(nodo.x, nodo.y + radio);
     this.ctx.stroke();
 
-    // Dibujar la etiqueta del nodo
     this.ctx.fillStyle = 'black';
     this.ctx.font = '12px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(nodo.label, nodo.x, nodo.y - radio - 5);
 
-    // Dibujar los tiempos de inicio y fin en las divisiones inferiores
     this.ctx.fillStyle = 'blue';
     this.ctx.font = '10px Arial';
     this.ctx.fillText(`Inicio: ${nodo.tiempoInicio}`, nodo.x - radio / 2, nodo.y + radio / 2 + 10);
@@ -80,65 +222,41 @@ export class JohnsonCanvasComponent implements OnInit {
 
   // Dibuja una conexión entre dos nodos
   dibujarConexion(conexion: Conexion): void {
+    const origen = conexion.origen;
+    const destino = conexion.destino;
+  
+    // Calcular puntos de control para la curva
+    const controlX1 = origen.x + (destino.x - origen.x) * 0.5;
+    const controlY1 = origen.y;
+    const controlX2 = origen.x + (destino.x - origen.x) * 0.5;
+    const controlY2 = destino.y;
+  
+    // Dibujar la curva
     this.ctx.beginPath();
-    this.ctx.moveTo(conexion.origen.x, conexion.origen.y);
-    this.ctx.lineTo(conexion.destino.x, conexion.destino.y);
-    this.ctx.strokeStyle = 'red';
+    this.ctx.moveTo(origen.x, origen.y);
+    this.ctx.bezierCurveTo(controlX1, controlY1, controlX2, controlY2, destino.x, destino.y);
+  
+    if (conexion.rutaCritica) {
+      this.ctx.strokeStyle = 'blue';
+      this.ctx.lineWidth = 3;
+    } else {
+      this.ctx.strokeStyle = 'red';
+      this.ctx.lineWidth = 1;
+    }
+  
     this.ctx.stroke();
-
-    // Dibujar peso de la conexión
-    const midX = (conexion.origen.x + conexion.destino.x) / 2;
-    const midY = (conexion.origen.y + conexion.destino.y) / 2;
+  
+    // Dibujar peso de la conexión (más grande)
+    const midX = (origen.x + destino.x) / 2;
+    const midY = (origen.y + destino.y) / 2;
     this.ctx.fillStyle = 'green';
+    this.ctx.font = '16px Arial'; // Tamaño de fuente más grande
+    this.ctx.textAlign = 'center';
     this.ctx.fillText(conexion.peso.toString(), midX, midY);
   }
 
   // Limpia el canvas
   limpiarCanvas(): void {
     this.ctx.clearRect(0, 0, this.canvasRef.nativeElement.width, this.canvasRef.nativeElement.height);
-  }
-
-  // Agrega un nodo en la posición (x, y)
-  agregarNodo(x: number, y: number): void {
-    const id = `nodo-${this.nodos.length + 1}`;
-    const label = `Nodo ${this.nodos.length + 1}`;
-    const nuevoNodo = new Nodo(id, x, y, label);
-    this.nodos.push(nuevoNodo);
-    this.dibujarGrafo();
-  }
-
-  // Agrega una conexión entre dos nodos
-  agregarConexion(origen: Nodo, destino: Nodo, peso: number): void {
-    const nuevaConexion = new Conexion(origen, destino, peso);
-    this.conexiones.push(nuevaConexion);
-    this.dibujarGrafo();
-  }
-
-  // Maneja el clic en el canvas
-  @HostListener('click', ['$event'])
-  onCanvasClick(event: MouseEvent): void {
-    const rect = this.canvasRef.nativeElement.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    // Verificar si se hizo clic en un nodo existente
-    const nodoClicado = this.nodos.find((nodo) => {
-      const distancia = Math.sqrt((nodo.x - x) ** 2 + (nodo.y - y) ** 2);
-      return distancia <= 20; // Radio del nodo
-    });
-
-    if (nodoClicado) {
-      if (this.selectedNodo) {
-        // Si ya hay un nodo seleccionado, crear una conexión
-        this.agregarConexion(this.selectedNodo, nodoClicado, 1); // Peso por defecto: 1
-        this.selectedNodo = null;
-      } else {
-        // Seleccionar el nodo para crear una conexión
-        this.selectedNodo = nodoClicado;
-      }
-    } else {
-      // Si no se hizo clic en un nodo, agregar un nuevo nodo
-      this.agregarNodo(x, y);
-    }
   }
 }
