@@ -192,32 +192,38 @@ export class JohnsonCanvasComponent implements OnInit {
   // Dibuja un nodo en el canvas
   dibujarNodo(nodo: Nodo): void {
     const radio = 20;
-    const mitadY = nodo.y + radio / 2;
-
+    const mitadX = nodo.x;
+    const mitadY = nodo.y;
+  
+    // Dibujar el círculo del nodo
     this.ctx.beginPath();
     this.ctx.arc(nodo.x, nodo.y, radio, 0, Math.PI * 2);
     this.ctx.strokeStyle = 'black';
     this.ctx.stroke();
-
+  
+    // Dibujar una línea vertical para dividir el nodo en dos partes
     this.ctx.beginPath();
-    this.ctx.moveTo(nodo.x - radio, nodo.y);
-    this.ctx.lineTo(nodo.x + radio, nodo.y);
-    this.ctx.stroke();
-
-    this.ctx.beginPath();
-    this.ctx.moveTo(nodo.x, nodo.y);
+    this.ctx.moveTo(nodo.x, nodo.y - radio);
     this.ctx.lineTo(nodo.x, nodo.y + radio);
     this.ctx.stroke();
-
+  
+    // Mostrar la etiqueta del nodo en la parte superior
     this.ctx.fillStyle = 'black';
     this.ctx.font = '12px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.fillText(nodo.label, nodo.x, nodo.y - radio - 5);
-
+  
+    // Mostrar el valor de ida (inicio) en la mitad izquierda del nodo
     this.ctx.fillStyle = 'blue';
     this.ctx.font = '10px Arial';
-    this.ctx.fillText(`Inicio: ${nodo.tiempoInicio}`, nodo.x - radio / 2, nodo.y + radio / 2 + 10);
-    this.ctx.fillText(`Fin: ${nodo.tiempoFin}`, nodo.x + radio / 2, nodo.y + radio / 2 + 10);
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(`I: ${nodo.tiempoInicio}`, nodo.x - radio / 2, nodo.y + 5);
+  
+    // Mostrar el valor de vuelta (fin) en la mitad derecha del nodo
+    this.ctx.fillStyle = 'red';
+    this.ctx.font = '10px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(`V: ${nodo.tiempoFin}`, nodo.x + radio / 2, nodo.y + 5);
   }
 
   // Dibuja una conexión entre dos nodos
@@ -254,6 +260,48 @@ export class JohnsonCanvasComponent implements OnInit {
     this.ctx.textAlign = 'center';
     this.ctx.fillText(conexion.peso.toString(), midX, midY);
   }
+  calcularJohnson(): void {
+    this.calcularTiemposIda();
+    this.calcularTiemposVuelta();
+    this.dibujarGrafo();
+  }
+  
+  calcularTiemposIda(): void {
+    // Inicializar los tiempos de inicio
+    this.nodos.forEach((nodo) => {
+      nodo.tiempoInicio = 0;
+    });
+  
+    // Calcular los tiempos de inicio (ida)
+    this.conexiones.forEach((conexion) => {
+      const tiempoLlegada = conexion.origen.tiempoInicio + conexion.peso;
+      if (tiempoLlegada > conexion.destino.tiempoInicio) {
+        conexion.destino.tiempoInicio = tiempoLlegada;
+      }
+    });
+  }
+  
+  calcularTiemposVuelta(): void {
+    // Inicializar los tiempos de fin con el último valor de ida
+    const ultimoNodo = this.nodos[this.nodos.length - 1];
+    this.nodos.forEach((nodo) => {
+      nodo.tiempoFin = ultimoNodo.tiempoInicio;
+    });
+  
+    // Calcular los tiempos de fin (vuelta)
+    for (let i = this.nodos.length - 1; i >= 0; i--) {
+      const nodo = this.nodos[i];
+      this.conexiones.forEach((conexion) => {
+        if (conexion.destino.id === nodo.id) {
+          const tiempoSalida = conexion.origen.tiempoFin - conexion.peso;
+          if (tiempoSalida < nodo.tiempoFin) {
+            nodo.tiempoFin = tiempoSalida;
+          }
+        }
+      });
+    }
+  }
+  
 
   // Limpia el canvas
   limpiarCanvas(): void {
