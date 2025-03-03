@@ -1,0 +1,41 @@
+<mat-toolbar color="primary" class="navbar">
+  <a mat-button routerLink="/home" class="brand">
+    <i class="bx bx-scatter-chart"></i>
+    <span>Análisis de Algoritmos o cualquier texto</span>
+  </a>
+
+  <nav class="nav-links">
+    @for (ruta of rutas; track ruta.path) {
+      <a
+        mat-button
+        [routerLink]="ruta.path"
+        [class.active-link]="isRouteActive(ruta.path)"
+        [matTooltip]="ruta.description"
+        class="nav-link"
+      >
+        <i class="bx {{ ruta.icon }}"></i>
+        <span>{{ ruta.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <button mat-icon-button [matMenuTriggerFor]="menu" class="menu-mobile">
+    <i class="bx bx-menu"></i>
+  </button>
+
+  <mat-menu #menu="matMenu">
+    @for (ruta of rutas; track ruta.path) {
+      <a
+        mat-menu-item
+        [routerLink]="ruta.path"
+        [class.active-link]="isRouteActive(ruta.path)"
+      >
+        <i class="bx {{ ruta.icon }}"></i>
+        <span>{{ ruta.label }}</span>
+        <small class="route-description">{{ ruta.description }}</small>
+      </a>
+    }
+  </mat-menu>
+</mat-toolbar>
+
+<div class="navbar-spacer"></div>
