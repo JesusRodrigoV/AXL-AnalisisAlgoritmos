@@ -90,8 +90,8 @@ export class JohnsonCanvasComponent implements OnInit {
 
   // Ajusta las coordenadas de los nodos para que no se superpongan
   ajustarCoordenadas(): void {
-    const espacioHorizontal = 150; // Espacio horizontal entre nodos
-    const espacioVertical = 100; // Espacio vertical entre niveles
+    const espacioHorizontal = 200; // Aumentamos el espacio horizontal
+    const espacioVertical = 120; // Aumentamos el espacio vertical
     const niveles: { [key: number]: Nodo[] } = {};
   
     // Asignar niveles a los nodos
@@ -103,17 +103,24 @@ export class JohnsonCanvasComponent implements OnInit {
       niveles[nivel].push(nodo);
     });
   
-    // Calcular las coordenadas de los nodos
-    Object.keys(niveles).forEach((nivelStr) => {
-      const nivel = parseInt(nivelStr, 10);
-      const nodosEnNivel = niveles[nivel];
-      const startY = (600 - (nodosEnNivel.length - 1) * espacioVertical) / 2; // Centrar verticalmente
+    // Ordenar nodos dentro de cada nivel según conexiones
+  Object.keys(niveles).forEach((nivelStr) => {
+    const nivel = parseInt(nivelStr, 10);
+    const nodosEnNivel = niveles[nivel];
+    nodosEnNivel.sort((a, b) => a.label.localeCompare(b.label)); // Orden alfabético
+  });
   
-      nodosEnNivel.forEach((nodo, index) => {
-        nodo.x = 100 + nivel * espacioHorizontal; // Mover de izquierda a derecha
-        nodo.y = startY + index * espacioVertical;
-      });
+  // Calcular las coordenadas de los nodos
+  Object.keys(niveles).forEach((nivelStr) => {
+    const nivel = parseInt(nivelStr, 10);
+    const nodosEnNivel = niveles[nivel];
+    const startY = (600 - (nodosEnNivel.length - 1) * espacioVertical) / 2; // Centrar verticalmente
+    
+    nodosEnNivel.forEach((nodo, index) => {
+      nodo.x = 150 + nivel * espacioHorizontal; // Mover de izquierda a derecha
+      nodo.y = startY + index * espacioVertical;
     });
+  });
   }
   
   // Obtener el nivel de un nodo (basado en la distancia desde el inicio)
@@ -191,39 +198,30 @@ export class JohnsonCanvasComponent implements OnInit {
 
   // Dibuja un nodo en el canvas
   dibujarNodo(nodo: Nodo): void {
-    const radio = 20;
-    const mitadX = nodo.x;
-    const mitadY = nodo.y;
-  
+    const radio = 30;
+    
     // Dibujar el círculo del nodo
     this.ctx.beginPath();
     this.ctx.arc(nodo.x, nodo.y, radio, 0, Math.PI * 2);
     this.ctx.strokeStyle = 'black';
     this.ctx.stroke();
-  
-    // Dibujar una línea vertical para dividir el nodo en dos partes
+    
+    // Dibujar líneas divisorias para dividir en tres secciones
     this.ctx.beginPath();
-    this.ctx.moveTo(nodo.x, nodo.y - radio);
-    this.ctx.lineTo(nodo.x, nodo.y + radio);
+    this.ctx.moveTo(nodo.x - radio, nodo.y);   // Desde la izquierda del círculo
+    this.ctx.lineTo(nodo.x + radio, nodo.y);   // Hasta la derecha del círculo
+    this.ctx.moveTo(nodo.x, nodo.y);   // Desde el centro
+    this.ctx.lineTo(nodo.x, nodo.y + radio);   // Hasta la parte inferior del círculo
     this.ctx.stroke();
-  
-    // Mostrar la etiqueta del nodo en la parte superior
-    this.ctx.fillStyle = 'black';
+    
+    // Mostrar valores en las dos secciones
+    this.ctx.fillStyle = 'blue';
     this.ctx.font = '12px Arial';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText(nodo.label, nodo.x, nodo.y - radio - 5);
-  
-    // Mostrar el valor de ida (inicio) en la mitad izquierda del nodo
-    this.ctx.fillStyle = 'blue';
-    this.ctx.font = '10px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText(`I: ${nodo.tiempoInicio}`, nodo.x - radio / 2, nodo.y + 5);
-  
-    // Mostrar el valor de vuelta (fin) en la mitad derecha del nodo
+    this.ctx.fillText(`I: ${nodo.tiempoInicio}`, nodo.x - radio / 3, nodo.y + radio / 2 + 5);
+    
     this.ctx.fillStyle = 'red';
-    this.ctx.font = '10px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText(`V: ${nodo.tiempoFin}`, nodo.x + radio / 2, nodo.y + 5);
+    this.ctx.fillText(`V: ${nodo.tiempoFin}`, nodo.x + radio / 3, nodo.y + radio / 2 + 5);
   }
 
   // Dibuja una conexión entre dos nodos
