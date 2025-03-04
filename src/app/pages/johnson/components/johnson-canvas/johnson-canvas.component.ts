@@ -262,6 +262,7 @@ export class JohnsonCanvasComponent implements OnInit {
     this.calcularTiemposIda();
     this.calcularTiemposVuelta();
     this.dibujarGrafo();
+    this.dibujarHolguras();
   }
   
   calcularTiemposIda(): void {
@@ -271,38 +272,67 @@ export class JohnsonCanvasComponent implements OnInit {
     });
   
     // Calcular los tiempos de inicio (ida)
+    let cambio = true;
+  while (cambio) {
+    cambio = false;
     this.conexiones.forEach((conexion) => {
       const tiempoLlegada = conexion.origen.tiempoInicio + conexion.peso;
       if (tiempoLlegada > conexion.destino.tiempoInicio) {
         conexion.destino.tiempoInicio = tiempoLlegada;
+        cambio = true;
       }
     });
   }
+}
   
-  calcularTiemposVuelta(): void {
-    // Inicializar los tiempos de fin con el último valor de ida
-    const ultimoNodo = this.nodos[this.nodos.length - 1];
-    this.nodos.forEach((nodo) => {
-      nodo.tiempoFin = ultimoNodo.tiempoInicio;
+calcularTiemposVuelta(): void {
+  // Obtener el tiempo máximo desde la ida
+  const ultimoNodo = this.nodos[this.nodos.length - 1];
+  const tiempoMaximo = ultimoNodo.tiempoInicio;
+
+  // Inicializar los tiempos de fin con el último tiempo de ida
+  this.nodos.forEach((nodo) => {
+    nodo.tiempoFin = tiempoMaximo;
+  });
+
+  // Repetir hasta que los valores se estabilicen
+  let cambio = true;
+  while (cambio) {
+    cambio = false;
+    this.conexiones.forEach((conexion) => {
+      const tiempoSalida = conexion.destino.tiempoFin - conexion.peso;
+      if (tiempoSalida < conexion.origen.tiempoFin) {
+        conexion.origen.tiempoFin = tiempoSalida;
+        cambio = true;
+      }
     });
-  
-    // Calcular los tiempos de fin (vuelta)
-    for (let i = this.nodos.length - 1; i >= 0; i--) {
-      const nodo = this.nodos[i];
-      this.conexiones.forEach((conexion) => {
-        if (conexion.destino.id === nodo.id) {
-          const tiempoSalida = conexion.origen.tiempoFin - conexion.peso;
-          if (tiempoSalida < nodo.tiempoFin) {
-            nodo.tiempoFin = tiempoSalida;
-          }
-        }
-      });
-    }
   }
+}
   
 
   // Limpia el canvas
   limpiarCanvas(): void {
     this.ctx.clearRect(0, 0, this.canvasRef.nativeElement.width, this.canvasRef.nativeElement.height);
   }
+
+
+
+  dibujarHolguras(): void {
+    this.ctx.fillStyle = 'black';
+    this.ctx.font = '12px Arial';
+    this.ctx.textAlign = 'center';
+  
+    this.conexiones.forEach((conexion) => {
+      // Calcular la holgura
+      const holgura = conexion.destino.tiempoFin - conexion.origen.tiempoInicio - conexion.peso;
+  
+      // Calcular la posición para mostrar la holgura (en el centro de la arista)
+      const xMedio = (conexion.origen.x + conexion.destino.x) / 2;
+      const yMedio = (conexion.origen.y + conexion.destino.y) / 2;
+  
+      // Dibujar el texto de la holgura en el canvas
+      this.ctx.fillText(`h=${holgura}`, xMedio, yMedio + 20);
+    });
+  }
+  
 }
