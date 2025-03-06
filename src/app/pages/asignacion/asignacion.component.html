@@ -1,1 +1,52 @@
-<p>asignacion works!</p>
+<div class="container">
+  <div class="canvas-container">
+    <app-my-canvas></app-my-canvas>
+  </div>
+
+  <div class="controls">
+    <div class="optimization-toggle">
+      <mat-button-toggle-group [(ngModel)]="isMaximization">
+        <mat-button-toggle [value]="false">Minimización</mat-button-toggle>
+        <mat-button-toggle [value]="true">Maximización</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="solveAssignment(isMaximization)"
+    >
+      Resolver Asignación
+    </button>
+
+    <div *ngIf="matrixStats" class="matrix-stats">
+      <h4>Estadísticas de la Matriz:</h4>
+      <p>Valor Máximo: {{ matrixStats.maxValue }}</p>
+      <p>Valor Mínimo: {{ matrixStats.minValue }}</p>
+      <p>Promedio: {{ matrixStats.average | number: "1.2-2" }}</p>
+    </div>
+
+    <div *ngIf="result" class="result-panel mat-elevation-z2">
+      <h3>
+        Resultado de {{ isMaximization ? "Maximización" : "Minimización" }}:
+      </h3>
+      <p class="total-cost">
+        Costo total: <strong>{{ result.cost }}</strong>
+      </p>
+
+      <div class="assignment-details">
+        <h4>Asignaciones Óptimas:</h4>
+        <mat-list>
+          <mat-list-item *ngFor="let assignment of getFormattedAssignments()">
+            <span class="assignment-item">
+              {{ assignment.from }} → {{ assignment.to }}
+              <span class="assignment-cost"
+                >(Costo: {{ assignment.cost }})</span
+              >
+            </span>
+          </mat-list-item>
+        </mat-list>
+      </div>
+    </div>
+  </div>
+</div>
