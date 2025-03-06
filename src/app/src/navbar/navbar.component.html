@@ -23,6 +23,11 @@
     <i class="bx bx-menu"></i>
   </button>
 
+  <button mat-icon-button (click)="themeService.toggleTheme()">
+    <mat-icon>{{
+      themeService.isDarkMode() ? "brightness_3" : "brightness_7"
+    }}</mat-icon>
+  </button>
   <mat-menu #menu="matMenu">
     @for (ruta of rutas; track ruta.path) {
       <a

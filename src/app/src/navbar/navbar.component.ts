@@ -6,6 +6,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Router, RouterLink } from '@angular/router';
+import { ThemeService } from '@app/services/theme/theme-service';
 
 @Component({
   selector: 'app-navbar',
@@ -22,6 +23,8 @@ import { Router, RouterLink } from '@angular/router';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
+  readonly themeService: ThemeService = inject(ThemeService);
+
   protected rutas = [
     {
       label: 'Home',
