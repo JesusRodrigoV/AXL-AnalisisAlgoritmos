@@ -1,0 +1,32 @@
+<div class="container">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Actividad</th>
+          <th>Secuencia</th>
+          <th>Atributos (Peso)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let actividad of actividades; let i = index">
+          <td>
+            <input [(ngModel)]="actividad.nombre" placeholder="Actividad {{ i + 1 }}" />
+          </td>
+          <td>
+            <input [(ngModel)]="actividad.secuencia" placeholder="Secuencia" />
+          </td>
+          <td>
+            <input [(ngModel)]="actividad.peso" placeholder="Peso" type="number" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button (click)="agregarActividad()">Agregar Actividad</button>
+    <button (click)="generarGrafo()">Generar Grafo</button>
+    <button (click)="calcularJohnson()">Calcular</button>
+  </div>
+  <div class="canvas-container">
+    <canvas #johnsonCanvas width="800" height="600"></canvas>
+  </div>
+</div>
