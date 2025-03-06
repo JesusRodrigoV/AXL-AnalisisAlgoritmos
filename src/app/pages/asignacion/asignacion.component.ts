@@ -5,6 +5,7 @@ import { MyCanvasComponent } from '@app/src/my-canvas';
 import { MatListModule } from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-asignacion',
@@ -15,6 +16,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
     MatListModule,
     FormsModule,
     MatButtonToggleModule,
+    MatCardModule,
   ],
   templateUrl: './asignacion.component.html',
   styleUrl: './asignacion.component.scss',
