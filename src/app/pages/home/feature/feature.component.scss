@@ -1,0 +1,48 @@
+.feature-card {
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  cursor: pointer;
+}
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+mat-card-header {
+  margin-bottom: 1rem;
+}
+
+mat-card-title {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+mat-icon {
+  color: #1976d2;
+}
+
+mat-card-content {
+  padding: 0 1rem;
+}
+
+mat-card-actions {
+  padding: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .features {
+    padding: 2rem 1rem;
+
+    h2 {
+      font-size: 2rem;
+    }
+  }
+
+  .cards-container {
+    grid-template-columns: 1fr;
+  }
+}

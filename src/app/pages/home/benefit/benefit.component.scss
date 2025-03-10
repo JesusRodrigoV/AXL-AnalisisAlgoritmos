@@ -1,0 +1,48 @@
+// Benefits Section
+
+.benefit-item {
+  text-align: center;
+  padding: 2rem;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  mat-icon {
+    font-size: 3rem;
+    height: 3rem;
+    width: 3rem;
+    color: #1976d2;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    //color: #333;
+  }
+
+  p {
+    //color: #666;
+    line-height: 1.6;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .features,
+  .benefits {
+    padding: 2rem 1rem;
+
+    h2 {
+      font-size: 2rem;
+    }
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}

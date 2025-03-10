@@ -5,63 +5,14 @@
       <h1>Análisis de Algoritmos</h1>
       <p class="subtitle">Visualización y análisis de algoritmos de grafos</p>
     </div>
-    <div class="wave"></div>
   </section>
 
-  <!-- Características principales -->
   <section class="features">
     <h2>Explora Nuestros Algoritmos</h2>
     <div class="cards-container">
-      <!-- Editor de Grafos Card -->
-      <mat-card class="feature-card" routerLink="/editor">
-        <mat-card-header>
-          <mat-icon mat-card-avatar>edit</mat-icon>
-          <mat-card-title>Editor de Grafos</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>
-            Crea y edita grafos de manera intuitiva con nuestro editor visual
-            interactivo.
-          </p>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-button color="primary">COMENZAR</button>
-        </mat-card-actions>
-      </mat-card>
-
-      <!-- Algoritmo de Johnson Card -->
-      <mat-card class="feature-card" routerLink="/johnson">
-        <mat-card-header>
-          <mat-icon mat-card-avatar>account_tree</mat-icon>
-          <mat-card-title>Algoritmo de Johnson</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>
-            Encuentra todos los caminos más cortos entre todos los pares de
-            vértices en grafos dispersos.
-          </p>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-button color="primary">EXPLORAR</button>
-        </mat-card-actions>
-      </mat-card>
-
-      <!-- Algoritmo de Asignación Card -->
-      <mat-card class="feature-card" routerLink="/asignacion">
-        <mat-card-header>
-          <mat-icon mat-card-avatar>assignment</mat-icon>
-          <mat-card-title>Algoritmo de Asignación</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p>
-            Optimiza la asignación de recursos con nuestro algoritmo de
-            asignación eficiente.
-          </p>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-button color="primary">COMENZAR</button>
-        </mat-card-actions>
-      </mat-card>
+      @for (ruta of rutas; track ruta.title) {
+        <app-feature [feature]="ruta" />
+      }
     </div>
   </section>
 
@@ -69,32 +20,10 @@
   <section class="benefits">
     <h2>¿Por qué usar nuestra aplicación?</h2>
     <div class="benefits-grid">
-      <div class="benefit-item">
-        <mat-icon>visibility</mat-icon>
-        <h3>Visualización Clara</h3>
-        <p>Interfaz intuitiva para la creación y manipulación de grafos</p>
-      </div>
-      <div class="benefit-item">
-        <mat-icon>speed</mat-icon>
-        <h3>Rendimiento Optimizado</h3>
-        <p>Implementaciones eficientes de algoritmos complejos</p>
-      </div>
-      <div class="benefit-item">
-        <mat-icon>school</mat-icon>
-        <h3>Herramienta Educativa</h3>
-        <p>Perfecta para aprender y enseñar conceptos de teoría de grafos</p>
-      </div>
-      <div class="benefit-item">
-        <mat-icon>auto_graph</mat-icon>
-        <h3>Análisis Detallado</h3>
-        <p>Resultados paso a paso y métricas detalladas</p>
-      </div>
+      @for (beneficio of beneficios; track beneficio.title) {
+        <app-benefit [benefit]="beneficio" />
+      }
     </div>
   </section>
-
-  <!-- Footer -->
-  <footer class="home-footer">
-    <p>Desarrollado para Análisis de Algoritmos</p>
-    <p>AXL © 2025</p>
-  </footer>
+  <app-footer />
 </div>
