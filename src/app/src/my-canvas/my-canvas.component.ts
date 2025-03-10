@@ -348,39 +348,63 @@ export class MyCanvasComponent {
             (c) => c.desde === conexion.hasta && c.hasta === conexion.desde,
           );
           ctx.beginPath();
+          let dx = hasta.x - desde.x;
+          let dy = hasta.y - desde.y;
+          let distancia = Math.sqrt(dx * dx + dy * dy);
+          let radio = 20; // Ajusta el radio del nodo
+          let offsetX = (dx / distancia) * radio;
+          let offsetY = (dy / distancia) * radio;
+          let startX = desde.x + offsetX;
+          let startY = desde.y + offsetY;
+          let endX = hasta.x - offsetX * 1.5;
+          let endY = hasta.y - offsetY * 1.5;
+
           let midX, midY, controlX, controlY;
+          const peso = conexion.peso ?? 0;
           if (bidireccional) {
-            controlX = (desde.x + hasta.x) / 2 + (desde.y - hasta.y) * 0.3;
-            controlY = (desde.y + hasta.y) / 2 + (hasta.x - desde.x) * 0.3;
-            ctx.moveTo(desde.x, desde.y);
-            ctx.quadraticCurveTo(controlX, controlY, hasta.x, hasta.y);
-            midX = (desde.x + 2 * controlX + hasta.x) / 4;
-            midY = (desde.y + 2 * controlY + hasta.y) / 4;
+            controlX = (startX + endX) / 2 + (startY - endY) * 0.3;
+            controlY = (startY + endY) / 2 + (endX - startX) * 0.3;
+            ctx.moveTo(startX, startY);
+            ctx.quadraticCurveTo(controlX, controlY, endX, endY);
+            midX = (startX + 2 * controlX + endX) / 4;
+            midY = (startY + 2 * controlY + endY) / 4;
           } else {
-            controlX = (desde.x + hasta.x) / 2;
-            controlY = (desde.y + hasta.y) / 2;
-            ctx.moveTo(desde.x, desde.y);
-            ctx.lineTo(hasta.x, hasta.y);
+            controlX = (startX + endX) / 2;
+            controlY = (startY + endY) / 2;
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
             midX = controlX;
             midY = controlY;
           }
+          if (midX !== undefined && midY !== undefined) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(midX - 10, midY - 10, 20, 20);
+            ctx.fillStyle = 'black';
+            ctx.fillText(peso.toString(), midX, midY);
+          }
+          ctx.stroke(); // Asegura que la arista se dibuje
+
+          // Dibujar flecha en el punto final
+          this.dibujarFlecha(ctx, endX, endY, dx, dy);
+
           ctx.strokeStyle = '#666';
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          if (conexion.dirigido) {
-            this.dibujarFlechaCurva(
-              ctx,
-              desde.x,
-              desde.y,
-              hasta.x,
-              hasta.y,
-              controlX,
-              controlY,
-            );
-          }
+          // Dibuja la flecha de Andres
+          //if (conexion.dirigido) {
+          //  this.dibujarFlechaCurva(
+          //    ctx,
+          //    desde.x,
+          //    desde.y,
+          //    hasta.x,
+          //    hasta.y,
+          //    controlX,
+          //    controlY,
+          //  );
+          //}
+
           // Dibujar el peso
-          const peso = conexion.peso ?? 0;
           ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
           ctx.font = '12px Arial';
@@ -410,6 +434,29 @@ export class MyCanvasComponent {
     });
 
     this.actualizarMatriz.emit();
+  }
+
+  dibujarFlecha(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ): void {
+    const angulo = Math.atan2(dy, dx);
+    const tamañoFlecha = 8;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(
+      x - tamañoFlecha * Math.cos(angulo - Math.PI / 6),
+      y - tamañoFlecha * Math.sin(angulo - Math.PI / 6),
+    );
+    ctx.moveTo(x, y);
+    ctx.lineTo(
+      x - tamañoFlecha * Math.cos(angulo + Math.PI / 6),
+      y - tamañoFlecha * Math.sin(angulo + Math.PI / 6),
+    );
+    ctx.stroke();
   }
 
   private dibujarBucle(
