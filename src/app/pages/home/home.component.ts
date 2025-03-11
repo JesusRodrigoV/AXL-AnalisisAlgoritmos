@@ -34,7 +34,7 @@ export interface Benefits {
   styleUrl: './home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class HomeComponent {
+export default class HomeComponent {
   protected rutas: RouteCard[] = [
     {
       icon: 'edit',

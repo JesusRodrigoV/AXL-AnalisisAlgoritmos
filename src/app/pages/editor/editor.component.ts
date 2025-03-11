@@ -8,4 +8,4 @@ import { MyCanvasComponent } from '@app/src/my-canvas';
   styleUrl: './editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditorComponent {}
+export default class EditorComponent {}

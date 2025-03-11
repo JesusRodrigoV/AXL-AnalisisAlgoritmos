@@ -22,7 +22,7 @@ import { MatCardModule } from '@angular/material/card';
   styleUrl: './asignacion.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AsignacionComponent {
+export default class AsignacionComponent {
   @ViewChild(MyCanvasComponent) canvas!: MyCanvasComponent;
   result: { assignment: number[][]; cost: number } | null = null;
   isMaximization: boolean = false; // Por defecto será minimización

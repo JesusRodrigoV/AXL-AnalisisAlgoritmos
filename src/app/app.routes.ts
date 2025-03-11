@@ -1,25 +1,21 @@
 import { Routes } from '@angular/router';
-import { HomeComponent } from './pages/home';
-import { EditorComponent } from './pages/editor';
-import { AsignacionComponent } from './pages/asignacion';
-import { JohnsonComponent } from './pages/johnson';
 
 export const routes: Routes = [
   {
     path: 'home',
-    component: HomeComponent,
+    loadComponent: () => import('./pages/home/home.component'),
   },
   {
     path: 'editor',
-    component: EditorComponent,
+    loadComponent: () => import('./pages/editor/editor.component'),
   },
   {
     path: 'johnson',
-    component: JohnsonComponent,
+    loadComponent: () => import('./pages/johnson/johnson.component'),
   },
   {
     path: 'asignacion',
-    component: AsignacionComponent,
+    loadComponent: () => import('./pages/asignacion/asignacion.component'),
   },
   {
     path: '',

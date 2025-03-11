@@ -9,5 +9,4 @@ import { JohnsonCanvasComponent } from 'src/app/pages/johnson/components/johnson
   styleUrl: './johnson.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class JohnsonComponent {}
-//comentario pa hacer el commit
+export default class JohnsonComponent {}
