@@ -1,16 +1,5 @@
-<div class="main-container">
-  <!-- Panel izquierdo con el canvas -->
-  <div class="left-panel">
-    <mat-card class="canvas-card">
-      <mat-card-content>
-        <app-my-canvas />
-      </mat-card-content>
-    </mat-card>
-  </div>
-
-  <!-- Panel derecho con controles y resultados -->
-  <div class="right-panel">
-    <!-- Controles superiores -->
+<div class="container">
+  <div class="left-section">
     <mat-card class="control-card">
       <mat-card-content>
         <div class="control-header">
@@ -105,6 +94,13 @@
             </mat-list-item>
           </mat-list>
         </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+  <div class="right-section">
+    <mat-card class="canvas-card">
+      <mat-card-content>
+        <app-my-canvas />
       </mat-card-content>
     </mat-card>
   </div>
