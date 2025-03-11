@@ -49,10 +49,15 @@ export class ThemeService {
 
   getThemeFromLocalStorage(): Theme {
     if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem(this.THEME_KEY) as Theme;
+      const storedTheme = localStorage.getItem(this.THEME_KEY) as Theme;
+      if (storedTheme) {
+        return storedTheme;
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    // Default theme for server-side rendering
+    return 'light';
   }
 }

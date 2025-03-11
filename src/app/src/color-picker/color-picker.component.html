@@ -1,0 +1,28 @@
+<div class="color-picker">
+  <div class="row">
+    @for (color of colors.slice(0, 5); track color.id) {
+      <div
+        class="color-pencil"
+        [class.selected]="color.isSelected"
+        [style.--pencil-color]="color.hexCode"
+        (click)="selectColor(color)"
+      >
+        <div class="eraser"></div>
+        <div class="pencil-tip"></div>
+      </div>
+    }
+  </div>
+  <div class="row">
+    @for (color of colors.slice(5); track color.id) {
+      <div
+        class="color-pencil"
+        [class.selected]="color.isSelected"
+        [style.--pencil-color]="color.hexCode"
+        (click)="selectColor(color)"
+      >
+        <div class="eraser"></div>
+        <div class="pencil-tip"></div>
+      </div>
+    }
+  </div>
+</div>
