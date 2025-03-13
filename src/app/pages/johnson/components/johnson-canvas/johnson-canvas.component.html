@@ -3,21 +3,28 @@
     <table>
       <thead>
         <tr>
-          <th>Actividad</th>
-          <th>Secuencia</th>
+          <th>Nodo i</th>
+          <th>Nodo j</th>
           <th>Atributos (Peso)</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let actividad of actividades; let i = index">
           <td>
-            <input [(ngModel)]="actividad.nombre" placeholder="Actividad {{ i + 1 }}" />
+            <input
+              [(ngModel)]="actividad.nombre"
+              placeholder="Actividad {{ i + 1 }}"
+            />
           </td>
           <td>
             <input [(ngModel)]="actividad.secuencia" placeholder="Secuencia" />
           </td>
           <td>
-            <input [(ngModel)]="actividad.peso" placeholder="Peso" type="number" />
+            <input
+              [(ngModel)]="actividad.peso"
+              placeholder="Peso"
+              type="number"
+            />
           </td>
         </tr>
       </tbody>
