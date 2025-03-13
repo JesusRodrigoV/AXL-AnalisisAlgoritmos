@@ -23,6 +23,8 @@ export class ThemeService {
     this.setTheme(this.getThemeFromLocalStorage());
   }
 
+
+
   toggleTheme() {
     if (this.currentTheme() === 'light') {
       this.setTheme('dark');
@@ -49,10 +51,11 @@ export class ThemeService {
 
   getThemeFromLocalStorage(): Theme {
     if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem(this.THEME_KEY) as Theme;
+      return (localStorage.getItem(this.THEME_KEY) as Theme) ||
+             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+
+    // Si está en el servidor, devuelve un valor por defecto (sin usar window)
+    return 'light';
   }
 }

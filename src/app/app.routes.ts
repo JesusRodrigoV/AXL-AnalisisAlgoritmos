@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/asignacion/asignacion.component'),
   },
   {
+    path: 'northwest',
+    loadComponent: () => import('./pages/northwest/northwest.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',

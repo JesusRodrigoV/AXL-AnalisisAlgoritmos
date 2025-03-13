@@ -1,1 +1,55 @@
-<p>northwest works!</p>
+<div class="container">
+  <h1>Método de la Esquina Noroeste</h1>
+
+  <label>Filas (Proveedores):</label>
+  <input type="number" [(ngModel)]="rows" (ngModelChange)="initializeMatrix()" min="1" />
+
+  <label>Columnas (Demandantes):</label>
+  <input type="number" [(ngModel)]="cols" (ngModelChange)="initializeMatrix()" min="1" />
+
+  <h2>Matriz de costos</h2>
+<table border="1">
+  <tbody>
+    <tr *ngFor="let row of matrix; let i = index; trackBy: trackByIndex">
+      <td *ngFor="let col of row; let j = index; trackBy: trackByIndex">
+        <input type="number" [(ngModel)]="matrix[i][j]" (click)="$event.stopPropagation()" />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Oferta y Demanda</h2>
+<div class="flex">
+  <div>
+    <h3>Oferta</h3>
+    <input type="number" *ngFor="let s of supply; let i = index; trackBy: trackByIndex" [(ngModel)]="supply[i]" />
+  </div>
+  <div>
+    <h3>Demanda</h3>
+    <input type="number" *ngFor="let d of demand; let j = index; trackBy: trackByIndex" [(ngModel)]="demand[j]" />
+  </div>
+</div>
+
+
+  <div>
+    <label for="mode">Modo de Optimización:</label>
+    <select id="mode" [(ngModel)]="minimize">
+      <option [value]="true">Minimizar Costos</option>
+      <option [value]="false">Maximizar Ganancias</option>
+    </select>
+
+    <button (click)="solve()">Resolver</button>
+  </div>
+
+  <div>
+  <h3>Solución:</h3>
+  <table border="1">
+    <tr *ngFor="let row of solution; let i = index">
+      <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
+    </tr>
+  </table>
+</div>
+</div>
+
+
+
