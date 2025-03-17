@@ -16,6 +16,7 @@ export default class NorthwestComponent {
   matrix: number[][] = [];
   supply: number[] = [];
   supplyN: number[] = [];
+  supplyCopy: number[] = [];
   demand: number[] = [];
   demandN: number[] = [];
   solution: number[][] = [];
@@ -23,15 +24,6 @@ export default class NorthwestComponent {
 
   ngOnInit(): void {
     this.initializeMatrix();
-    this.setMatrix([
-      [3, 1, 7, 4],
-      [2, 6, 5, 9],
-      [8, 3, 3, 3]
-    ]);
-    this.supply = [250, 350, 400];
-    this.demand = [200,300,350,150];
-    this.supplyN = [250, 350, 400];
-    this.demandN = [200,300,350,150];
   }
 
 /*
@@ -52,6 +44,15 @@ export default class NorthwestComponent {
     this.matrix = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
     this.solution = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
     this.costMatrix = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
+    this.setMatrix([
+      [3, 1, 7, 4],
+      [2, 6, 5, 9],
+      [8, 3, 3, 3]
+    ]);
+    this.supply = [250, 350, 400];
+    this.demand = [200,300,350,150];
+    this.supplyN =  [...this.supply];
+    this.demandN =  [...this.demand];
   }
 
 
@@ -69,54 +70,55 @@ export default class NorthwestComponent {
 
   solve() {
     this.setCostMatrix(this.matrix);
-
-    console.log("Supply:", this.supply);
-    console.log("Demand:", this.demand);
-    console.log("Supply and Demand Copy");
-    console.log("SupplyN:", this.supplyN);
-    console.log("DemandN:", this.demandN);
     console.log("Aplicando método Northwest Corner...");
     this.northwestCorner();
-    console.log("Matriz de asignación inicial:", this.solution);
-    console.log("Supply:", this.supply);
-    console.log("Demand:", this.demand);
-    console.log("Supply and Demand Copy");
-    console.log("SupplyN:", this.supplyN);
-    console.log("DemandN:", this.demandN);
+    console.log(`Matriz de asignación inicial:  ${this.solution}`);
     console.log("Costo inicial:", this.calculateTotalCost());
 
     console.log("Optimizando con método MODI...");
+    console.log(`Matriz de solucion:  ${this.solution}`);
     this.optimizeMODI();
     console.log("Matriz optimizada:", this.solution);
+    console.log(`Matriz de solucion:  ${this.solution}`);
     console.log("Costo mínimo obtenido:", this.calculateTotalCost());
   }
 
   northwestCorner() {
-    console.log("Supply:", this.supply);
-    console.log("Demand:", this.demand);
-    console.log("Supply and Demand Copy");
-    console.log("SupplyN:", this.supplyN);
-    console.log("DemandN:", this.demandN);
     let i = 0, j = 0;
     this.solution = Array.from({ length: this.supplyN.length }, () => Array(this.demandN.length).fill(0));
 
+    console.log("Inicializando algoritmo");
+
     while (i < this.supplyN.length && j < this.demandN.length) {
-      console.log("i:", i, " y J:", j);
-      console.log("Supply:", this.supply);
-      console.log("Demand:", this.demand);
-      console.log("Supply and Demand Copy");
-      console.log("SupplyN:", this.supplyN);
-      console.log("DemandN:", this.demandN);
+      console.log(`i: ${i}, j: ${j}`);
+      console.log(`SupplyN: ${this.supplyN[i]}`);
+      console.log(`DemandN: ${this.demandN[j]}`);
+
+      if (this.supplyN[i] === 0) {
+        console.log("Suministro agotado, avanzando a la siguiente fila");
+        i++;
+        continue;
+      }
+
+      if (this.demandN[j] === 0) {
+        console.log("Demanda satisfecha, avanzando a la siguiente columna");
+        j++;
+        continue;
+      }
+
       const qty = Math.min(this.supplyN[i], this.demandN[j]);
-      this.solution[i][j] = qty; // Asegurar que solution[i][j] está definido
+      console.log(`Asignando cantidad: ${qty}`);
+
+      this.solution[i][j] = qty;
+
       this.supplyN[i] -= qty;
       this.demandN[j] -= qty;
 
-      if (this.supplyN[i] === 0) i++;
-      if (this.demandN[j] === 0) j++;
+      console.log(`Suministro actualizado: ${this.supplyN[i]}`);
+      console.log(`Demanda actualizada: ${this.demandN[j]}`);
     }
+    console.log(`Matriz de solucion: ${this.solution}`);
   }
-
 
   // Calcular costo total de la asignación
   calculateTotalCost(): number {
@@ -200,13 +202,17 @@ export default class NorthwestComponent {
       for (let k = 0; k < cycle.length; k++) {
         let [i, j] = cycle[k];
         if (k % 2 === 0) {
-          this.solution[i][j] += theta;
+          // Verificar si el valor asignado está dentro de los límites de la demanda y la oferta
+          let newValue = Math.min(this.demand[j], this.supply[i], this.solution[i][j] + theta);
+          this.solution[i][j] = newValue;
         } else {
-          this.solution[i][j] -= theta;
+          // Verificar si el valor asignado está dentro de los límites de la demanda y la oferta
+          let newValue = Math.max(0, Math.min(this.demand[j], this.supply[i], this.solution[i][j] - theta));
+          this.solution[i][j] = newValue;
         }
       }
-
       console.log(`Iteración ${iteration}: Mejorando solución con la celda (${minI}, ${minJ}) con costo reducido ${minReducedCost}`);
+      console.log(`Matriz de solucion:  ${this.solution}`);
     }
   }
 
