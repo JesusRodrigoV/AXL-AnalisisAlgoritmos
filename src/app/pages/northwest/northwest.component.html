@@ -33,12 +33,8 @@
 
   <div>
     <label for="mode">Modo de Optimización:</label>
-    <select id="mode" [(ngModel)]="minimize">
-      <option [value]="true">Minimizar Costos</option>
-      <option [value]="false">Maximizar Ganancias</option>
-    </select>
-
-    <button (click)="solve()">Resolver</button>
+    <button (click)="solve()">Minimizar Costos</button>
+    <button (click)="solve()">Maximizar Ganancias</button>
   </div>
 
   <div>
