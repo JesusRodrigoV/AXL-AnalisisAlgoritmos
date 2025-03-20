@@ -23,6 +23,33 @@ import { MatCardModule } from '@angular/material/card';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class AsignacionComponent {
+  // Array de colores para las asignaciones
+  assignmentColors: string[] = [
+    '#FF6B6B80', // Rojo con transparencia
+    '#4ECDC480', // Turquesa con transparencia
+    '#45B7D180', // Azul claro con transparencia
+    '#96CEB480', // Verde menta con transparencia
+    '#FFEEAD80', // Amarillo claro con transparencia
+    '#D4A5A580', // Rosa pálido con transparencia
+    '#9B5DE580', // Púrpura con transparencia
+    '#F15BB580', // Rosa con transparencia
+    '#00BBF980', // Azul brillante con transparencia
+    '#00F5D480', // Turquesa brillante con transparencia
+  ];
+
+  // Colores sólidos para las conexiones
+  connectionColors: string[] = [
+    '#FF6B6B', // Rojo
+    '#4ECDC4', // Turquesa
+    '#45B7D1', // Azul claro
+    '#96CEB4', // Verde menta
+    '#FFEEAD', // Amarillo claro
+    '#D4A5A5', // Rosa pálido
+    '#9B5DE5', // Púrpura
+    '#F15BB5', // Rosa
+    '#00BBF9', // Azul brillante
+    '#00F5D4', // Turquesa brillante
+  ];
   @ViewChild(MyCanvasComponent) canvas!: MyCanvasComponent;
   result: { assignment: number[][]; cost: number } | null = null;
   isMaximization: boolean = false; // Por defecto será minimización
@@ -93,7 +120,6 @@ export default class AsignacionComponent {
       this.result.cost = maxValue * n - this.result.cost;
       console.log('Costo ajustado para maximización:', this.result.cost);
     }
-
     this.highlightSolution();
   }
 
@@ -363,25 +389,41 @@ export default class AsignacionComponent {
       node.color = '#ffffff';
     });
 
+    // Resetear colores de conexiones
+    this.canvas.conexiones.forEach((conn) => {
+      conn._color = '#666';
+    });
+
     // Resaltar las conexiones de la solución
     const assignment = this.result.assignment;
+    const usedColors = new Set<number>(); // Para trackear los colores usados
+
     for (let i = 0; i < assignment.length; i++) {
       for (let j = 0; j < assignment[i].length; j++) {
         if (assignment[i][j] === 1) {
+          // Asignar un nuevo índice de color que no haya sido usado
+          let colorIndex = 0;
+          while (usedColors.has(colorIndex)) {
+            colorIndex = (colorIndex + 1) % this.assignmentColors.length;
+          }
+          usedColors.add(colorIndex);
+
           // Encontrar la conexión correspondiente
           const connection = this.canvas.conexiones.find(
             (conn) => conn.desde === i + 1 && conn.hasta === j + 1,
           );
+
           if (connection) {
-            // Resaltar los nodos conectados
+            // Resaltar los nodos conectados con colores semi-transparentes
             const fromNode = this.canvas.nodos.find(
               (node) => node.contador === i + 1,
             );
             const toNode = this.canvas.nodos.find(
               (node) => node.contador === j + 1,
             );
-            if (fromNode) fromNode.color = '#90CAF9';
-            if (toNode) toNode.color = '#90CAF9';
+
+            if (fromNode) fromNode.color = this.assignmentColors[colorIndex];
+            if (toNode) toNode.color = this.assignmentColors[colorIndex];
           }
         }
       }

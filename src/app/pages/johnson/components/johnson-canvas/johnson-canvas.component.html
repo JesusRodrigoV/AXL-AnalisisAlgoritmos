@@ -1,39 +1,124 @@
-<div class="container">
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr>
-          <th>Nodo i</th>
-          <th>Nodo j</th>
-          <th>Atributos (Peso)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let actividad of actividades; let i = index">
-          <td>
-            <input
-              [(ngModel)]="actividad.nombre"
-              placeholder="Actividad {{ i + 1 }}"
-            />
-          </td>
-          <td>
-            <input [(ngModel)]="actividad.secuencia" placeholder="Secuencia" />
-          </td>
-          <td>
-            <input
-              [(ngModel)]="actividad.peso"
-              placeholder="Peso"
-              type="number"
-            />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <button (click)="agregarActividad()">Agregar Actividad</button>
-    <button (click)="generarGrafo()">Generar Grafo</button>
-    <button (click)="calcularJohnson()">Calcular</button>
-  </div>
-  <div class="canvas-container">
-    <canvas #johnsonCanvas width="800" height="600"></canvas>
+<div class="johnson-layout">
+  <mat-card class="config-panel">
+    <mat-card-header>
+      <mat-card-title>Configuración de Actividades</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="activities-table">
+        <div class="table-header">
+          <div class="header-cell">Nodo i</div>
+          <div class="header-cell">Nodo j</div>
+          <div class="header-cell">Peso</div>
+        </div>
+
+        @for (actividad of actividades; track actividad) {
+          <div class="table-row">
+            <div class="table-cell">
+              <mat-form-field appearance="outline">
+                <input
+                  matInput
+                  [(ngModel)]="actividad.nombre"
+                  placeholder="Nombre"
+                  type="text"
+                />
+              </mat-form-field>
+            </div>
+            <div class="table-cell">
+              <mat-form-field
+                appearance="outline"
+                [class.mat-form-field-invalid]="
+                  mostrarErrorAutoReferencia(actividad)
+                "
+              >
+                <input
+                  matInput
+                  [(ngModel)]="actividad.secuencia"
+                  placeholder="Secuencia"
+                  type="text"
+                />
+                <mat-error *ngIf="mostrarErrorAutoReferencia(actividad)">
+                  No se puede conectar un nodo consigo mismo
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div class="table-cell">
+              <mat-form-field appearance="outline">
+                <input
+                  matInput
+                  type="number"
+                  [(ngModel)]="actividad.peso"
+                  placeholder="Peso"
+                  min="0"
+                  pattern="[0-9]*"
+                  (input)="validarPeso($event)"
+                  [matTooltip]="'Solo números positivos'"
+                />
+                <mat-error *ngIf="!esNumeroValido(actividad.peso)">
+                  El peso debe ser un número positivo
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="actions-container">
+        <button mat-raised-button color="primary" (click)="agregarActividad()">
+          <i class="bx bx-plus"></i>
+          Agregar Actividad
+        </button>
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="generarGrafo()"
+          [disabled]="!actividadesValidas()"
+        >
+          <i class="bx bx-git-branch"></i>
+          Generar Grafo
+        </button>
+        <button mat-raised-button (click)="limpiarTodo()">
+          <i class="bx bx-trash"></i>
+          Limpiar Todo
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="canvas-container" #canvasContainer>
+    <div class="canvas-controls">
+      <button mat-mini-fab aria-label (click)="zoomIn()">
+        <mat-icon>zoom_in</mat-icon>
+      </button>
+      <button mat-mini-fab aria-label (click)="zoomOut()">
+        <mat-icon>zoom_out</mat-icon>
+      </button>
+      <button mat-mini-fab aria-label (click)="resetZoom()">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+    <div
+      class="canvas-wrapper"
+      (mousedown)="startPan($event)"
+      (mousemove)="pan($event)"
+      (mouseup)="stopPan()"
+      (mouseleave)="stopPan()"
+    >
+      <canvas
+        #johnsonCanvas
+        [width]="canvasWidth"
+        [height]="canvasHeight"
+        style="width: 100%; height: 100%"
+      ></canvas>
+    </div>
+    <div class="legend-container">
+      <div class="legend-item">
+        <div class="legend-color critical"></div>
+        <span>Camino crítico (ruta óptima)</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-color regular"></div>
+        <span>Camino regular</span>
+      </div>
+    </div>
   </div>
 </div>

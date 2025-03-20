@@ -3,15 +3,19 @@ import {
   OnInit,
   ViewChild,
   ElementRef,
-  HostListener,
   PLATFORM_ID,
   Inject,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { Nodo } from 'src/app/pages/johnson/models/nodo.model.jonson';
 import { Conexion } from 'src/app/pages/johnson/models/conexion.model.jonson';
 import { CommonModule } from '@angular/common'; // Importa CommonModule
 import { FormsModule } from '@angular/forms'; // Importa FormsModule
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 interface Actividad {
   nombre: string;
@@ -21,11 +25,49 @@ interface Actividad {
 
 @Component({
   selector: 'app-johnson-canvas',
-  imports: [CommonModule, FormsModule], // Importa CommonModule y FormsModule
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatIconModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatTooltipModule,
+  ],
   templateUrl: './johnson-canvas.component.html',
   styleUrls: ['./johnson-canvas.component.scss'],
 })
 export class JohnsonCanvasComponent implements OnInit {
+  hayGrafo = false;
+  private scale = 1;
+  private offsetX = 0;
+  private offsetY = 0;
+  private isPanning = false;
+  private lastX = 0;
+  private lastY = 0;
+  private readonly MIN_SCALE = 0.5;
+  private readonly MAX_SCALE = 2;
+  private readonly ZOOM_FACTOR = 0.1;
+  canvasWidth = 2000;
+  canvasHeight = 1500;
+
+  // Colores para la ruta crítica y nodos
+  private readonly COLORS = {
+    NODE: {
+      FILL: '#ffffff',
+      STROKE: '#2196F3',
+      TEXT: '#000000',
+      CRITICAL: '#ff4081',
+      REGULAR: '#2196F3',
+    },
+    EDGE: {
+      CRITICAL: '#ff4081',
+      REGULAR: '#2196F3',
+      TEXT: '#4CAF50',
+      HOVER: '#FF9800',
+    },
+  };
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
   @ViewChild('johnsonCanvas', { static: true })
@@ -40,25 +82,109 @@ export class JohnsonCanvasComponent implements OnInit {
   ngOnInit(): void {
     // Verificar si estamos en el navegador
     if (typeof window !== 'undefined') {
-      const context = this.canvasRef.nativeElement.getContext('2d');
-      if (context) {
-        this.ctx = context; // Asignamos el contexto solo si no es null
-        this.dibujarGrafo();
-      } else {
-        console.warn('No se pudo obtener el contexto 2D del canvas.');
-      }
+      this.inicializarCanvas();
+    }
+  }
+
+  private inicializarCanvas(): void {
+    const canvas = this.canvasRef.nativeElement;
+    const context = canvas.getContext('2d');
+
+    if (context) {
+      this.ctx = context;
+      // Ajustar el tamaño del canvas al contenedor
+      this.ajustarTamanoCanvas();
+      // Dibujar el grafo inicial
+      this.dibujarGrafo();
+    } else {
+      console.warn('No se pudo obtener el contexto 2D del canvas.');
+    }
+  }
+
+  private ajustarTamanoCanvas(): void {
+    const container = this.canvasRef.nativeElement.parentElement;
+    if (container) {
+      this.canvasWidth = container.clientWidth;
+      this.canvasHeight = container.clientHeight;
+      this.canvasRef.nativeElement.width = this.canvasWidth;
+      this.canvasRef.nativeElement.height = this.canvasHeight;
     }
   }
 
   // Agrega una nueva actividad a la tabla
   agregarActividad(): void {
-    this.actividades.push({ nombre: '', secuencia: '', peso: 0 });
+    const nuevaActividad = {
+      nombre: `Act${this.actividades.length + 1}`,
+      secuencia: '',
+      peso: 0,
+    };
+    this.actividades.push(nuevaActividad);
+  }
+
+  // Verifica si las actividades son válidas para generar el grafo
+  actividadesValidas(): boolean {
+    return this.actividades.every(
+      (actividad) =>
+        actividad.nombre?.trim() &&
+        (!actividad.secuencia || actividad.secuencia.trim()) &&
+        actividad.peso >= 0 &&
+        actividad.nombre !== actividad.secuencia, // Validar que no sea el mismo nodo
+    );
+  }
+
+  // Método para validar si una actividad tiene ciclo en sí misma
+  validarAutoReferencia(actividad: Actividad): boolean {
+    return actividad.nombre === actividad.secuencia;
+  }
+
+  // Método para mostrar error de auto-referencia
+  mostrarErrorAutoReferencia(actividad: Actividad): boolean {
+    return (
+      this.validarAutoReferencia(actividad) &&
+      actividad.nombre !== '' &&
+      actividad.secuencia !== ''
+    );
+  }
+
+  // Limpia todo y reinicia el componente
+  limpiarTodo(): void {
+    this.actividades = [{ nombre: '', secuencia: '', peso: 0 }];
+    this.nodos = [];
+    this.conexiones = [];
+    this.hayGrafo = false;
+    this.scale = 1;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.limpiarCanvas();
   }
 
   // Genera el grafo a partir de la tabla
   generarGrafo(): void {
+    // Limpiar estado previo
     this.nodos = [];
     this.conexiones = [];
+    this.hayGrafo = false;
+
+    // Validar que no haya auto-referencias
+    const hayAutoReferencias = this.actividades.some((actividad) =>
+      this.validarAutoReferencia(actividad),
+    );
+
+    if (hayAutoReferencias) {
+      console.warn('Hay actividades que se referencian a sí mismas');
+      return;
+    }
+
+    // Validar actividades
+    if (!this.actividadesValidas()) {
+      console.warn('Las actividades no son válidas');
+      return;
+    }
+    if (this.actividades.some((a) => a.nombre || a.secuencia || a.peso !== 0)) {
+      if (!this.actividadesValidas()) {
+        return;
+      }
+    }
 
     // Crear nodos únicos basados en la columna "Actividad"
     const nodosUnicos: { [key: string]: Nodo } = {};
@@ -97,6 +223,7 @@ export class JohnsonCanvasComponent implements OnInit {
 
     // Dibujar el grafo
     this.dibujarGrafo();
+    this.hayGrafo = true;
 
     // Calcular la ruta crítica
     this.calcularRutaCritica();
@@ -207,14 +334,17 @@ export class JohnsonCanvasComponent implements OnInit {
   private requestAnimationId: number | null = null;
 
   dibujarGrafo(): void {
-    // Cancelar cualquier frame de animación pendiente
     if (this.requestAnimationId !== null) {
       cancelAnimationFrame(this.requestAnimationId);
     }
 
-    // Programar el próximo frame de dibujado
     this.requestAnimationId = requestAnimationFrame(() => {
       this.limpiarCanvas();
+
+      // Aplicar transformaciones
+      this.ctx.save();
+      this.ctx.translate(this.offsetX, this.offsetY);
+      this.ctx.scale(this.scale, this.scale);
 
       // Dibujar conexiones
       this.conexiones.forEach((conexion) => {
@@ -226,8 +356,73 @@ export class JohnsonCanvasComponent implements OnInit {
         this.dibujarNodo(nodo);
       });
 
+      this.ctx.restore();
       this.requestAnimationId = null;
     });
+  }
+
+  // Métodos para zoom
+  zoomIn(): void {
+    if (this.scale < this.MAX_SCALE) {
+      this.scale += this.ZOOM_FACTOR;
+      this.dibujarGrafo();
+    }
+  }
+
+  zoomOut(): void {
+    if (this.scale > this.MIN_SCALE) {
+      this.scale -= this.ZOOM_FACTOR;
+      this.dibujarGrafo();
+    }
+  }
+
+  resetZoom(): void {
+    this.scale = 1;
+    this.offsetX = 0;
+    this.offsetY = 0;
+    this.dibujarGrafo();
+  }
+
+  // Métodos para pan
+  startPan(event: MouseEvent): void {
+    this.isPanning = true;
+    this.lastX = event.clientX;
+    this.lastY = event.clientY;
+  }
+
+  pan(event: MouseEvent): void {
+    if (!this.isPanning) return;
+
+    const deltaX = event.clientX - this.lastX;
+    const deltaY = event.clientY - this.lastY;
+
+    this.offsetX += deltaX;
+    this.offsetY += deltaY;
+
+    this.lastX = event.clientX;
+    this.lastY = event.clientY;
+
+    this.dibujarGrafo();
+  }
+
+  stopPan(): void {
+    this.isPanning = false;
+  }
+
+  // Conversión de coordenadas del canvas a coordenadas del mundo
+  private canvasToWorld(x: number, y: number): { x: number; y: number } {
+    return {
+      x: (x - this.offsetX) / this.scale,
+      y: (y - this.offsetY) / this.scale,
+    };
+  }
+
+  // Conversión de coordenadas del mundo a coordenadas del canvas
+  private worldToCanvas(x: number, y: number): { x: number; y: number } {
+    return {
+      x: x * this.scale + this.offsetX,
+      y: y * this.scale + this.offsetY,
+    };
   }
 
   // Limpiar recursos cuando el componente se destruye
@@ -239,18 +434,48 @@ export class JohnsonCanvasComponent implements OnInit {
 
   // Dibuja un nodo en el canvas
   dibujarNodo(nodo: Nodo): void {
-    const radio = 30;
+    const radio = 35; // Radio aumentado para mejor visualización
+
+    // Efecto de sombra
+    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    this.ctx.shadowBlur = 8;
+    this.ctx.shadowOffsetX = 2;
+    this.ctx.shadowOffsetY = 2;
 
     // Dibujar el círculo del nodo
     this.ctx.beginPath();
     this.ctx.arc(nodo.x, nodo.y, radio, 0, Math.PI * 2);
-    this.ctx.fillStyle = '#ffffff'; // Fondo blanco
+    this.ctx.fillStyle = this.COLORS.NODE.FILL;
     this.ctx.fill();
-    this.ctx.strokeStyle = '#2196F3'; // Borde azul
-    this.ctx.lineWidth = 2;
+
+    // Resetear sombra para el borde
+    this.ctx.shadowColor = 'transparent';
+
+    // Borde del nodo
+    this.ctx.strokeStyle = this.esNodoCritico(nodo)
+      ? this.COLORS.NODE.CRITICAL
+      : this.COLORS.NODE.REGULAR;
+    this.ctx.lineWidth = 3;
     this.ctx.stroke();
 
-    // Dibujar líneas divisorias para dividir en tres secciones
+    // Dibujar líneas divisorias con efecto gradiente
+    const gradient = this.ctx.createLinearGradient(
+      nodo.x - radio,
+      nodo.y,
+      nodo.x + radio,
+      nodo.y,
+    );
+    gradient.addColorStop(0, 'rgba(33, 150, 243, 0.2)');
+    gradient.addColorStop(1, 'rgba(33, 150, 243, 0.1)');
+
+    // Texto del nodo con mejor estilo (ahora dentro del círculo)
+    this.ctx.fillStyle = this.COLORS.NODE.TEXT;
+    this.ctx.font = 'bold 16px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(nodo.label, nodo.x, nodo.y - 10); // Posicionado arriba de la línea divisoria
+
+    // Dibujar líneas divisorias
+    this.ctx.strokeStyle = gradient;
     this.ctx.beginPath();
     this.ctx.moveTo(nodo.x - radio, nodo.y);
     this.ctx.lineTo(nodo.x + radio, nodo.y);
@@ -258,26 +483,30 @@ export class JohnsonCanvasComponent implements OnInit {
     this.ctx.lineTo(nodo.x, nodo.y + radio);
     this.ctx.stroke();
 
-    // Mostrar el nombre del nodo en la parte superior
-    this.ctx.fillStyle = '#000000';
-    this.ctx.font = 'bold 14px Arial';
-    this.ctx.textAlign = 'center';
-    this.ctx.fillText(nodo.label, nodo.x, nodo.y - radio - 5);
+    // Valores con mejor contraste
+    this.ctx.font = '14px Arial';
+    const tiempoInicioX = nodo.x - radio / 3;
+    const tiempoFinX = nodo.x + radio / 3;
+    const tiempoY = nodo.y + radio / 2 + 5;
 
-    // Mostrar valores en las secciones
-    this.ctx.font = '12px Arial';
-    this.ctx.fillStyle = '#1976D2'; // Azul más oscuro
-    this.ctx.fillText(
-      `${nodo.tiempoInicio}`,
-      nodo.x - radio / 3,
-      nodo.y + radio / 2 + 5,
-    );
+    // Fondo para los valores
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    this.ctx.fillRect(tiempoInicioX - 15, tiempoY - 12, 30, 16);
+    this.ctx.fillRect(tiempoFinX - 15, tiempoY - 12, 30, 16);
 
-    this.ctx.fillStyle = '#D32F2F'; // Rojo más oscuro
-    this.ctx.fillText(
-      `${nodo.tiempoFin}`,
-      nodo.x + radio / 3,
-      nodo.y + radio / 2 + 5,
+    // Valores
+    this.ctx.fillStyle = this.esNodoCritico(nodo)
+      ? this.COLORS.NODE.CRITICAL
+      : this.COLORS.NODE.REGULAR;
+    this.ctx.fillText(`${nodo.tiempoInicio}`, tiempoInicioX, tiempoY);
+    this.ctx.fillText(`${nodo.tiempoFin}`, tiempoFinX, tiempoY);
+  }
+
+  private esNodoCritico(nodo: Nodo): boolean {
+    return this.conexiones.some(
+      (conexion) =>
+        (conexion.origen.id === nodo.id || conexion.destino.id === nodo.id) &&
+        conexion.rutaCritica,
     );
   }
 
@@ -285,9 +514,8 @@ export class JohnsonCanvasComponent implements OnInit {
   dibujarConexion(conexion: Conexion): void {
     const origen = conexion.origen;
     const destino = conexion.destino;
-    const radio = 30; // Mismo radio que los nodos
+    const radio = 35;
 
-    // Calcular puntos de inicio y fin ajustados para que la flecha no toque los nodos
     const dx = destino.x - origen.x;
     const dy = destino.y - origen.y;
     const angle = Math.atan2(dy, dx);
@@ -297,25 +525,37 @@ export class JohnsonCanvasComponent implements OnInit {
     const endX = destino.x - radio * Math.cos(angle);
     const endY = destino.y - radio * Math.sin(angle);
 
-    // Dibujar la línea principal
+    // Efecto de sombra para la línea
+    this.ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+    this.ctx.shadowBlur = 4;
+    this.ctx.shadowOffsetX = 1;
+    this.ctx.shadowOffsetY = 1;
+
+    // Dibujar la línea principal con gradiente
+    const gradient = this.ctx.createLinearGradient(startX, startY, endX, endY);
+    if (conexion.rutaCritica) {
+      gradient.addColorStop(0, this.COLORS.EDGE.CRITICAL);
+      gradient.addColorStop(1, this.COLORS.EDGE.CRITICAL);
+      this.ctx.lineWidth = 4;
+    } else {
+      gradient.addColorStop(0, this.COLORS.EDGE.REGULAR);
+      gradient.addColorStop(1, this.COLORS.EDGE.REGULAR);
+      this.ctx.lineWidth = 2;
+    }
+
     this.ctx.beginPath();
     this.ctx.moveTo(startX, startY);
     this.ctx.lineTo(endX, endY);
-
-    // Establecer el estilo según si es ruta crítica o no
-    if (conexion.rutaCritica) {
-      this.ctx.strokeStyle = '#1976D2'; // Azul más oscuro
-      this.ctx.lineWidth = 3;
-    } else {
-      this.ctx.strokeStyle = '#D32F2F'; // Rojo más oscuro
-      this.ctx.lineWidth = 2;
-    }
+    this.ctx.strokeStyle = gradient;
     this.ctx.stroke();
 
-    // Dibujar la punta de la flecha
-    const headlen = 15; // Longitud de la punta de la flecha
-    const angle1 = angle - Math.PI / 6;
-    const angle2 = angle + Math.PI / 6;
+    // Resetear sombra para el resto de elementos
+    this.ctx.shadowColor = 'transparent';
+
+    // Dibujar la punta de la flecha con mejor estilo
+    const headlen = 18;
+    const angle1 = angle - Math.PI / 7;
+    const angle2 = angle + Math.PI / 7;
 
     this.ctx.beginPath();
     this.ctx.moveTo(endX, endY);
@@ -323,29 +563,46 @@ export class JohnsonCanvasComponent implements OnInit {
       endX - headlen * Math.cos(angle1),
       endY - headlen * Math.sin(angle1),
     );
-    this.ctx.moveTo(endX, endY);
+    this.ctx.lineTo(
+      endX - headlen * 0.5 * Math.cos(angle),
+      endY - headlen * 0.5 * Math.sin(angle),
+    );
     this.ctx.lineTo(
       endX - headlen * Math.cos(angle2),
       endY - headlen * Math.sin(angle2),
     );
-    this.ctx.stroke();
-
-    // Dibujar peso de la conexión con fondo
-    const midX = (startX + endX) / 2;
-    const midY = (startY + endY) / 2;
-
-    // Fondo blanco para el peso
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.beginPath();
-    this.ctx.arc(midX, midY, 12, 0, Math.PI * 2);
+    this.ctx.closePath();
+    this.ctx.fillStyle = conexion.rutaCritica
+      ? this.COLORS.EDGE.CRITICAL
+      : this.COLORS.EDGE.REGULAR;
     this.ctx.fill();
 
-    // Texto del peso
-    this.ctx.fillStyle = '#4CAF50'; // Verde
-    this.ctx.font = 'bold 16px Arial';
+    // Información de peso y holgura
+    const midX = (startX + endX) / 2;
+    const midY = (startY + endY) / 2;
+    const offset = conexion.rutaCritica ? 25 : 20;
+
+    // Fondo para el peso
+    this.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    this.ctx.beginPath();
+    this.ctx.arc(midX, midY, 15, 0, Math.PI * 2);
+    this.ctx.fill();
+
+    // Peso
+    this.ctx.fillStyle = this.COLORS.EDGE.TEXT;
+    this.ctx.font = 'bold 14px Arial';
     this.ctx.textAlign = 'center';
     this.ctx.textBaseline = 'middle';
     this.ctx.fillText(conexion.peso.toString(), midX, midY);
+
+    // Holgura
+    if (conexion.holgura !== undefined) {
+      this.ctx.font = '12px Arial';
+      this.ctx.fillStyle = conexion.rutaCritica
+        ? this.COLORS.EDGE.CRITICAL
+        : this.COLORS.EDGE.REGULAR;
+      this.ctx.fillText(`h=${conexion.holgura}`, midX, midY + offset);
+    }
   }
   calcularJohnson(): void {
     this.calcularTiemposIda();
@@ -449,5 +706,22 @@ export class JohnsonCanvasComponent implements OnInit {
       // Dibujar el texto de la holgura en el canvas
       this.ctx.fillText(`h=${holgura}`, xMedio, yMedio + 20);
     });
+  }
+  validarPeso(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const valor = input.value;
+
+    // Eliminar caracteres no numéricos
+    input.value = valor.replace(/[^0-9]/g, '');
+
+    // Convertir a número y validar
+    const numeroValor = Number(input.value);
+    if (numeroValor < 0) {
+      input.value = '0';
+    }
+  }
+
+  esNumeroValido(valor: any): boolean {
+    return !isNaN(valor) && valor >= 0;
   }
 }

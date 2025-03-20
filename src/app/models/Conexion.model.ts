@@ -3,12 +3,14 @@ export class Conexion {
   private _hasta: number;
   private _peso: number;
   private _dirigido: boolean;
+  _color?: string;
 
   constructor(desde: number, hasta: number, peso: number, dirigido: boolean) {
     this._desde = desde;
     this._hasta = hasta;
     this._peso = peso;
     this._dirigido = dirigido;
+    this._color = '#666';
   }
 
   get desde(): number {
@@ -41,5 +43,8 @@ export class Conexion {
 
   set dirigido(value: boolean) {
     this._dirigido = value;
+  }
+  get color(): string | undefined {
+    return this._color;
   }
 }

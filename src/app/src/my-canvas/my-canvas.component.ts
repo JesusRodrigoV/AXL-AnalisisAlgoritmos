@@ -150,7 +150,28 @@ export class MyCanvasComponent {
         this.primerNodoSeleccionado = nodoSeleccionado.contador;
         nodoSeleccionado.selected = true;
       } else {
-        // Permitimos que el segundo nodo sea el mismo que el primero
+        // Validamos que no sea el mismo nodo
+        if (nodoSeleccionado.contador === this.primerNodoSeleccionado) {
+          alert('No se puede conectar un nodo consigo mismo');
+          this.limpiarSeleccion();
+          return;
+        }
+
+        // Validar que no exista ninguna conexión entre estos nodos
+        const existeConexion = this.conexiones.some(
+          (conn) =>
+            (conn.desde === this.primerNodoSeleccionado &&
+              conn.hasta === nodoSeleccionado.contador) ||
+            (conn.desde === nodoSeleccionado.contador &&
+              conn.hasta === this.primerNodoSeleccionado),
+        );
+
+        if (existeConexion) {
+          alert('Ya existe una conexión entre estos nodos');
+          this.limpiarSeleccion();
+          return;
+        }
+
         this.segundoNodoSeleccionado = nodoSeleccionado.contador;
         this.showModal();
       }
@@ -387,7 +408,7 @@ export class MyCanvasComponent {
           // Dibujar flecha en el punto final
           this.dibujarFlecha(ctx, endX, endY, dx, dy);
 
-          ctx.strokeStyle = '#666';
+          ctx.strokeStyle = conexion.color || '#666';
           ctx.lineWidth = 2;
           ctx.stroke();
 
@@ -419,8 +440,10 @@ export class MyCanvasComponent {
     this.nodos.forEach((circulo) => {
       ctx.beginPath();
       ctx.arc(circulo.x, circulo.y, circulo.radio, 0, Math.PI * 2);
-      ctx.fillStyle = circulo.selected ? '#ff9800' : circulo.color; // Aquí se aplica el color
+      ctx.fillStyle = circulo.selected ? '#ff9800' : circulo.color; // Color de relleno
       ctx.fill();
+      ctx.strokeStyle = '#000000'; // Color del borde siempre negro
+      ctx.lineWidth = 2; // Grosor del borde
       ctx.stroke();
       ctx.font = '20px Source Sans Pro,Arial,sans-serif';
       ctx.fillStyle = 'black';
