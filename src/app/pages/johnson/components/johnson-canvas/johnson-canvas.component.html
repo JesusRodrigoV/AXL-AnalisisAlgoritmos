@@ -80,6 +80,20 @@
           <i class="bx bx-trash"></i>
           Limpiar Todo
         </button>
+        <button
+          mat-icon-button
+          (click)="exportarGrafo()"
+          matTooltip="Exportar grafo"
+        >
+          <mat-icon>file_download</mat-icon>
+        </button>
+        <button
+          mat-icon-button
+          (click)="triggerFileInput()"
+          matTooltip="Importar grafo"
+        >
+          <mat-icon>file_upload</mat-icon>
+        </button>
       </div>
     </mat-card-content>
   </mat-card>

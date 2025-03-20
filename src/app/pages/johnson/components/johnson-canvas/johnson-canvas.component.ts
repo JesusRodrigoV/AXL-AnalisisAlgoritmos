@@ -80,25 +80,59 @@ export class JohnsonCanvasComponent implements OnInit {
   selectedNodo: Nodo | null = null; // Nodo seleccionado para crear conexiones
 
   ngOnInit(): void {
-    // Verificar si estamos en el navegador
-    if (typeof window !== 'undefined') {
-      this.inicializarCanvas();
+    // Verificar si estamos en el navegador y si el canvas existe
+    if (typeof window !== 'undefined' && this.canvasRef?.nativeElement) {
+      setTimeout(() => {
+        this.inicializarCanvas();
+      }, 0);
     }
   }
 
   private inicializarCanvas(): void {
-    const canvas = this.canvasRef.nativeElement;
-    const context = canvas.getContext('2d');
-
-    if (context) {
-      this.ctx = context;
-      // Ajustar el tamaño del canvas al contenedor
-      this.ajustarTamanoCanvas();
-      // Dibujar el grafo inicial
-      this.dibujarGrafo();
-    } else {
-      console.warn('No se pudo obtener el contexto 2D del canvas.');
+    if (!this.canvasRef) {
+      console.error('Canvas reference not found');
+      return;
     }
+
+    const canvas = this.canvasRef.nativeElement;
+    if (!canvas) {
+      console.error('Canvas element not found');
+      return;
+    }
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      console.error('Could not get 2D context');
+      return;
+    }
+
+    this.ctx = context;
+
+    // Configurar el canvas
+    canvas.width = this.canvasWidth;
+    canvas.height = this.canvasHeight;
+
+    // Ajustar el tamaño del canvas al contenedor
+    this.ajustarTamanoCanvas();
+
+    // Aplicar escala inicial
+    this.ctx.scale(this.scale, this.scale);
+
+    // Dibujar el grafo inicial si hay datos
+    if (this.nodos.length > 0) {
+      this.dibujarGrafo();
+    }
+
+    // Agregar listeners para el mouse
+    canvas.addEventListener('mousedown', (e) => this.startPan(e));
+    canvas.addEventListener('mousemove', (e) => this.pan(e));
+    canvas.addEventListener('mouseup', () => this.stopPan());
+    canvas.addEventListener('mouseleave', () => this.stopPan());
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) this.zoomIn();
+      else this.zoomOut();
+    });
   }
 
   private ajustarTamanoCanvas(): void {
@@ -114,7 +148,7 @@ export class JohnsonCanvasComponent implements OnInit {
   // Agrega una nueva actividad a la tabla
   agregarActividad(): void {
     const nuevaActividad = {
-      nombre: `Act${this.actividades.length + 1}`,
+      nombre: ``,
       secuencia: '',
       peso: 0,
     };
@@ -227,6 +261,7 @@ export class JohnsonCanvasComponent implements OnInit {
 
     // Calcular la ruta crítica
     this.calcularRutaCritica();
+    this.calcularJohnson();
   }
 
   // Ajusta las coordenadas de los nodos para que no se superpongan
@@ -723,5 +758,98 @@ export class JohnsonCanvasComponent implements OnInit {
 
   esNumeroValido(valor: any): boolean {
     return !isNaN(valor) && valor >= 0;
+  }
+
+  exportarGrafo(): void {
+    const datos = {
+      actividades: this.actividades,
+      nodos: this.nodos.map((nodo) => ({
+        id: nodo.id,
+        x: nodo.x,
+        y: nodo.y,
+        label: nodo.label,
+        tiempoInicio: nodo.tiempoInicio,
+        tiempoFin: nodo.tiempoFin,
+      })),
+      conexiones: this.conexiones.map((conexion) => ({
+        origen: conexion.origen.id,
+        destino: conexion.destino.id,
+        peso: conexion.peso,
+        holgura: conexion.holgura,
+        rutaCritica: conexion.rutaCritica,
+      })),
+    };
+
+    const jsonString = JSON.stringify(datos, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'grafo-johnson.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  importarGrafo(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const datos = JSON.parse(e.target?.result as string);
+
+        // Limpiar el estado actual
+        this.limpiarTodo();
+
+        // Importar actividades
+        this.actividades = datos.actividades;
+
+        // Importar nodos
+        this.nodos = datos.nodos.map((nodoData: any) => {
+          const nodo = new Nodo(
+            nodoData.id,
+            nodoData.x,
+            nodoData.y,
+            nodoData.label,
+          );
+          nodo.tiempoInicio = nodoData.tiempoInicio;
+          nodo.tiempoFin = nodoData.tiempoFin;
+          return nodo;
+        });
+
+        // Importar conexiones
+        this.conexiones = datos.conexiones.map((conexionData: any) => {
+          const origen = this.nodos.find((n) => n.id === conexionData.origen)!;
+          const destino = this.nodos.find(
+            (n) => n.id === conexionData.destino,
+          )!;
+          const conexion = new Conexion(origen, destino, conexionData.peso);
+          conexion.holgura = conexionData.holgura;
+          conexion.rutaCritica = conexionData.rutaCritica;
+          return conexion;
+        });
+
+        this.hayGrafo = true;
+        this.dibujarGrafo();
+      } catch (error) {
+        console.error('Error al importar el archivo:', error);
+        alert(
+          'Error al importar el archivo. Asegúrate de que sea un archivo JSON válido.',
+        );
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  triggerFileInput(): void {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    fileInput.onchange = (e) => this.importarGrafo(e);
+    fileInput.click();
   }
 }
