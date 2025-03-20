@@ -1,0 +1,13 @@
+<div class="help-button-container">
+  <button
+    mat-mini-fab
+    color="primary"
+    (click)="openHelpDialog()"
+    matTooltip="Ayuda"
+    class="help-fab"
+  >
+    <mat-icon>help_outline</mat-icon>
+  </button>
+
+  <div class="help-prompt" *ngIf="showHelpPrompt">¿Necesitas ayuda?</div>
+</div>

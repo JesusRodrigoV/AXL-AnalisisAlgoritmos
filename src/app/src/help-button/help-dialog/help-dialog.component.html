@@ -1,0 +1,46 @@
+<h2 mat-dialog-title>{{ data.title }}</h2>
+
+<mat-dialog-content class="help-content">
+  <div *ngIf="data.description" class="description">
+    {{ data.description }}
+  </div>
+
+  <div *ngIf="data.steps?.length" class="steps-section">
+    <h3>Pasos a seguir:</h3>
+    <mat-vertical-stepper>
+      <mat-step *ngFor="let step of data.steps">
+        <ng-template matStepLabel>{{ step.title }}</ng-template>
+        <div class="step-content">
+          <p>{{ step.description }}</p>
+          <img *ngIf="step.image" [src]="step.image" [alt]="step.title" />
+        </div>
+      </mat-step>
+    </mat-vertical-stepper>
+  </div>
+
+  <div *ngIf="data.images?.length" class="images-section">
+    <h3>Imágenes de referencia:</h3>
+    <mat-grid-list cols="2" rowHeight="200px" gutterSize="16px">
+      <mat-grid-tile *ngFor="let image of data.images">
+        <figure>
+          <img [src]="image.url" [alt]="image.alt" />
+          <figcaption>{{ image.caption }}</figcaption>
+        </figure>
+      </mat-grid-tile>
+    </mat-grid-list>
+  </div>
+
+  <div *ngIf="data.tips?.length" class="tips-section">
+    <h3>Consejos útiles:</h3>
+    <mat-list>
+      <mat-list-item *ngFor="let tip of data.tips">
+        <mat-icon matListItemIcon>lightbulb</mat-icon>
+        <span matListItemTitle>{{ tip }}</span>
+      </mat-list-item>
+    </mat-list>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="closeDialog()">Cerrar</button>
+</mat-dialog-actions>

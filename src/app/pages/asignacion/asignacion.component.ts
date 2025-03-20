@@ -6,6 +6,8 @@ import { MatListModule } from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { HelpContent } from '@app/models/Help.model';
+import { HelpButtonComponent } from '@app/src/help-button';
 
 @Component({
   selector: 'app-asignacion',
@@ -17,12 +19,49 @@ import { MatCardModule } from '@angular/material/card';
     FormsModule,
     MatButtonToggleModule,
     MatCardModule,
+    HelpButtonComponent,
   ],
   templateUrl: './asignacion.component.html',
   styleUrl: './asignacion.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class AsignacionComponent {
+  helpContent: HelpContent = {
+    title: 'Ayuda - Algoritmo de Johnson',
+    description:
+      'Este componente te permite resolver problemas usando el algoritmo de Johnson...',
+    steps: [
+      {
+        number: 1,
+        title: 'Crear nodos',
+        description: 'Haz clic en el canvas para crear un nuevo nodo',
+        image: 'assets/create-node.png',
+      },
+      {
+        number: 2,
+        title: 'Crear nodos',
+        description: 'Haz clic en el canvas para crear un nuevo nodo',
+        image: 'assets/create-node.png',
+      },
+      {
+        number: 3,
+        title: 'Crear nodos',
+        description: 'Haz clic en el canvas para crear un nuevo nodo',
+        image: 'assets/create-node.png',
+      },
+    ],
+    images: [
+      {
+        url: 'assets/example1.png',
+        caption: 'Ejemplo de un grafo completo',
+        alt: 'Grafo de ejemplo',
+      },
+    ],
+    tips: [
+      'Puedes arrastrar los nodos para reorganizarlos',
+      'Usa el botón derecho para eliminar elementos',
+    ],
+  };
   // Array de colores para las asignaciones
   assignmentColors: string[] = [
     '#FF6B6B80', // Rojo con transparencia

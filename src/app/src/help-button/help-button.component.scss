@@ -1,0 +1,48 @@
+.help-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.help-fab {
+  z-index: 1000;
+}
+
+.help-prompt {
+  position: absolute;
+  background: #323232;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: fadeInOut 2s ease-in-out;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0 8px;
+    border-style: solid;
+    border-color: #323232 transparent transparent transparent;
+  }
+}
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
