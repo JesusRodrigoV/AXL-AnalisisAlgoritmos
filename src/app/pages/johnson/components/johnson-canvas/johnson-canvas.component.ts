@@ -20,6 +20,7 @@ interface Actividad {
 export class JohnsonCanvasComponent implements OnInit {
   @ViewChild('johnsonCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
   private ctx!: CanvasRenderingContext2D;
+  
 
   actividades: Actividad[] = [{ nombre: '', secuencia: '', peso: 0 }]; // Lista de actividades
   nodos: Nodo[] = []; // Lista de nodos
@@ -213,6 +214,12 @@ export class JohnsonCanvasComponent implements OnInit {
     this.ctx.moveTo(nodo.x, nodo.y);   // Desde el centro
     this.ctx.lineTo(nodo.x, nodo.y + radio);   // Hasta la parte inferior del círculo
     this.ctx.stroke();
+
+    // Mostrar la etiqueta dentro de la parte superior del nodo
+    this.ctx.fillStyle = 'black';
+    this.ctx.font = '14px Arial';
+    this.ctx.textAlign = 'center';
+    this.ctx.fillText(nodo.label, nodo.x, nodo.y - radio / 2 + 5);
     
     // Mostrar valores en las dos secciones
     this.ctx.fillStyle = 'blue';
@@ -228,6 +235,7 @@ export class JohnsonCanvasComponent implements OnInit {
   dibujarConexion(conexion: Conexion): void {
     const origen = conexion.origen;
     const destino = conexion.destino;
+    const radio = 30;
   
     // Calcular puntos de control para la curva
     const controlX1 = origen.x + (destino.x - origen.x) * 0.5;
@@ -257,6 +265,35 @@ export class JohnsonCanvasComponent implements OnInit {
     this.ctx.font = '16px Arial'; // Tamaño de fuente más grande
     this.ctx.textAlign = 'center';
     this.ctx.fillText(conexion.peso.toString(), midX, midY);
+
+    const midT = 0.85; // Ajuste de la posición de la flecha
+    const arrowX = this.bezierPoint(origen.x, controlX1, controlX2, destino.x, midT);
+    const arrowY = this.bezierPoint(origen.y, controlY1, controlY2, destino.y, midT);
+    const angle = this.bezierAngle(origen.x, controlX1, controlX2, destino.x, 
+                                   origen.y, controlY1, controlY2, destino.y, midT);
+    this.dibujarFlecha(arrowX, arrowY, angle);
+  }
+
+  dibujarFlecha(x: number, y: number, angle: number): void {
+    const headLength = 10;
+
+    this.ctx.beginPath();
+    this.ctx.moveTo(x, y);
+    this.ctx.lineTo(x - headLength * Math.cos(angle - Math.PI / 6), y - headLength * Math.sin(angle - Math.PI / 6));
+    this.ctx.lineTo(x - headLength * Math.cos(angle + Math.PI / 6), y - headLength * Math.sin(angle + Math.PI / 6));
+    this.ctx.lineTo(x, y);
+    this.ctx.fillStyle = 'black';
+    this.ctx.fill();
+  }
+
+  bezierPoint(p0: number, p1: number, p2: number, p3: number, t: number): number {
+    return Math.pow(1 - t, 3) * p0 + 3 * Math.pow(1 - t, 2) * t * p1 + 3 * (1 - t) * Math.pow(t, 2) * p2 + Math.pow(t, 3) * p3;
+  }
+
+  bezierAngle(x0: number, x1: number, x2: number, x3: number, y0: number, y1: number, y2: number, y3: number, t: number): number {
+    const dx = 3 * Math.pow(1 - t, 2) * (x1 - x0) + 6 * (1 - t) * t * (x2 - x1) + 3 * Math.pow(t, 2) * (x3 - x2);
+    const dy = 3 * Math.pow(1 - t, 2) * (y1 - y0) + 6 * (1 - t) * t * (y2 - y1) + 3 * Math.pow(t, 2) * (y3 - y2);
+    return Math.atan2(dy, dx);
   }
   calcularJohnson(): void {
     this.calcularTiemposIda();
