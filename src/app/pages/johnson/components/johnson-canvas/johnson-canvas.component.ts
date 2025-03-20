@@ -834,12 +834,26 @@ export class JohnsonCanvasComponent implements OnInit {
         });
 
         this.hayGrafo = true;
-        this.dibujarGrafo();
+
+        // Asegurarse de que el canvas esté inicializado
+        if (!this.ctx) {
+          setTimeout(() => {
+            this.inicializarCanvas();
+            setTimeout(() => {
+              this.dibujarGrafo();
+            }, 100);
+          }, 0);
+        } else {
+          this.dibujarGrafo();
+        }
       } catch (error) {
         console.error('Error al importar el archivo:', error);
         alert(
           'Error al importar el archivo. Asegúrate de que sea un archivo JSON válido.',
         );
+      } finally {
+        // Limpiar el input file
+        input.value = '';
       }
     };
     reader.readAsText(file);
