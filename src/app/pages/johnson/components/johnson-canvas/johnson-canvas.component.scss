@@ -49,3 +49,35 @@
     background-color: #fff;
   }
 }
+
+.legend {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+  align-items: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.line {
+  width: 40px;
+  height: 5px;
+  border-radius: 2px;
+}
+
+.blue {
+  background-color: blue;
+}
+
+.red {
+  background-color: red;
+}
+
+.table-container button {
+  margin-right: 5px;
+  margin-top: 5px;
+}

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { Nodo } from 'src/app/pages/johnson/models/nodo.model.jonson';
 import { Conexion } from 'src/app/pages/johnson/models/conexion.model.jonson';
 import { CommonModule } from '@angular/common'; // Importa CommonModule
@@ -17,24 +17,75 @@ interface Actividad {
   templateUrl: './johnson-canvas.component.html',
   styleUrls: ['./johnson-canvas.component.scss'],
 })
-export class JohnsonCanvasComponent implements OnInit {
-  @ViewChild('johnsonCanvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+export class JohnsonCanvasComponent implements AfterViewInit {
+  @ViewChild('johnsonCanvas', { static: false }) canvas?: ElementRef<HTMLCanvasElement>;
   private ctx!: CanvasRenderingContext2D;
-  
+  private scale: number = 1;
+  private offsetX: number = 0;
+  private offsetY: number = 0;
+  private isPanning: boolean = false;
+  private startX: number = 0;
+  private startY: number = 0;
 
   actividades: Actividad[] = [{ nombre: '', secuencia: '', peso: 0 }]; // Lista de actividades
   nodos: Nodo[] = []; // Lista de nodos
   conexiones: Conexion[] = []; // Lista de conexiones
   selectedNodo: Nodo | null = null; // Nodo seleccionado para crear conexiones
 
-  ngOnInit(): void {
-    const context = this.canvasRef.nativeElement.getContext('2d');
-    if (context) {
-      this.ctx = context; // Asignamos el contexto solo si no es null
-      this.dibujarGrafo();
-    } else {
-      throw new Error('No se pudo obtener el contexto 2D del canvas.');
+  ngAfterViewInit(): void {
+    if (this.canvas?.nativeElement) {
+      this.ctx = this.canvas.nativeElement.getContext('2d')!;
+      this.setupCanvas();
     }
+  }
+
+  private setupCanvas(): void {
+    if (!this.canvas) return;
+    const canvasElement = this.canvas.nativeElement;
+    canvasElement.width = window.innerWidth;
+    canvasElement.height = window.innerHeight;
+    this.redraw();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.setupCanvas();
+  }
+
+  @HostListener('mousedown', ['$event'])
+  onMouseDown(event: MouseEvent): void {
+    this.isPanning = true;
+    this.startX = event.clientX - this.offsetX;
+    this.startY = event.clientY - this.offsetY;
+  }
+
+  @HostListener('mousemove', ['$event'])
+  onMouseMove(event: MouseEvent): void {
+    if (this.isPanning) {
+      this.offsetX = event.clientX - this.startX;
+      this.offsetY = event.clientY - this.startY;
+      this.redraw();
+    }
+  }
+
+  @HostListener('mouseup')
+  onMouseUp(): void {
+    this.isPanning = false;
+  }
+
+  @HostListener('wheel', ['$event'])
+  onWheel(event: WheelEvent): void {
+    event.preventDefault();
+    const scaleAmount = event.deltaY > 0 ? 0.9 : 1.1;
+    this.scale *= scaleAmount;
+    this.redraw();
+  }
+
+  private redraw(): void {
+    if (!this.canvas) return;
+    this.ctx.setTransform(this.scale, 0, 0, this.scale, this.offsetX, this.offsetY);
+    this.ctx.clearRect(-this.offsetX, -this.offsetY, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
+    this.dibujarGrafo(); // Redibujar el grafo después de limpiar el canvas
   }
 
   // Agrega una nueva actividad a la tabla
@@ -225,10 +276,10 @@ export class JohnsonCanvasComponent implements OnInit {
     this.ctx.fillStyle = 'blue';
     this.ctx.font = '12px Arial';
     this.ctx.textAlign = 'center';
-    this.ctx.fillText(`I: ${nodo.tiempoInicio}`, nodo.x - radio / 3, nodo.y + radio / 2 + 5);
+    this.ctx.fillText(` ${nodo.tiempoInicio}`, nodo.x - radio / 3, nodo.y + radio / 2 + 5);
     
     this.ctx.fillStyle = 'red';
-    this.ctx.fillText(`V: ${nodo.tiempoFin}`, nodo.x + radio / 3, nodo.y + radio / 2 + 5);
+    this.ctx.fillText(` ${nodo.tiempoFin}`, nodo.x + radio / 3, nodo.y + radio / 2 + 5);
   }
 
   // Dibuja una conexión entre dos nodos
@@ -348,9 +399,10 @@ calcularTiemposVuelta(): void {
   
 
   // Limpia el canvas
-  limpiarCanvas(): void {
-    this.ctx.clearRect(0, 0, this.canvasRef.nativeElement.width, this.canvasRef.nativeElement.height);
-  }
+limpiarCanvas(): void {
+  if (!this.canvas) return; // Verificar que el canvas está disponible
+  this.ctx.clearRect(0, 0, this.canvas.nativeElement.width, this.canvas.nativeElement.height);
+}
 
 
 
