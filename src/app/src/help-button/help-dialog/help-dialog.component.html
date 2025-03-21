@@ -12,7 +12,14 @@
         <ng-template matStepLabel>{{ step.title }}</ng-template>
         <div class="step-content">
           <p>{{ step.description }}</p>
-          <img *ngIf="step.image" [src]="step.image" [alt]="step.title" />
+          <img
+            *ngIf="step.image"
+            [ngSrc]="step.image"
+            [alt]="step.title"
+            width="800"
+            height="400"
+            priority
+          />
         </div>
       </mat-step>
     </mat-vertical-stepper>
@@ -23,7 +30,13 @@
     <mat-grid-list cols="2" rowHeight="200px" gutterSize="16px">
       <mat-grid-tile *ngFor="let image of data.images">
         <figure>
-          <img [src]="image.url" [alt]="image.alt" />
+          <img
+            [ngSrc]="image.url"
+            [alt]="image.alt"
+            width="400"
+            height="200"
+            priority
+          />
           <figcaption>{{ image.caption }}</figcaption>
         </figure>
       </mat-grid-tile>

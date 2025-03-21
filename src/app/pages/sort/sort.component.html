@@ -1,0 +1,89 @@
+<mat-card class="sort-container">
+  <mat-card-header>
+    <mat-card-title>Visualización de Ordenamiento</mat-card-title>
+    <mat-card-subtitle>Algoritmo de Selección Interactivo</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content class="card-content">
+    <section class="controls-section">
+      <div class="controls-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Tamaño del arreglo</mat-label>
+          <input
+            matInput
+            type="number"
+            name="arraySize"
+            [(ngModel)]="arraySize"
+            min="1"
+            max="100"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Valor mínimo</mat-label>
+          <input
+            matInput
+            type="number"
+            name="minValue"
+            [(ngModel)]="minValue"
+            min="0"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Valor máximo</mat-label>
+          <input
+            matInput
+            type="number"
+            name="maxValue"
+            [(ngModel)]="maxValue"
+            min="1"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Orden</mat-label>
+          <mat-select [(ngModel)]="order">
+            <mat-option value="asc">Ascendente</mat-option>
+            <mat-option value="desc">Descendente</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="button-container">
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="generateArray()"
+          [disabled]="sorting"
+        >
+          <mat-icon>shuffle</mat-icon>
+          Generar Nuevo
+        </button>
+
+        <button
+          mat-raised-button
+          color="accent"
+          (click)="sortArray()"
+          [disabled]="sorting"
+        >
+          <mat-icon>sort</mat-icon>
+          Ordenar
+        </button>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <section class="visualization-section">
+      <div class="visualization-container"></div>
+
+      <div class="time-display" *ngIf="sortTime > 0">
+        <p>
+          Tiempo de ejecución:
+          <strong>{{ sortTime.toFixed(3) }}</strong> segundos
+        </p>
+      </div>
+    </section>
+  </mat-card-content>
+</mat-card>

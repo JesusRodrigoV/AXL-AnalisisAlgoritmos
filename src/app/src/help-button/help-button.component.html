@@ -9,5 +9,7 @@
     <mat-icon>help_outline</mat-icon>
   </button>
 
-  <div class="help-prompt" *ngIf="showHelpPrompt">¿Necesitas ayuda?</div>
+  @if (showHelpPrompt) {
+    <div class="help-prompt">¿Necesitas ayuda?</div>
+  }
 </div>

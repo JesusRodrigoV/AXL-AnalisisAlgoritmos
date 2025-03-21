@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/asignacion/asignacion.component'),
   },
   {
+    path: 'sort',
+    loadComponent: () => import('./pages/sort/sort.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',
