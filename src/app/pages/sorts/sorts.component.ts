@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import * as echarts from 'echarts';
 
 @Component({
   selector: 'app-sorts',
