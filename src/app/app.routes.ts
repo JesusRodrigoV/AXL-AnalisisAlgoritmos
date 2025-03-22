@@ -18,6 +18,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/asignacion/asignacion.component'),
   },
   {
+    path: 'ordenamientos',
+    loadComponent: () => import('./pages/ordenamientos/ordenamientos.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',

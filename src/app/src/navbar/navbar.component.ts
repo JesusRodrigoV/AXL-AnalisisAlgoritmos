@@ -50,6 +50,12 @@ export class NavbarComponent {
       icon: 'bx-task',
       description: 'Algoritmo de asignación para optimización',
     },
+    {
+      label: 'Ordenamientos',
+      path: '/ordenamientos',
+      icon: 'bx-sort',
+      description: 'Algoritmos de ordenamiento',
+    },
   ];
   private router: Router = inject(Router);
   private location: Location = inject(Location);
