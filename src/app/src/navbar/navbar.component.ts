@@ -51,9 +51,9 @@ export class NavbarComponent {
       description: 'Algoritmo de asignación para optimización',
     },
     {
-      label: 'Ordenamientos',
-      path: '/ordenamientos',
-      icon: 'bx-sort',
+      label: 'Sorts',
+      path: '/sorts',
+      icon: 'bx-sort-alt-2',
       description: 'Algoritmos de ordenamiento',
     },
   ];

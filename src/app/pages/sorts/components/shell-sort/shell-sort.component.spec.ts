@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { OrdenamientosComponent } from './ordenamientos.component';
+import { ShellSortComponent } from './shell-sort.component';
 
-describe('OrdenamientosComponent', () => {
-  let component: OrdenamientosComponent;
-  let fixture: ComponentFixture<OrdenamientosComponent>;
+describe('ShellSortComponent', () => {
+  let component: ShellSortComponent;
+  let fixture: ComponentFixture<ShellSortComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [OrdenamientosComponent]
+      imports: [ShellSortComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(OrdenamientosComponent);
+    fixture = TestBed.createComponent(ShellSortComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

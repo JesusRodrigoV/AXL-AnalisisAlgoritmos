@@ -18,8 +18,9 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/asignacion/asignacion.component'),
   },
   {
-    path: 'ordenamientos',
-    loadComponent: () => import('./pages/ordenamientos/ordenamientos.component'),
+    path: 'sorts',
+    loadComponent: () =>
+      import('./pages/sorts/sorts.component').then((m) => m.SortsComponent),
   },
   {
     path: '',
