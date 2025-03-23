@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { min } from 'rxjs';
 
 @Component({
   selector: 'app-northwest',
@@ -45,12 +46,12 @@ export default class NorthwestComponent {
     this.solution = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
     this.costMatrix = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
     this.setMatrix([
-      [3, 1, 7, 4],
-      [2, 6, 5, 9],
-      [8, 3, 3, 3]
+      [17, 20, 13, 12],
+      [15, 21, 26, 25],
+      [15, 14, 15, 17]
     ]);
-    this.supply = [250, 350, 400];
-    this.demand = [200,300,350,150];
+    this.supply = [70, 90, 115];
+    this.demand = [50, 60, 70, 95];
     this.supplyN =  [...this.supply];
     this.demandN =  [...this.demand];
   }
@@ -135,27 +136,37 @@ export default class NorthwestComponent {
 
   // Método MODI para optimización
   optimizeMODI() {
+    let matrixCostCopy = this.costMatrix.map(row => [...row]);  // Copia real
+    let matrixMinCost = this.costMatrix.map(row => [...row]);   // Copia real
     let iteration = 0;
+    let negativeValue = true;
     while (true) {
       iteration++;
       const rows = this.supply.length;
       const cols = this.demand.length;
       let u = Array(rows).fill(null);
       let v = Array(cols).fill(null);
+      let pending = new Set<number>();
       u[0] = 0; // Empezamos con u[0]=0
-
+      negativeValue=false;
       // 1. Calcular los potenciales U y V
+      // Agregar todas las filas y columnas al conjunto de pendientes
+      for (let i = 0; i < rows; i++) pending.add(i);
+      for (let j = 0; j < cols; j++) pending.add(rows + j);
+
       let updated = true;
       while (updated) {
         updated = false;
         for (let i = 0; i < rows; i++) {
           for (let j = 0; j < cols; j++) {
-            if (this.solution[i][j] > 0) { // Solo celdas básicas
+            if (this.solution[i][j] > 0) { // Solo celdas con asignación
               if (u[i] !== null && v[j] === null) {
                 v[j] = this.costMatrix[i][j] - u[i];
+                pending.delete(rows + j);
                 updated = true;
               } else if (u[i] === null && v[j] !== null) {
                 u[i] = this.costMatrix[i][j] - v[j];
+                pending.delete(i);
                 updated = true;
               }
             }
@@ -163,55 +174,59 @@ export default class NorthwestComponent {
         }
       }
 
-      // 2. Buscar la celda con el menor costo reducido (solo en celdas no básicas)
-      let minReducedCost = Infinity;
-      let minI = -1, minJ = -1;
-      for (let i = 0; i < rows; i++) {
-        for (let j = 0; j < cols; j++) {
-          if (this.solution[i][j] === 0) {
-            const reducedCost = this.costMatrix[i][j] - (u[i]! + v[j]!);
-            if (reducedCost < minReducedCost) {
-              minReducedCost = reducedCost;
-              minI = i;
-              minJ = j;
-            }
+      // Verificar si quedaron valores sin definir (posible degeneración)
+      if (pending.size > 0) {
+        console.warn("¡Advertencia! No se pudieron calcular algunos valores de U o V.");
+      }
+      console.log(`U value: ${u}`)
+      console.log(`V value: ${v}`)
+
+      // 2.1 Llenar la matriz de costos minimo
+      for(let i=0;i<rows; i++){
+        for(let j=0;j<cols; j++){
+            matrixMinCost[i][j]=u[i]+v[j];
+        }
+      }
+      console.log(`Matiz Zij value: ${matrixMinCost}`);
+
+      // 2.2 Obtener matriz resultante de costMatrix - matrixMinCost
+      let matixCostAux = matrixCostCopy.map(row => [...row]);
+      for(let i=0;i<rows; i++){
+        for(let j=0;j<cols; j++){
+          matixCostAux[i][j]-=matrixMinCost[i][j];
+        }
+      }
+      console.log(`Matiz Cij - Zij value: ${matixCostAux}`);
+
+      // 2.3 Buscar el valor mas pequenio
+      let positionOfMin=[0, 0];
+      let minCostValue = Infinity;
+      for(let i=0;i<rows; i++){
+        for(let j=0;j<cols; j++){
+          if(negativeValue!==true && matixCostAux[i][j]<0){
+            negativeValue=true;
+          }
+          if(matixCostAux[i][j]<minCostValue){
+            minCostValue=matixCostAux[i][j];
+            positionOfMin=[i, j];
           }
         }
       }
 
-      // 3. Si no hay mejoras, salir del ciclo
-      if (minReducedCost >= 0) {
+      if(!negativeValue){
         console.log(`Iteración ${iteration}: No se encontró una mejor solución.`);
         break;
       }
 
-      // 4. Buscar el ciclo cerrado
-      let cycle = this.findCycle(minI, minJ);
-      if (!cycle) {
-        console.log(`Iteración ${iteration}: No se encontró ciclo de transporte.`);
-        break;
+      // 2.5 Crear un ciclo cerrado para luego sumar
+      let cicloCerrado = this.findCycle(positionOfMin[0],positionOfMin[1]);
+
+      // 2.6 Aplicacion del ciclo
+      if(cicloCerrado!= null){
+        this.applyCycle(cicloCerrado)
       }
 
-      // 5. Ajustar la solución
-      let theta = Infinity;
-      // Se toman los nodos con signo negativo en el ciclo (empezando desde el segundo)
-      for (let k = 1; k < cycle.length; k += 2) {
-        let [i, j] = cycle[k];
-        theta = Math.min(theta, this.solution[i][j]);
-      }
-      for (let k = 0; k < cycle.length; k++) {
-        let [i, j] = cycle[k];
-        if (k % 2 === 0) {
-          // Verificar si el valor asignado está dentro de los límites de la demanda y la oferta
-          let newValue = Math.min(this.demand[j], this.supply[i], this.solution[i][j] + theta);
-          this.solution[i][j] = newValue;
-        } else {
-          // Verificar si el valor asignado está dentro de los límites de la demanda y la oferta
-          let newValue = Math.max(0, Math.min(this.demand[j], this.supply[i], this.solution[i][j] - theta));
-          this.solution[i][j] = newValue;
-        }
-      }
-      console.log(`Iteración ${iteration}: Mejorando solución con la celda (${minI}, ${minJ}) con costo reducido ${minReducedCost}`);
+      console.log(`Iteración ${iteration}: Mejorando solución con la celda (${positionOfMin[0]}, ${positionOfMin[1]})`);
       console.log(`Matriz de solucion:  ${this.solution}`);
     }
   }
@@ -222,66 +237,101 @@ export default class NorthwestComponent {
     const rows = this.solution.length;
     const cols = this.solution[0].length;
     let path: [number, number][] = [];
-    let visited = Array.from({ length: rows }, () => Array(cols).fill(false));
+    let visited = new Set<string>();
+
+    // Almacena filas y columnas visitadas para validar ciclos
+    let uniqueRows = new Set<number>();
+    let uniqueCols = new Set<number>();
 
     const dfs = (i: number, j: number, lastDir: 'row' | 'col' | null): boolean => {
-      // Si el camino tiene 4 o más celdas y vuelve a la celda inicial, se encontró un ciclo.
-      if (path.length >= 4 && i === startI && j === startJ) {
-        return true;
-      }
-
-      // Explorar en la misma fila (horizontal)
-      if (lastDir !== 'row') {
-        for (let y = 0; y < cols; y++) {
-          if (y === j) continue;
-          // Permitir la celda candidata solo para cerrar el ciclo.
-          if (i === startI && y === startJ) {
-            if (path.length >= 3) {
-              path.push([i, y]);
-              return true;
+        if (path.length >= 4 && i === startI && j === startJ) {
+            // Un ciclo válido debe incluir al menos 2 filas y 2 columnas distintas
+            if (uniqueRows.size > 1 && uniqueCols.size > 1) {
+                return true;
             }
-            continue;
-          }
-          if (!visited[i][y] && this.solution[i][y] > 0) {
-            visited[i][y] = true;
-            path.push([i, y]);
-            if (dfs(i, y, 'row')) return true;
-            path.pop();
-            visited[i][y] = false;
-          }
+            return false;
         }
-      }
 
-      // Explorar en la misma columna (vertical)
-      if (lastDir !== 'col') {
-        for (let x = 0; x < rows; x++) {
-          if (x === i) continue;
-          if (x === startI && j === startJ) {
-            if (path.length >= 3) {
-              path.push([x, j]);
-              return true;
+        // Explorar en la misma fila (horizontal)
+        if (lastDir !== 'row') {
+            for (let y = 0; y < cols; y++) {
+                if (y === j) continue;
+                if (i === startI && y === startJ && path.length >= 3) {
+                    path.push([i, y]);
+                    return true;
+                }
+                if (!visited.has(`${i},${y}`) && this.solution[i][y] > 0) {
+                    path.push([i, y]);
+                    visited.add(`${i},${y}`);
+                    uniqueCols.add(y);
+                    if (dfs(i, y, 'row')) return true;
+                    path.pop();
+                    visited.delete(`${i},${y}`);
+                    if (path.length > 0) uniqueCols.delete(y);
+                }
             }
-            continue;
-          }
-          if (!visited[x][j] && this.solution[x][j] > 0) {
-            visited[x][j] = true;
-            path.push([x, j]);
-            if (dfs(x, j, 'col')) return true;
-            path.pop();
-            visited[x][j] = false;
-          }
         }
-      }
-      return false;
+
+        // Explorar en la misma columna (vertical)
+        if (lastDir !== 'col') {
+            for (let x = 0; x < rows; x++) {
+                if (x === i) continue;
+                if (x === startI && j === startJ && path.length >= 3) {
+                    path.push([x, j]);
+                    return true;
+                }
+                if (!visited.has(`${x},${j}`) && this.solution[x][j] > 0) {
+                    path.push([x, j]);
+                    visited.add(`${x},${j}`);
+                    uniqueRows.add(x);
+                    if (dfs(x, j, 'col')) return true;
+                    path.pop();
+                    visited.delete(`${x},${j}`);
+                    if (path.length > 0) uniqueRows.delete(x);
+                }
+            }
+        }
+
+        return false;
     };
 
-    // Iniciar el DFS desde la celda candidata.
+    // Iniciar DFS desde la celda candidata
     path.push([startI, startJ]);
-    visited[startI][startJ] = true;
+    visited.add(`${startI},${startJ}`);
+    uniqueRows.add(startI);
+    uniqueCols.add(startJ);
+
     if (dfs(startI, startJ, null)) {
-      return path;
+        return path;
     }
+
     return null;
   }
 
+  applyCycle(cycle: [number, number][]): void {
+    if (!cycle || cycle.length < 4) {
+        console.log("No se encontró un ciclo válido.");
+        return;
+    }
+
+    let minValue = Infinity;  // Valor mínimo en posiciones de resta
+
+    // 1. Identificar las posiciones de suma (+) y resta (-)
+    for (let step = 1; step < cycle.length; step += 2) {
+        const [i, j] = cycle[step];  // Posiciones de resta (-)
+        minValue = Math.min(minValue, this.solution[i][j]);
+    }
+
+    // 2. Aplicar los cambios en la matriz
+    for (let step = 0; step < cycle.length; step++) {
+        const [i, j] = cycle[step];
+        if (step % 2 === 0) {
+            this.solution[i][j] += minValue;  // Sumar en posiciones pares
+        } else {
+            this.solution[i][j] -= minValue;  // Restar en posiciones impares
+        }
+    }
+
+    console.log("Nueva solución después de aplicar el ciclo:", this.solution);
+  }
 }
