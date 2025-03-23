@@ -1,5 +1,4 @@
 @use "@angular/material" as mat;
-@use "./_theme-colors.scss" as theme-colors;
 
 html {
   color-scheme: light;
@@ -28,4 +27,10 @@ body {
   height: 100%;
   margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+i {
+  font-size: 12px;
+  justify-content: center;
+  align-items: center;
 }

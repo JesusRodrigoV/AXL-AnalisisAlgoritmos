@@ -1,48 +1,56 @@
 .help-button-container {
-  position: relative;
-  display: inline-block;
+  position: fixed; // Cambiado de relative a fixed
+  bottom: 20px;    // Distancia desde el fondo
+  right: 20px;     // Distancia desde la derecha
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  
+
+  &:hover {
+    .help-prompt {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 }
 
 .help-fab {
-  z-index: 1000;
+  margin: 8px;
+  transition: transform 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.1);
+  }
 }
 
 .help-prompt {
-  position: absolute;
+  position: relative;
   background: #323232;
   color: white;
   padding: 8px 16px;
   border-radius: 4px;
   font-size: 14px;
   white-space: nowrap;
-  top: -40px;
-  left: 50%;
-  transform: translateX(-50%);
-  animation: fadeInOut 2s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  top: auto;
+  left: auto;
+  transform: none;
+  animation: none;
 
   &::after {
     content: "";
     position: absolute;
+    right: 10px;
     bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
     border-width: 8px 8px 0 8px;
     border-style: solid;
     border-color: #323232 transparent transparent transparent;
+    left: auto;
+    transform: none;
   }
 }
 
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
+
