@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { log } from 'console';
 import { min } from 'rxjs';
 
 @Component({
@@ -22,6 +23,7 @@ export default class NorthwestComponent {
   demandN: number[] = [];
   solution: number[][] = [];
   costMatrix: number[][] = [];
+  iterationModi: number = 1;
 
   ngOnInit(): void {
     this.initializeMatrix();
@@ -55,25 +57,39 @@ export default class NorthwestComponent {
     return index;
   }
 
-  solve() {
+  solveMin() {
     this.setCostMatrix(this.matrix);
     console.log("Aplicando método Northwest Corner...");
-    this.northwestCorner();
+    this.northwestCornerMin();
     console.log(`Matriz de asignación inicial:  ${this.solution}`);
     console.log("Costo inicial:", this.calculateTotalCost());
     console.log("Optimizando con método MODI...");
     console.log(`Matriz de solucion:  ${this.solution}`);
     this.optimizeMODI();
     console.log("Matriz optimizada:", this.solution);
-    console.log(`Matriz de solucion:  ${this.solution}`);
+    //console.log(`Matriz de solucion:  ${this.solution}`);
     console.log("Costo mínimo obtenido:", this.calculateTotalCost());
   }
 
-  northwestCorner() {
-    let i = 0, j = 0;
-    this.solution = Array.from({ length: this.supplyN.length }, () => Array(this.demandN.length).fill(0));
+  solveMax() {
+    this.setCostMatrix(this.matrix);
+    console.log("Aplicando método Northwest Corner...");
+    this.northwestCornerMax();
+    console.log(`Matriz de asignación inicial:  ${this.solution}`);
+    console.log("Costo inicial:", this.calculateTotalCost());/*
+    console.log("Optimizando con método MODI...");
+    console.log(`Matriz de solucion:  ${this.solution}`);
+    this.optimizeMODI();
+    console.log("Matriz optimizada:", this.solution);
+    console.log(`Matriz de solucion:  ${this.solution}`);
+    console.log("Costo mínimo obtenido:", this.calculateTotalCost());*/
+  }
 
+  northwestCornerMin() {
+    let i = 0, j = 0, iteration = 0;
+    this.solution = Array.from({ length: this.supplyN.length }, () => Array(this.demandN.length).fill(0));
     while (i < this.supplyN.length && j < this.demandN.length) {
+      iteration++;
       if (this.supplyN[i] === 0) {
         i++;
         continue;
@@ -91,6 +107,37 @@ export default class NorthwestComponent {
       this.supplyN[i] -= qty;
       this.demandN[j] -= qty;
     }
+
+    console.log("Numero de iteraciones de NorthWest: "+iteration);
+  }
+
+  northwestCornerMax() {
+    this.solution = Array.from({ length: this.supplyN.length }, () => Array(this.demandN.length).fill(0));
+    let iteration = 0;
+    while (true) {
+      let maxCostCell = { i: -1, j: -1, cost: -Infinity };
+
+      // Buscar la celda con el costo más alto
+      for (let x = 0; x < this.supplyN.length; x++) {
+        for (let y = 0; y < this.demandN.length; y++) {
+          if (this.supplyN[x] > 0 && this.demandN[y] > 0 && this.costMatrix[x][y] > maxCostCell.cost) {
+            maxCostCell = { i: x, j: y, cost: this.costMatrix[x][y] };
+          }
+        }
+      }
+
+      // Si no hay más celdas para asignar, terminar
+      if (maxCostCell.i === -1) break;
+      iteration++;
+      // Asignar la cantidad mínima entre oferta y demanda
+      const qty = Math.min(this.supplyN[maxCostCell.i], this.demandN[maxCostCell.j]);
+      this.solution[maxCostCell.i][maxCostCell.j] = qty;
+
+      // Actualizar ofertas y demandas
+      this.supplyN[maxCostCell.i] -= qty;
+      this.demandN[maxCostCell.j] -= qty;
+    }
+    console.log("Numero de iteraciones de NorthWest: "+iteration);
   }
 
   // Calcular costo total de la asignación
@@ -128,7 +175,7 @@ export default class NorthwestComponent {
       for (let j = 0; j < cols; j++) pending.add(rows + j);
 
       let updated = true;
-      console.log(matrixCostUV);
+      //console.log(matrixCostUV);
       while (updated) {
         updated = false;
         for (let i = 0; i < rows; i++) {
@@ -150,10 +197,10 @@ export default class NorthwestComponent {
 
       // Verificar si quedaron valores sin definir (posible degeneración)
       if (pending.size > 0) {
-        console.warn("¡Advertencia! No se pudieron calcular algunos valores de U o V.");
+        //console.warn("¡Advertencia! No se pudieron calcular algunos valores de U o V.");
       }
-      console.log(`U value: ${u}`)
-      console.log(`V value: ${v}`)
+      //console.log(`U value: ${u}`)
+      //console.log(`V value: ${v}`)
 
       // 2.1 Llenar la matriz de costos minimo
       for(let i=0;i<rows; i++){
@@ -161,7 +208,8 @@ export default class NorthwestComponent {
             matrixMinCost[i][j]=u[i]+v[j];
         }
       }
-      console.log(`Matiz Zij value: ${matrixMinCost}`);
+
+      //console.log(`Matiz Zij value: ${matrixMinCost}`);
 
       // 2.2 Obtener matriz resultante de costMatrix - matrixMinCost
       let matixCostAux = matrixCostCopy.map(row => [...row]);
@@ -170,7 +218,7 @@ export default class NorthwestComponent {
           matixCostAux[i][j]-=matrixMinCost[i][j];
         }
       }
-      console.log(`Matiz Cij - Zij value: ${matixCostAux}`);
+      //console.log(`Matiz Cij - Zij value: ${matixCostAux}`);
 
       // 2.3 Buscar el valor mas pequenio
       let positionOfMin=[0, 0];
@@ -188,10 +236,10 @@ export default class NorthwestComponent {
       }
 
       if(!negativeValue){
-        console.log(`Iteración ${iteration}: No se encontró una mejor solución.`);
+        //console.log(`Iteración ${iteration}: No se encontró una mejor solución.`);
         break;
       }
-      console.log(`Iteración ${iteration}: Mejorando solución con la celda (${positionOfMin[0]}, ${positionOfMin[1]})`);
+      //console.log(`Iteración ${iteration}: Mejorando solución con la celda (${positionOfMin[0]}, ${positionOfMin[1]})`);
       // 2.5 Crear un ciclo cerrado para luego sumar
       let cicloCerrado = this.findCycle(positionOfMin[0],positionOfMin[1]);
 
@@ -202,12 +250,13 @@ export default class NorthwestComponent {
         console.log("No se encontró un ciclo válido.");
       }
 
-
-      console.log(`Matriz de solucion:  ${this.solution}`);
-      if(iteration>6){
+      //console.log(`Matriz de solucion:  ${this.solution}`);
+      if(iteration>100){
         break;
       }
     }
+    console.log("Numero de iteraciones de MODI: "+iteration);
+    this.iterationModi = iteration;
   }
 
 
@@ -290,11 +339,11 @@ export default class NorthwestComponent {
 
   applyCycle(cycle: [number, number][]): void {
     if (!cycle || cycle.length < 4) {
-        console.log("No se encontró un ciclo válido.");
+        //console.log("No se encontró un ciclo válido.");
         return;
     }
     cycle.reverse();
-    console.log(`Ciclo encontrado:`+cycle);
+    //console.log(`Ciclo encontrado:`+cycle);
     let minValue = Infinity;  // Valor mínimo en posiciones de resta
 
     // 1. Identificar las posiciones de suma (+) y resta (-)
@@ -303,7 +352,7 @@ export default class NorthwestComponent {
         minValue = Math.min(minValue, this.solution[i][j]);
 
     }
-    console.log(`Valor minimo: ${minValue}`);
+    //console.log(`Valor minimo: ${minValue}`);
 
     // 2. Aplicar los cambios en la matriz
     for (let step = 0; step < cycle.length-1; step++) {
@@ -315,6 +364,6 @@ export default class NorthwestComponent {
         }
     }
 
-    console.log("Nueva solución después de aplicar el ciclo:", this.solution);
+    //console.log("Nueva solución después de aplicar el ciclo:", this.solution);
   }
 }
