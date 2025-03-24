@@ -12,53 +12,64 @@
         </div>
 
         @for (actividad of actividades; track actividad) {
-        <div class="table-row">
-          <div class="table-cell">
-            <mat-form-field appearance="outline">
-              <input
-                matInput
-                [(ngModel)]="actividad.nombre"
-                placeholder="Nombre"
-                type="text"
-              />
-            </mat-form-field>
+          <div class="table-row">
+            <div class="table-cell">
+              <mat-form-field appearance="outline">
+                <input
+                  matInput
+                  [(ngModel)]="actividad.nombre"
+                  placeholder="Nombre"
+                  type="text"
+                />
+              </mat-form-field>
+            </div>
+            <div class="table-cell">
+              <mat-form-field
+                appearance="outline"
+                [class.mat-form-field-invalid]="
+                  mostrarErrorAutoReferencia(actividad)
+                "
+              >
+                <input
+                  matInput
+                  [(ngModel)]="actividad.secuencia"
+                  placeholder="Secuencia"
+                  type="text"
+                />
+                <mat-error *ngIf="mostrarErrorAutoReferencia(actividad)">
+                  No se puede conectar un nodo consigo mismo
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div class="table-cell">
+              <mat-form-field appearance="outline">
+                <input
+                  matInput
+                  type="number"
+                  [(ngModel)]="actividad.peso"
+                  placeholder="Peso"
+                  min="0"
+                  pattern="[0-9]*"
+                  (input)="validarPeso($event)"
+                  [matTooltip]="'Solo números positivos'"
+                />
+                <mat-error *ngIf="!esNumeroValido(actividad.peso)">
+                  El peso debe ser un número positivo
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <div class="table-cell delete-cell">
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="eliminarActividad(actividad)"
+                [disabled]="actividades.length === 1"
+                matTooltip="Eliminar actividad"
+              >
+                <i class="bx bx-trash"></i>
+              </button>
+            </div>
           </div>
-          <div class="table-cell">
-            <mat-form-field
-              appearance="outline"
-              [class.mat-form-field-invalid]="
-                mostrarErrorAutoReferencia(actividad)
-              "
-            >
-              <input
-                matInput
-                [(ngModel)]="actividad.secuencia"
-                placeholder="Secuencia"
-                type="text"
-              />
-              <mat-error *ngIf="mostrarErrorAutoReferencia(actividad)">
-                No se puede conectar un nodo consigo mismo
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <div class="table-cell">
-            <mat-form-field appearance="outline">
-              <input
-                matInput
-                type="number"
-                [(ngModel)]="actividad.peso"
-                placeholder="Peso"
-                min="0"
-                pattern="[0-9]*"
-                (input)="validarPeso($event)"
-                [matTooltip]="'Solo números positivos'"
-              />
-              <mat-error *ngIf="!esNumeroValido(actividad.peso)">
-                El peso debe ser un número positivo
-              </mat-error>
-            </mat-form-field>
-          </div>
-        </div>
         }
       </div>
 

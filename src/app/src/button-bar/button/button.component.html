@@ -3,8 +3,17 @@
   mat-button
   [matTooltip]="label"
   matTooltipPosition="below"
-  [ngStyle]="{ 'background-color': active ? '#ff9999' : '' }"
+  [ngStyle]="{
+    'background-color': active ? '#ff9999' : '',
+    color: active ? '#000000' : '',
+    transition: 'all 0.2s ease',
+  }"
 >
-  <i [class]="iconClasses"></i>
+  <i
+    [class]="iconClasses"
+    [ngStyle]="{
+      transition: 'all 0.2s ease',
+    }"
+  ></i>
   {{ label }}
 </button>

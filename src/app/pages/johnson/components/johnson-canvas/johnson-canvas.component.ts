@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { Nodo } from 'src/app/pages/johnson/models/nodo.model.jonson';
 import { Conexion } from 'src/app/pages/johnson/models/conexion.model.jonson';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,6 +25,7 @@ interface Actividad {
 @Component({
   selector: 'app-johnson-canvas',
   imports: [
+    NgIf,
     CommonModule,
     FormsModule,
     MatCardModule,
@@ -49,8 +50,6 @@ export class JohnsonCanvasComponent implements OnInit {
   private readonly ZOOM_FACTOR = 0.1;
   canvasWidth = 2000;
   canvasHeight = 1500;
-  
-
 
   // Colores para la ruta crítica y nodos
   private readonly COLORS = {
@@ -181,6 +180,13 @@ export class JohnsonCanvasComponent implements OnInit {
   }
 
   // Limpia todo y reinicia el componente
+  eliminarActividad(actividad: Actividad): void {
+    const index = this.actividades.indexOf(actividad);
+    if (index > -1 && this.actividades.length > 1) {
+      this.actividades.splice(index, 1);
+    }
+  }
+
   limpiarTodo(): void {
     this.actividades = [{ nombre: '', secuencia: '', peso: 0 }];
     this.nodos = [];
