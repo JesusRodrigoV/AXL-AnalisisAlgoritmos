@@ -1,22 +1,18 @@
-import { NgFor, NgIf } from '@angular/common';
-import { 
-  ChangeDetectionStrategy, 
-  Component, 
+import {
+  ChangeDetectionStrategy,
+  Component,
   Inject,
-  SecurityContext 
+  SecurityContext,
 } from '@angular/core';
-import { 
-  MAT_DIALOG_DATA, 
-  MatDialogActions, 
-  MatDialogClose,
-  MatDialogContent, 
-  MatDialogRef, 
-  MatDialogTitle 
+import {
+  MAT_DIALOG_DATA,
+  MatDialogActions,
+  MatDialogContent,
+  MatDialogRef,
+  MatDialogTitle,
 } from '@angular/material/dialog';
 import { HelpContent } from '@app/models/Help.model';
-import { 
-  MatStepperModule 
-} from '@angular/material/stepper';
+import { MatStepperModule } from '@angular/material/stepper';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonModule } from '@angular/material/button';
@@ -27,10 +23,7 @@ import { SafeUrlPipe } from '../Pipes/safe-url.pipe';
 
 @Component({
   selector: 'app-help-dialog',
-  standalone: true,
   imports: [
-    NgIf,
-    NgFor,
     MatDialogTitle,
     MatDialogContent,
     MatDialogActions,
@@ -39,8 +32,8 @@ import { SafeUrlPipe } from '../Pipes/safe-url.pipe';
     MatListModule,
     MatButtonModule,
     MatIconModule,
-    MatExpansionModule, 
-    SafeUrlPipe
+    MatExpansionModule,
+    SafeUrlPipe,
   ],
   templateUrl: './help-dialog.component.html',
   styleUrl: './help-dialog.component.scss',
@@ -50,14 +43,13 @@ export class HelpDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<HelpDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: HelpContent,
-    private sanitizer: DomSanitizer // Necesario para el pipe safeUrl
+    private sanitizer: DomSanitizer, // Necesario para el pipe safeUrl
   ) {}
 
   closeDialog(): void {
     this.dialogRef.close();
   }
 
-  // Función para sanitizar URLs de video
   sanitizeUrl(url: string) {
     return this.sanitizer.sanitize(SecurityContext.URL, url);
   }

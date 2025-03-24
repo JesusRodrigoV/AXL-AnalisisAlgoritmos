@@ -1,29 +1,41 @@
-<div class="matrix-container">
-  <table>
-    <tr>
-      <th></th>
-      @for (nodo of nodos; track nodo.nombre) {
-        <th class="nodo-nombre">{{ nodo.nombre }}</th>
-      }
-      <th class="suma-columna-fila">Suma Fila</th>
-    </tr>
-    @for (fila of matriz; track $index; let i = $index) {
+@defer (on viewport) {
+  <div class="matrix-container">
+    <table>
       <tr>
-        <th class="nodo-nombre">{{ nodos[i].nombre }}</th>
-        @for (celda of fila; track $index) {
-          <td>{{ celda }}</td>
+        <th></th>
+        @for (nodo of nodos; track nodo.nombre) {
+          <th class="nodo-nombre">{{ nodo.nombre }}</th>
         }
-        <td class="suma-columna-fila">{{ filaSumas[i] }}</td>
+        <th class="suma-columna-fila">Suma Fila</th>
       </tr>
-    }
-    <tr>
-      <th class="suma-columna-fila">Suma Columna</th>
-      @for (suma of columnaSumas; track $index) {
-        <td class="suma-columna-fila">
-          {{ suma }}
-        </td>
+      @for (fila of matriz; track $index; let i = $index) {
+        <tr>
+          <th class="nodo-nombre">{{ nodos[i].nombre }}</th>
+          @for (celda of fila; track $index) {
+            <td>{{ celda }}</td>
+          }
+          <td class="suma-columna-fila">{{ filaSumas[i] }}</td>
+        </tr>
       }
-      <td class="suma-columna-fila"></td>
-    </tr>
-  </table>
-</div>
+      <tr>
+        <th class="suma-columna-fila">Suma Columna</th>
+        @for (suma of columnaSumas; track $index) {
+          <td class="suma-columna-fila">
+            {{ suma }}
+          </td>
+        }
+        <td class="suma-columna-fila"></td>
+      </tr>
+    </table>
+  </div>
+} @placeholder {
+  <div class="matrix-placeholder">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p>Cargando matriz...</p>
+  </div>
+} @error {
+  <div class="matrix-error">
+    <i class="bx bx-error-circle"></i>
+    <p>Error al cargar la matriz. Por favor, intente nuevamente.</p>
+  </div>
+}
