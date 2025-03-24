@@ -15,6 +15,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogConfig } from '@angular/material/dialog';
+import { ErrorDialogComponent } from '../error-dialog';
 
 interface Actividad {
   nombre: string;
@@ -33,6 +36,7 @@ interface Actividad {
     MatFormFieldModule,
     MatInputModule,
     MatTooltipModule,
+    MatDialogModule,
   ],
   templateUrl: './johnson-canvas.component.html',
   styleUrls: ['./johnson-canvas.component.scss'],
@@ -67,7 +71,75 @@ export class JohnsonCanvasComponent implements OnInit {
       HOVER: '#FF9800',
     },
   };
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private dialog: MatDialog,
+  ) {}
+
+  private mostrarError(mensaje: string): void {
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = { mensaje };
+    dialogConfig.width = '400px';
+    dialogConfig.position = { top: '100px' };
+
+    this.dialog.open(ErrorDialogComponent, dialogConfig);
+  }
+
+  private existeBidireccionalidad(): boolean {
+    const conexiones = new Set<string>();
+
+    for (const conexion of this.conexiones) {
+      const directa = `${conexion.origen.label}-${conexion.destino.label}`;
+      const inversa = `${conexion.destino.label}-${conexion.origen.label}`;
+
+      if (conexiones.has(inversa)) {
+        return true;
+      }
+      conexiones.add(directa);
+    }
+
+    return false;
+  }
+
+  private existeCiclo(): boolean {
+    const visitados = new Set<string>();
+    const enProceso = new Set<string>();
+
+    const buscarCiclo = (nodoLabel: string): boolean => {
+      if (enProceso.has(nodoLabel)) {
+        return true; // Se encontró un ciclo
+      }
+
+      if (visitados.has(nodoLabel)) {
+        return false;
+      }
+
+      enProceso.add(nodoLabel);
+
+      const conexionesSalientes = this.conexiones.filter(
+        (conexion) => conexion.origen.label === nodoLabel,
+      );
+
+      for (const conexion of conexionesSalientes) {
+        if (buscarCiclo(conexion.destino.label)) {
+          return true;
+        }
+      }
+
+      enProceso.delete(nodoLabel);
+      visitados.add(nodoLabel);
+      return false;
+    };
+
+    // Buscar ciclos desde cada nodo no visitado
+    for (const nodo of this.nodos) {
+      if (!visitados.has(nodo.label) && buscarCiclo(nodo.label)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   @ViewChild('johnsonCanvas', { static: true })
   canvasRef!: ElementRef<HTMLCanvasElement>;
@@ -211,6 +283,13 @@ export class JohnsonCanvasComponent implements OnInit {
     );
 
     if (hayAutoReferencias) {
+      this.mostrarError(
+        'Hay actividades que se referencian a sí mismas. Por favor, corrija las conexiones.',
+      );
+      return;
+    }
+
+    if (hayAutoReferencias) {
       console.warn('Hay actividades que se referencian a sí mismas');
       return;
     }
@@ -260,6 +339,27 @@ export class JohnsonCanvasComponent implements OnInit {
 
     // Ajustar las coordenadas de los nodos
     this.ajustarCoordenadas();
+
+    // Validar bidireccionalidad y ciclos
+    if (this.existeBidireccionalidad()) {
+      this.mostrarError(
+        'Se detectaron conexiones bidireccionales. No se permiten conexiones en ambos sentidos entre dos nodos.',
+      );
+      this.nodos = [];
+      this.conexiones = [];
+      this.hayGrafo = false;
+      return;
+    }
+
+    if (this.existeCiclo()) {
+      this.mostrarError(
+        'Se detectaron ciclos en el grafo. No se permiten ciclos en el método de Johnson.',
+      );
+      this.nodos = [];
+      this.conexiones = [];
+      this.hayGrafo = false;
+      return;
+    }
 
     // Dibujar el grafo
     this.dibujarGrafo();
