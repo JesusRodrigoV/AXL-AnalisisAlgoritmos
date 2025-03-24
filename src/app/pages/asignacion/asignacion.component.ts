@@ -1,5 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ViewChild,
+  ChangeDetectorRef,
+  Inject,
+  PLATFORM_ID,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MyCanvasComponent } from '@app/src/my-canvas';
 import { MatListModule } from '@angular/material/list';
@@ -26,6 +33,10 @@ import { HelpButtonComponent } from '@app/src/help-button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class AsignacionComponent {
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private cdr: ChangeDetectorRef,
+  ) {}
   helpContent: HelpContent = {
     title: 'Ayuda - Algoritmo de Asignación',
     description:
@@ -132,41 +143,57 @@ export default class AsignacionComponent {
   }
 
   solveAssignment(isMaximization: boolean = false) {
-    this.isMaximization = isMaximization;
-    console.log('Iniciando resolución del problema de asignación');
-    console.log('Modo:', this.isMaximization ? 'Maximización' : 'Minimización');
+    try {
+      this.isMaximization = isMaximization;
+      console.log('Iniciando resolución del problema de asignación');
+      console.log(
+        'Modo:',
+        this.isMaximization ? 'Maximización' : 'Minimización',
+      );
 
-    const matrix = this.getAdjacencyMatrix();
-    console.log('Matriz original:', matrix);
+      const matrix = this.getAdjacencyMatrix();
+      console.log('Matriz original:', matrix);
 
-    if (!this.validateMatrix(matrix)) {
+      if (!this.validateMatrix(matrix)) {
+        alert(
+          'El grafo debe ser bipartito y tener igual número de nodos en ambos conjuntos',
+        );
+        return;
+      }
+
+      // Si es maximización, convertimos el problema a minimización
+      let workingMatrix = [...matrix.map((row) => [...row])];
+      if (this.isMaximization) {
+        console.log('Convirtiendo problema de maximización a minimización');
+        const maxValue = Math.max(
+          ...matrix.flat().filter((x) => x !== Infinity),
+        );
+        workingMatrix = workingMatrix.map((row) =>
+          row.map((val) => (val === Infinity ? Infinity : maxValue - val)),
+        );
+        console.log('Matriz convertida para minimización:', workingMatrix);
+      }
+
+      this.result = this.hungarianAlgorithm(workingMatrix);
+
+      // Ajustar el costo final si era un problema de maximización
+      if (this.isMaximization && this.result) {
+        const n = matrix.length;
+        const maxValue = Math.max(
+          ...matrix.flat().filter((x) => x !== Infinity),
+        );
+        this.result.cost = maxValue * n - this.result.cost;
+        console.log('Costo ajustado para maximización:', this.result.cost);
+      }
+      this.highlightSolution();
+      // Forzar la detección de cambios
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error al resolver la asignación:', error);
       alert(
-        'El grafo debe ser bipartito y tener igual número de nodos en ambos conjuntos',
+        'Ocurrió un error al resolver la asignación. Por favor, verifica que el grafo sea válido.',
       );
-      return;
     }
-
-    // Si es maximización, convertimos el problema a minimización
-    let workingMatrix = [...matrix.map((row) => [...row])];
-    if (this.isMaximization) {
-      console.log('Convirtiendo problema de maximización a minimización');
-      const maxValue = Math.max(...matrix.flat().filter((x) => x !== Infinity));
-      workingMatrix = workingMatrix.map((row) =>
-        row.map((val) => (val === Infinity ? Infinity : maxValue - val)),
-      );
-      console.log('Matriz convertida para minimización:', workingMatrix);
-    }
-
-    this.result = this.hungarianAlgorithm(workingMatrix);
-
-    // Ajustar el costo final si era un problema de maximización
-    if (this.isMaximization && this.result) {
-      const n = matrix.length;
-      const maxValue = Math.max(...matrix.flat().filter((x) => x !== Infinity));
-      this.result.cost = maxValue * n - this.result.cost;
-      console.log('Costo ajustado para maximización:', this.result.cost);
-    }
-    this.highlightSolution();
   }
 
   private getAdjacencyMatrix(): number[][] {
@@ -389,6 +416,33 @@ export default class AsignacionComponent {
     return assignment;
   }
 
+  private validateAssignment(assignment: number[][]): boolean {
+    const n = assignment.length;
+
+    // Verificar que cada fila (nodo origen) solo tenga una asignación
+    for (let i = 0; i < n; i++) {
+      const rowSum = assignment[i].reduce((sum, val) => sum + val, 0);
+      if (rowSum !== 1) {
+        console.error(`El nodo origen ${i + 1} tiene ${rowSum} asignaciones`);
+        return false;
+      }
+    }
+
+    // Verificar que cada columna (nodo destino) solo tenga una asignación
+    for (let j = 0; j < n; j++) {
+      let colSum = 0;
+      for (let i = 0; i < n; i++) {
+        colSum += assignment[i][j];
+      }
+      if (colSum !== 1) {
+        console.error(`El nodo destino ${j + 1} tiene ${colSum} asignaciones`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private findOptimalAssignment(matrix: number[][]): number[][] {
     const n = matrix.length;
     const assignment = Array(n)
@@ -400,10 +454,10 @@ export default class AsignacionComponent {
     console.log('Buscando asignación óptima');
     console.log('Matriz para asignación:', matrix);
 
-    // Encontrar asignación inicial
+    // Encontrar asignación inicial asegurando que no haya duplicados
     let numAssigned = 0;
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n && numAssigned < n; i++) {
+      for (let j = 0; j < n && !rowCovered[i]; j++) {
         if (matrix[i][j] === 0 && !rowCovered[i] && !colCovered[j]) {
           assignment[i][j] = 1;
           rowCovered[i] = true;
@@ -417,8 +471,11 @@ export default class AsignacionComponent {
     console.log('Número de asignaciones realizadas:', numAssigned);
     console.log('Asignación final:', assignment);
 
-    if (numAssigned < n) {
-      console.warn('No se encontró una asignación completa óptima');
+    if (numAssigned < n || !this.validateAssignment(assignment)) {
+      console.warn('No se encontró una asignación válida y completa');
+      return Array(n)
+        .fill(0)
+        .map(() => Array(n).fill(0));
     }
 
     return assignment;

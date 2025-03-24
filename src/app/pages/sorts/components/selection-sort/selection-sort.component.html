@@ -1,0 +1,107 @@
+<mat-card class="sort-card">
+  <mat-card-header>
+    <mat-card-title>Selection Sort</mat-card-title>
+    <mat-card-subtitle
+      >Visualización del algoritmo de ordenamiento por
+      selección</mat-card-subtitle
+    >
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="input-container">
+      <mat-form-field>
+        <mat-label>Tamaño del Array</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="arraySize"
+          min="1"
+          max="100"
+        />
+        <mat-hint>Valor entre 1 y 100</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Valor Mínimo</mat-label>
+        <input matInput type="number" [(ngModel)]="minValue" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Valor Máximo</mat-label>
+        <input matInput type="number" [(ngModel)]="maxValue" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Tipo de Ordenamiento</mat-label>
+        <mat-select [(ngModel)]="sortOrder">
+          <mat-option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div #chartContainer class="chart-container"></div>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <button
+      mat-raised-button
+      color="accent"
+      (click)="generateNewArray()"
+      [disabled]="isSorting"
+    >
+      Generar Array
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="startSort()"
+      [disabled]="isSorting || arrayData.length === 0"
+    >
+      {{ isSorting ? "Ordenando..." : "Iniciar Ordenamiento" }}
+    </button>
+  </mat-card-actions>
+</mat-card>
+
+<style>
+  .sort-card {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .input-container {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .chart-container {
+    width: 100%;
+    height: 400px;
+    margin: 20px 0;
+  }
+
+  mat-card-actions {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  mat-form-field {
+    min-width: 150px;
+    flex: 1;
+  }
+
+  @media (max-width: 600px) {
+    .input-container {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+</style>

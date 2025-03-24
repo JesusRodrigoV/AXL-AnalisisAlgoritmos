@@ -1,0 +1,83 @@
+<mat-card class="sort-card">
+  <mat-card-header>
+    <mat-card-title>Shell Sort</mat-card-title>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="input-container">
+      <mat-form-field appearance="outline">
+        <mat-label>Tamaño del array</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="arraySize"
+          min="5"
+          max="100"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Valor mínimo</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="minValue"
+          min="0"
+          max="999"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Valor máximo</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="maxValue"
+          min="1"
+          max="1000"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Valor inicial de h (gap)</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="hValue"
+          min="1"
+          [max]="arraySize"
+        />
+        <mat-hint>Debe ser menor o igual al tamaño del array</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Orden</mat-label>
+        <mat-select [(ngModel)]="sortOrder">
+          <mat-option value="asc">Menor a mayor</mat-option>
+          <mat-option value="desc">Mayor a menor</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div #chartContainer class="chart-container"></div>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="generateArray()"
+      [disabled]="sorting"
+    >
+      Generar Array
+    </button>
+    <button
+      mat-raised-button
+      color="accent"
+      (click)="sort()"
+      [disabled]="sorting || !array.length || !isValidHValue()"
+    >
+      Iniciar ordenamiento
+    </button>
+  </mat-card-actions>
+</mat-card>

@@ -49,6 +49,43 @@ export class NavbarComponent {
       icon: 'bx-task',
       description: 'Algoritmo de asignación para optimización',
     },
+    {
+      label: 'Sorts',
+      icon: 'bx-sort-alt-2',
+      description: 'Algoritmos de ordenamiento',
+      submenu: [
+        {
+          label: 'Bubble Sort',
+          path: '/sorts/bubble',
+          icon: 'bx-sort',
+          description: 'Ordenamiento de burbuja',
+        },
+        {
+          label: 'Insertion Sort',
+          path: '/sorts/insertion',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por inserción',
+        },
+        {
+          label: 'Merge Sort',
+          path: '/sorts/merge',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por mezcla',
+        },
+        {
+          label: 'Selection Sort',
+          path: '/sorts/selection',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por selección',
+        },
+        {
+          label: 'Shell Sort',
+          path: '/sorts/shell',
+          icon: 'bx-sort',
+          description: 'Ordenamiento Shell',
+        },
+      ],
+    },
   ];
   private router: Router = inject(Router);
   private location: Location = inject(Location);
