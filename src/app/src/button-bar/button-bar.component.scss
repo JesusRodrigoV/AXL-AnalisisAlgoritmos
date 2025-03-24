@@ -8,8 +8,8 @@
   left: 47%;
   transform: translate(-40%);
   padding: 10px;
-  //background-color: white;
-  border: 1px solid #ccc;
+  background-color: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-primary);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 50px;
   z-index: 1000;

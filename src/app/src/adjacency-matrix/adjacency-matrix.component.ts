@@ -15,7 +15,6 @@ import { Nodo, Conexion } from '@app/models';
 
 @Component({
   selector: 'app-adjacency-matrix',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './adjacency-matrix.component.html',
   styleUrl: './adjacency-matrix.component.scss',

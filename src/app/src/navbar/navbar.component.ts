@@ -1,7 +1,6 @@
-import { Location } from '@angular/common';
+import { Location, NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -13,10 +12,10 @@ import { ThemeService } from '@app/services/theme/theme-service';
   imports: [
     MatToolbarModule,
     MatButtonModule,
-    MatIconModule,
     RouterLink,
     MatTooltipModule,
     MatMenuModule,
+    NgClass
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',

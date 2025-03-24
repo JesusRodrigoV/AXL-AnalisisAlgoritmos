@@ -57,7 +57,6 @@ export class ThemeService {
         ? 'dark'
         : 'light';
     }
-    // Default theme for server-side rendering
     return 'light';
   }
 }

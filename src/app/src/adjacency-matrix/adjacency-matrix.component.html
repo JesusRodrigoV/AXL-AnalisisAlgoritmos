@@ -2,19 +2,27 @@
   <table>
     <tr>
       <th></th>
-      <th *ngFor="let nodo of nodos" class="nodo-nombre">{{ nodo.nombre }}</th>
+      @for (nodo of nodos; track nodo.nombre) {
+        <th class="nodo-nombre">{{ nodo.nombre }}</th>
+      }
       <th class="suma-columna-fila">Suma Fila</th>
     </tr>
-    <tr *ngFor="let fila of matriz; let i = index">
-      <th class="nodo-nombre">{{ nodos[i].nombre }}</th>
-      <td *ngFor="let celda of fila">{{ celda }}</td>
-      <td class="suma-columna-fila">{{ filaSumas[i] }}</td>
-    </tr>
+    @for (fila of matriz; track $index; let i = $index) {
+      <tr>
+        <th class="nodo-nombre">{{ nodos[i].nombre }}</th>
+        @for (celda of fila; track $index) {
+          <td>{{ celda }}</td>
+        }
+        <td class="suma-columna-fila">{{ filaSumas[i] }}</td>
+      </tr>
+    }
     <tr>
       <th class="suma-columna-fila">Suma Columna</th>
-      <td *ngFor="let suma of columnaSumas" class="suma-columna-fila">
-        {{ suma }}
-      </td>
+      @for (suma of columnaSumas; track $index) {
+        <td class="suma-columna-fila">
+          {{ suma }}
+        </td>
+      }
       <td class="suma-columna-fila"></td>
     </tr>
   </table>

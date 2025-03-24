@@ -27,40 +27,47 @@ import { HelpButtonComponent } from '@app/src/help-button';
 })
 export default class AsignacionComponent {
   helpContent: HelpContent = {
-    title: 'Ayuda - Algoritmo de Johnson',
+    title: 'Ayuda - Algoritmo de Asignación',
     description:
-      'Este componente te permite resolver problemas usando el algoritmo de Johnson...',
+      'Este componente implementa el método húngaro (algoritmo de asignación) para resolver problemas de optimización de asignación de recursos. Permite encontrar la asignación óptima minimizando o maximizando el costo total.',
     steps: [
       {
         number: 1,
-        title: 'Crear nodos',
-        description: 'Haz clic en el canvas para crear un nuevo nodo',
-        image: 'assets/create-node.png',
+        title: 'Crear Nodos',
+        description:
+          'Haz doble clic en el canvas para crear los nodos que representarán recursos y tareas. El grafo debe ser bipartito con igual número de nodos en ambos conjuntos.',
+        image: 'assets/asignacion/create-node.png',
       },
       {
         number: 2,
-        title: 'Crear nodos',
-        description: 'Haz clic en el canvas para crear un nuevo nodo',
-        image: 'assets/create-node.png',
+        title: 'Establecer Conexiones',
+        description:
+          'Selecciona el modo "Conexión" y haz clic en dos nodos para crear una conexión. Ingresa el costo/peso de la asignación en el diálogo emergente.',
+        image: 'assets/asignacion/create-connection.png',
       },
       {
         number: 3,
-        title: 'Crear nodos',
-        description: 'Haz clic en el canvas para crear un nuevo nodo',
-        image: 'assets/create-node.png',
+        title: 'Configurar Optimización',
+        description:
+          'Elige entre minimización o maximización según tu objetivo. La minimización busca reducir el costo total, mientras que la maximización busca aumentarlo.',
+        image: 'assets/asignacion/optimization-toggle.png',
+      },
+      {
+        number: 4,
+        title: 'Resolver',
+        description:
+          'Presiona el botón "Resolver Asignación" para ejecutar el algoritmo. Las asignaciones óptimas se mostrarán resaltadas en el grafo y en el panel de resultados.',
+        image: 'assets/asignacion/solve-button.png',
       },
     ],
     images: [
       {
-        url: 'assets/example1.png',
+        url: 'assets/asignacion/example1.png',
         caption: 'Ejemplo de un grafo completo',
         alt: 'Grafo de ejemplo',
       },
     ],
-    tips: [
-      'Puedes arrastrar los nodos para reorganizarlos',
-      'Usa el botón derecho para eliminar elementos',
-    ],
+    tips: ['Usa el botón derecho para eliminar elementos'],
   };
   // Array de colores para las asignaciones
   assignmentColors: string[] = [
@@ -410,9 +417,6 @@ export default class AsignacionComponent {
     console.log('Número de asignaciones realizadas:', numAssigned);
     console.log('Asignación final:', assignment);
 
-    // Si no se han asignado todos los elementos, se podría mejorar
-    // el algoritmo aquí implementando los pasos adicionales del
-    // método húngaro completo (líneas, etc.)
     if (numAssigned < n) {
       console.warn('No se encontró una asignación completa óptima');
     }
@@ -423,17 +427,14 @@ export default class AsignacionComponent {
   private highlightSolution(): void {
     if (!this.result) return;
 
-    // Resetear colores
     this.canvas.nodos.forEach((node) => {
       node.color = '#ffffff';
     });
 
-    // Resetear colores de conexiones
     this.canvas.conexiones.forEach((conn) => {
       conn._color = '#666';
     });
 
-    // Resaltar las conexiones de la solución
     const assignment = this.result.assignment;
     const usedColors = new Set<number>(); // Para trackear los colores usados
 
@@ -468,7 +469,6 @@ export default class AsignacionComponent {
       }
     }
 
-    // Redibujar el canvas
     const ctx = this.canvas.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.canvas.dibujarNodo(ctx);
