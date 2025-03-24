@@ -1,1 +1,64 @@
-<p>insertion-sort works!</p>
+<mat-card class="sort-card">
+  <mat-card-header>
+    <mat-card-title>Insertion Sort</mat-card-title>
+    <mat-card-subtitle
+      >Visualización del algoritmo de ordenamiento por
+      inserción</mat-card-subtitle
+    >
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="input-container">
+      <mat-form-field>
+        <mat-label>Tamaño del Array</mat-label>
+        <input
+          matInput
+          type="number"
+          [(ngModel)]="arraySize"
+          min="1"
+          max="100"
+        />
+        <mat-hint>Valor entre 1 y 100</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Valor Mínimo</mat-label>
+        <input matInput type="number" [(ngModel)]="minValue" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Valor Máximo</mat-label>
+        <input matInput type="number" [(ngModel)]="maxValue" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Tipo de Ordenamiento</mat-label>
+        <mat-select [(ngModel)]="sortingOrder">
+          <mat-option value="asc">Menor a mayor</mat-option>
+          <mat-option value="desc">Mayor a menor</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div #chartContainer class="chart-container"></div>
+  </mat-card-content>
+
+  <mat-card-actions>
+    <button
+      mat-raised-button
+      color="accent"
+      (click)="generateArray()"
+      [disabled]="isSorting"
+    >
+      Generar Array
+    </button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="startSort()"
+      [disabled]="isSorting || array.length === 0"
+    >
+      {{ isSorting ? "Ordenando..." : "Iniciar Ordenamiento" }}
+    </button>
+  </mat-card-actions>
+</mat-card>
