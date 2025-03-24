@@ -21,25 +21,11 @@ export default class NorthwestComponent {
   demand: number[] = [];
   demandN: number[] = [];
   solution: number[][] = [];
-  costMatrix: number[][] = []; // Agregado para almacenar costos
+  costMatrix: number[][] = [];
 
   ngOnInit(): void {
     this.initializeMatrix();
   }
-
-/*
-    0 250 0 0
-    200 0 150 0
-    0 50  200 150
-  */
-
-  /*
-    3 1 7 4 250
-    2 6 5 9 350
-    8 3 3 3 400
-    200 300 350 150
-  */
-
 
   initializeMatrix() {
     this.matrix = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
@@ -75,7 +61,6 @@ export default class NorthwestComponent {
     this.northwestCorner();
     console.log(`Matriz de asignación inicial:  ${this.solution}`);
     console.log("Costo inicial:", this.calculateTotalCost());
-
     console.log("Optimizando con método MODI...");
     console.log(`Matriz de solucion:  ${this.solution}`);
     this.optimizeMODI();
@@ -88,37 +73,24 @@ export default class NorthwestComponent {
     let i = 0, j = 0;
     this.solution = Array.from({ length: this.supplyN.length }, () => Array(this.demandN.length).fill(0));
 
-    console.log("Inicializando algoritmo");
-
     while (i < this.supplyN.length && j < this.demandN.length) {
-      console.log(`i: ${i}, j: ${j}`);
-      console.log(`SupplyN: ${this.supplyN[i]}`);
-      console.log(`DemandN: ${this.demandN[j]}`);
-
       if (this.supplyN[i] === 0) {
-        console.log("Suministro agotado, avanzando a la siguiente fila");
         i++;
         continue;
       }
 
       if (this.demandN[j] === 0) {
-        console.log("Demanda satisfecha, avanzando a la siguiente columna");
         j++;
         continue;
       }
 
       const qty = Math.min(this.supplyN[i], this.demandN[j]);
-      console.log(`Asignando cantidad: ${qty}`);
 
       this.solution[i][j] = qty;
 
       this.supplyN[i] -= qty;
       this.demandN[j] -= qty;
-
-      console.log(`Suministro actualizado: ${this.supplyN[i]}`);
-      console.log(`Demanda actualizada: ${this.demandN[j]}`);
     }
-    console.log(`Matriz de solucion: ${this.solution}`);
   }
 
   // Calcular costo total de la asignación
@@ -136,8 +108,9 @@ export default class NorthwestComponent {
 
   // Método MODI para optimización
   optimizeMODI() {
-    let matrixCostCopy = this.costMatrix.map(row => [...row]);  // Copia real
-    let matrixMinCost = this.costMatrix.map(row => [...row]);   // Copia real
+    let matrixCostUV = this.costMatrix.map(row => [...row]);
+    let matrixCostCopy = this.costMatrix.map(row => [...row]);
+    let matrixMinCost = this.costMatrix.map(row => [...row]);
     let iteration = 0;
     let negativeValue = true;
     while (true) {
@@ -147,7 +120,7 @@ export default class NorthwestComponent {
       let u = Array(rows).fill(null);
       let v = Array(cols).fill(null);
       let pending = new Set<number>();
-      u[0] = 0; // Empezamos con u[0]=0
+      v[0] = 0; // Empezamos con u[0]=0
       negativeValue=false;
       // 1. Calcular los potenciales U y V
       // Agregar todas las filas y columnas al conjunto de pendientes
@@ -155,18 +128,19 @@ export default class NorthwestComponent {
       for (let j = 0; j < cols; j++) pending.add(rows + j);
 
       let updated = true;
+      console.log(matrixCostUV);
       while (updated) {
         updated = false;
         for (let i = 0; i < rows; i++) {
           for (let j = 0; j < cols; j++) {
             if (this.solution[i][j] > 0) { // Solo celdas con asignación
-              if (u[i] !== null && v[j] === null) {
-                v[j] = this.costMatrix[i][j] - u[i];
-                pending.delete(rows + j);
+              if (u[i] != null && v[j] == null) {
+                v[j] = matrixCostUV[i][j] - u[i];
+                //pending.delete(rows + j);
                 updated = true;
-              } else if (u[i] === null && v[j] !== null) {
-                u[i] = this.costMatrix[i][j] - v[j];
-                pending.delete(i);
+              } else if (u[i] == null && v[j] != null) {
+                u[i] = matrixCostUV[i][j] - v[j];
+                //pending.delete(i);
                 updated = true;
               }
             }
@@ -217,17 +191,22 @@ export default class NorthwestComponent {
         console.log(`Iteración ${iteration}: No se encontró una mejor solución.`);
         break;
       }
-
+      console.log(`Iteración ${iteration}: Mejorando solución con la celda (${positionOfMin[0]}, ${positionOfMin[1]})`);
       // 2.5 Crear un ciclo cerrado para luego sumar
       let cicloCerrado = this.findCycle(positionOfMin[0],positionOfMin[1]);
 
       // 2.6 Aplicacion del ciclo
       if(cicloCerrado!= null){
         this.applyCycle(cicloCerrado)
+      }else{
+        console.log("No se encontró un ciclo válido.");
       }
 
-      console.log(`Iteración ${iteration}: Mejorando solución con la celda (${positionOfMin[0]}, ${positionOfMin[1]})`);
+
       console.log(`Matriz de solucion:  ${this.solution}`);
+      if(iteration>6){
+        break;
+      }
     }
   }
 
@@ -239,20 +218,16 @@ export default class NorthwestComponent {
     let path: [number, number][] = [];
     let visited = new Set<string>();
 
-    // Almacena filas y columnas visitadas para validar ciclos
     let uniqueRows = new Set<number>();
     let uniqueCols = new Set<number>();
 
     const dfs = (i: number, j: number, lastDir: 'row' | 'col' | null): boolean => {
         if (path.length >= 4 && i === startI && j === startJ) {
-            // Un ciclo válido debe incluir al menos 2 filas y 2 columnas distintas
-            if (uniqueRows.size > 1 && uniqueCols.size > 1) {
-                return true;
-            }
+            if (uniqueRows.size > 1 && uniqueCols.size > 1) return true;
             return false;
         }
 
-        // Explorar en la misma fila (horizontal)
+        // Explorar en la misma fila
         if (lastDir !== 'row') {
             for (let y = 0; y < cols; y++) {
                 if (y === j) continue;
@@ -260,19 +235,22 @@ export default class NorthwestComponent {
                     path.push([i, y]);
                     return true;
                 }
-                if (!visited.has(`${i},${y}`) && this.solution[i][y] > 0) {
+                let key = `${i},${y}`;
+                if (!visited.has(key) && this.solution[i][y] > 0) {
                     path.push([i, y]);
-                    visited.add(`${i},${y}`);
+                    visited.add(key);
                     uniqueCols.add(y);
+
                     if (dfs(i, y, 'row')) return true;
+
                     path.pop();
-                    visited.delete(`${i},${y}`);
-                    if (path.length > 0) uniqueCols.delete(y);
+                    visited.delete(key);
+                    if (!path.some(p => p[1] === y)) uniqueCols.delete(y);
                 }
             }
         }
 
-        // Explorar en la misma columna (vertical)
+        // Explorar en la misma columna
         if (lastDir !== 'col') {
             for (let x = 0; x < rows; x++) {
                 if (x === i) continue;
@@ -280,14 +258,17 @@ export default class NorthwestComponent {
                     path.push([x, j]);
                     return true;
                 }
-                if (!visited.has(`${x},${j}`) && this.solution[x][j] > 0) {
+                let key = `${x},${j}`;
+                if (!visited.has(key) && this.solution[x][j] > 0) {
                     path.push([x, j]);
-                    visited.add(`${x},${j}`);
+                    visited.add(key);
                     uniqueRows.add(x);
+
                     if (dfs(x, j, 'col')) return true;
+
                     path.pop();
-                    visited.delete(`${x},${j}`);
-                    if (path.length > 0) uniqueRows.delete(x);
+                    visited.delete(key);
+                    if (!path.some(p => p[0] === x)) uniqueRows.delete(x);
                 }
             }
         }
@@ -295,15 +276,14 @@ export default class NorthwestComponent {
         return false;
     };
 
-    // Iniciar DFS desde la celda candidata
+    // Iniciar DFS desde la celda inicial
+    let startKey = `${startI},${startJ}`;
     path.push([startI, startJ]);
-    visited.add(`${startI},${startJ}`);
+    visited.add(startKey);
     uniqueRows.add(startI);
     uniqueCols.add(startJ);
 
-    if (dfs(startI, startJ, null)) {
-        return path;
-    }
+    if (dfs(startI, startJ, null)) return path;
 
     return null;
   }
@@ -313,17 +293,20 @@ export default class NorthwestComponent {
         console.log("No se encontró un ciclo válido.");
         return;
     }
-
+    cycle.reverse();
+    console.log(`Ciclo encontrado:`+cycle);
     let minValue = Infinity;  // Valor mínimo en posiciones de resta
 
     // 1. Identificar las posiciones de suma (+) y resta (-)
     for (let step = 1; step < cycle.length; step += 2) {
         const [i, j] = cycle[step];  // Posiciones de resta (-)
         minValue = Math.min(minValue, this.solution[i][j]);
+
     }
+    console.log(`Valor minimo: ${minValue}`);
 
     // 2. Aplicar los cambios en la matriz
-    for (let step = 0; step < cycle.length; step++) {
+    for (let step = 0; step < cycle.length-1; step++) {
         const [i, j] = cycle[step];
         if (step % 2 === 0) {
             this.solution[i][j] += minValue;  // Sumar en posiciones pares
