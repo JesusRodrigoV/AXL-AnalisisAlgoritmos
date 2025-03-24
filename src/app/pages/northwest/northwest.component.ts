@@ -13,7 +13,7 @@ import { min } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class NorthwestComponent {
-  rows: number = 4;
+  rows: number = 3;
   cols: number = 3;
   matrix: number[][] = [];
   supply: number[] = [];
@@ -26,20 +26,22 @@ export default class NorthwestComponent {
   iterationModi: number = 1;
 
   ngOnInit(): void {
-    this.initializeMatrix();
+    //this.initializeMatrix();
   }
 
   initializeMatrix() {
     this.matrix = Array.from({ length: this.rows }, () => Array(this.cols).fill(0));
+    this.supply = Array(this.rows).fill(0);
+    this.demand = Array(this.cols).fill(0);
     this.solution = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
     this.costMatrix = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
-    this.setMatrix([
+    /*this.setMatrix([
       [17, 20, 13, 12],
       [15, 21, 26, 25],
       [15, 14, 15, 17]
-    ]);
-    this.supply = [70, 90, 115];
-    this.demand = [50, 60, 70, 95];
+    ]);*/
+    //this.supply = [70, 90, 115];
+    //this.demand = [50, 60, 70, 95];
     this.supplyN =  [...this.supply];
     this.demandN =  [...this.demand];
   }
