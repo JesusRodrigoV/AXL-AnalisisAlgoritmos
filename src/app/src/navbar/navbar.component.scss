@@ -11,11 +11,12 @@
   background: linear-gradient(135deg, #1976d2 0%, #3f51b5 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   button[mat-button] {
-    .bx-sun, .bx-moon {
-      color: white !important; 
+    .bx-sun,
+    .bx-moon {
+      color: white !important;
       font-size: 1.5rem;
       transition: opacity 0.3s ease;
-      
+
       &:hover {
         opacity: 0.8;
       }
@@ -88,7 +89,6 @@ i.bx {
 .route-description {
   display: block;
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.7);
   margin-top: 2px;
 }
 
@@ -118,4 +118,3 @@ i.bx {
     transform: translateY(0);
   }
 }
-

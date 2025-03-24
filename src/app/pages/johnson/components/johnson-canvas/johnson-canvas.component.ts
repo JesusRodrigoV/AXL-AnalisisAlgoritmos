@@ -16,7 +16,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatDialogConfig } from '@angular/material/dialog';
 import { ErrorDialogComponent } from '../error-dialog';
 
 interface Actividad {
@@ -71,18 +70,58 @@ export class JohnsonCanvasComponent implements OnInit {
       HOVER: '#FF9800',
     },
   };
+
+  @ViewChild('johnsonCanvas', { static: true })
+  canvasRef!: ElementRef<HTMLCanvasElement>;
+  private ctx!: CanvasRenderingContext2D;
+
+  actividades: Actividad[] = [{ nombre: '', secuencia: '', peso: 0 }]; // Lista de actividades
+  nodos: Nodo[] = []; // Lista de nodos
+  conexiones: Conexion[] = []; // Lista de conexiones
+  selectedNodo: Nodo | null = null; // Nodo seleccionado para crear conexiones
+
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private dialog: MatDialog,
   ) {}
 
-  private mostrarError(mensaje: string): void {
-    const dialogConfig = new MatDialogConfig();
-    dialogConfig.data = { mensaje };
-    dialogConfig.width = '400px';
-    dialogConfig.position = { top: '100px' };
+  ngOnInit(): void {
+    if (typeof window !== 'undefined' && this.canvasRef?.nativeElement) {
+      setTimeout(() => this.inicializarCanvas(), 0);
+    }
+  }
 
-    this.dialog.open(ErrorDialogComponent, dialogConfig);
+  private inicializarCanvas(): void {
+    const canvas = this.canvasRef.nativeElement;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    this.ctx = context;
+    canvas.width = this.canvasWidth;
+    canvas.height = this.canvasHeight;
+    this.ajustarTamanoCanvas();
+    this.ctx.scale(this.scale, this.scale);
+
+    if (this.nodos.length > 0) this.dibujarGrafo();
+
+    // Agregar listeners para el mouse
+    canvas.addEventListener('mousedown', (e) => this.startPan(e));
+    canvas.addEventListener('mousemove', (e) => this.pan(e));
+    canvas.addEventListener('mouseup', () => this.stopPan());
+    canvas.addEventListener('mouseleave', () => this.stopPan());
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) this.zoomIn();
+      else this.zoomOut();
+    });
+  }
+  // Métodos auxiliares
+  private mostrarError(mensaje: string): void {
+    this.dialog.open(ErrorDialogComponent, {
+      data: { mensaje },
+      width: '400px',
+      position: { top: '100px' },
+    });
   }
 
   private existeBidireccionalidad(): boolean {
@@ -139,71 +178,6 @@ export class JohnsonCanvasComponent implements OnInit {
     }
 
     return false;
-  }
-
-  @ViewChild('johnsonCanvas', { static: true })
-  canvasRef!: ElementRef<HTMLCanvasElement>;
-  private ctx!: CanvasRenderingContext2D;
-
-  actividades: Actividad[] = [{ nombre: '', secuencia: '', peso: 0 }]; // Lista de actividades
-  nodos: Nodo[] = []; // Lista de nodos
-  conexiones: Conexion[] = []; // Lista de conexiones
-  selectedNodo: Nodo | null = null; // Nodo seleccionado para crear conexiones
-
-  ngOnInit(): void {
-    // Verificar si estamos en el navegador y si el canvas existe
-    if (typeof window !== 'undefined' && this.canvasRef?.nativeElement) {
-      setTimeout(() => {
-        this.inicializarCanvas();
-      }, 0);
-    }
-  }
-
-  private inicializarCanvas(): void {
-    if (!this.canvasRef) {
-      console.error('Canvas reference not found');
-      return;
-    }
-
-    const canvas = this.canvasRef.nativeElement;
-    if (!canvas) {
-      console.error('Canvas element not found');
-      return;
-    }
-
-    const context = canvas.getContext('2d');
-    if (!context) {
-      console.error('Could not get 2D context');
-      return;
-    }
-
-    this.ctx = context;
-
-    // Configurar el canvas
-    canvas.width = this.canvasWidth;
-    canvas.height = this.canvasHeight;
-
-    // Ajustar el tamaño del canvas al contenedor
-    this.ajustarTamanoCanvas();
-
-    // Aplicar escala inicial
-    this.ctx.scale(this.scale, this.scale);
-
-    // Dibujar el grafo inicial si hay datos
-    if (this.nodos.length > 0) {
-      this.dibujarGrafo();
-    }
-
-    // Agregar listeners para el mouse
-    canvas.addEventListener('mousedown', (e) => this.startPan(e));
-    canvas.addEventListener('mousemove', (e) => this.pan(e));
-    canvas.addEventListener('mouseup', () => this.stopPan());
-    canvas.addEventListener('mouseleave', () => this.stopPan());
-    canvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      if (e.deltaY < 0) this.zoomIn();
-      else this.zoomOut();
-    });
   }
 
   private ajustarTamanoCanvas(): void {
@@ -277,198 +251,351 @@ export class JohnsonCanvasComponent implements OnInit {
     this.conexiones = [];
     this.hayGrafo = false;
 
-    // Validar que no haya auto-referencias
-    const hayAutoReferencias = this.actividades.some((actividad) =>
-      this.validarAutoReferencia(actividad),
+    // 1. Validación de auto-referencias
+    const hayAutoReferencias = this.actividades.some((a) =>
+      this.validarAutoReferencia(a),
     );
-
     if (hayAutoReferencias) {
+      this.mostrarError('Existen actividades que se referencian a sí mismas');
+      return;
+    }
+
+    // 2. Recolectar todos los nombres de nodos (tanto origen como destino)
+    const nombresNodos = new Set<string>();
+    this.actividades.forEach((actividad) => {
+      if (actividad.nombre?.trim()) {
+        nombresNodos.add(actividad.nombre.trim());
+      }
+      if (actividad.secuencia?.trim()) {
+        nombresNodos.add(actividad.secuencia.trim());
+      }
+    });
+    // 3. Creación de nodos y conexiones
+    const nodosUnicos = new Map<string, Nodo>();
+
+    // Crear nodos para actividades y sus secuencias
+    this.actividades.forEach((a) => {
+      // Crear nodo origen si no existe
+      if (!nodosUnicos.has(a.nombre)) {
+        nodosUnicos.set(a.nombre, new Nodo(`nodo-${a.nombre}`, 0, 0, a.nombre));
+      }
+
+      // Crear nodo destino si existe secuencia y no existe el nodo
+      if (
+        a.secuencia &&
+        a.secuencia.trim() !== '' &&
+        !nodosUnicos.has(a.secuencia)
+      ) {
+        nodosUnicos.set(
+          a.secuencia,
+          new Nodo(`nodo-${a.secuencia}`, 0, 0, a.secuencia),
+        );
+      }
+    });
+
+    this.nodos = Array.from(nodosUnicos.values());
+
+    // Crear conexiones válidas
+    this.actividades.forEach((a) => {
+      if (a.secuencia && a.secuencia.trim() !== '') {
+        const origen = nodosUnicos.get(a.nombre);
+        const destino = nodosUnicos.get(a.secuencia);
+        if (origen && destino && origen !== destino) {
+          this.conexiones.push(new Conexion(origen, destino, a.peso));
+        }
+      }
+    });
+
+    // Crear conexiones válidas
+    this.actividades.forEach((a) => {
+      const origen = nodosUnicos.get(a.nombre);
+      const destino = nodosUnicos.get(a.secuencia);
+      if (origen && destino && origen !== destino) {
+        this.conexiones.push(new Conexion(origen, destino, a.peso));
+      }
+    });
+
+    // 4. Detección de ciclos y bidireccionalidad
+    if (this.detectarCiclos()) {
       this.mostrarError(
-        'Hay actividades que se referencian a sí mismas. Por favor, corrija las conexiones.',
+        'El grafo contiene ciclos. No se puede calcular la ruta crítica.',
       );
       return;
     }
 
-    if (hayAutoReferencias) {
-      console.warn('Hay actividades que se referencian a sí mismas');
-      return;
-    }
-
-    // Validar actividades
-    if (!this.actividadesValidas()) {
-      console.warn('Las actividades no son válidas');
-      return;
-    }
-    if (this.actividades.some((a) => a.nombre || a.secuencia || a.peso !== 0)) {
-      if (!this.actividadesValidas()) {
-        return;
-      }
-    }
-
-    // Crear nodos únicos basados en la columna "Actividad"
-    const nodosUnicos: { [key: string]: Nodo } = {};
-
-    this.actividades.forEach((actividad) => {
-      if (!nodosUnicos[actividad.nombre]) {
-        const id = `nodo-${actividad.nombre}`;
-        const label = actividad.nombre;
-        const nuevoNodo = new Nodo(id, 0, 0, label); // Las coordenadas se ajustarán más tarde
-        nodosUnicos[actividad.nombre] = nuevoNodo;
-        this.nodos.push(nuevoNodo);
-      }
-
-      if (actividad.secuencia && !nodosUnicos[actividad.secuencia]) {
-        const id = `nodo-${actividad.secuencia}`;
-        const label = actividad.secuencia;
-        const nuevoNodo = new Nodo(id, 0, 0, label); // Las coordenadas se ajustarán más tarde
-        nodosUnicos[actividad.secuencia] = nuevoNodo;
-        this.nodos.push(nuevoNodo);
-      }
-    });
-
-    // Crear conexiones basadas en la columna "Secuencia"
-    this.actividades.forEach((actividad) => {
-      const origen = nodosUnicos[actividad.nombre];
-      const destino = nodosUnicos[actividad.secuencia];
-
-      if (origen && destino) {
-        const nuevaConexion = new Conexion(origen, destino, actividad.peso);
-        this.conexiones.push(nuevaConexion);
-      }
-    });
-
-    // Ajustar las coordenadas de los nodos
-    this.ajustarCoordenadas();
-
-    // Validar bidireccionalidad y ciclos
     if (this.existeBidireccionalidad()) {
       this.mostrarError(
-        'Se detectaron conexiones bidireccionales. No se permiten conexiones en ambos sentidos entre dos nodos.',
+        'El grafo contiene conexiones bidireccionales. No se permite este tipo de conexiones.',
       );
-      this.nodos = [];
-      this.conexiones = [];
-      this.hayGrafo = false;
       return;
     }
 
-    if (this.existeCiclo()) {
-      this.mostrarError(
-        'Se detectaron ciclos en el grafo. No se permiten ciclos en el método de Johnson.',
-      );
-      this.nodos = [];
-      this.conexiones = [];
-      this.hayGrafo = false;
+    // 5. Cálculo de la ruta crítica
+    const ordenTopologico = this.obtenerOrdenTopologico();
+    if (!ordenTopologico) {
+      this.mostrarError('No se puede calcular el orden topológico');
       return;
     }
 
-    // Dibujar el grafo
+    // 6. Cálculo de tiempos y ruta crítica
+    this.calcularRutaCritica();
+
+    // 7. Ajuste de coordenadas y visualización
+    this.ajustarCoordenadas();
+    this.calcularJohnson(); // Este método ahora actualiza los tiempos y holguras
     this.dibujarGrafo();
     this.hayGrafo = true;
-
-    // Calcular la ruta crítica
-    this.calcularRutaCritica();
-    this.calcularJohnson();
   }
 
   // Ajusta las coordenadas de los nodos para que no se superpongan
-  ajustarCoordenadas(): void {
-    const espacioHorizontal = 200; // Aumentamos el espacio horizontal
-    const espacioVertical = 120; // Aumentamos el espacio vertical
-    const niveles: { [key: number]: Nodo[] } = {};
+  private ajustarCoordenadas(): void {
+    const niveles = new Map<number, Nodo[]>();
 
-    // Asignar niveles a los nodos
     this.nodos.forEach((nodo) => {
-      const nivel = this.obtenerNivel(nodo);
-      if (!niveles[nivel]) {
-        niveles[nivel] = [];
-      }
-      niveles[nivel].push(nodo);
+      const nivel = this.calcularNivel(nodo);
+      niveles.set(nivel, [...(niveles.get(nivel) || []), nodo]);
     });
 
-    // Ordenar nodos dentro de cada nivel según conexiones
-    Object.keys(niveles).forEach((nivelStr) => {
-      const nivel = parseInt(nivelStr, 10);
-      const nodosEnNivel = niveles[nivel];
-      nodosEnNivel.sort((a, b) => a.label.localeCompare(b.label)); // Orden alfabético
-    });
+    niveles.forEach((nodosNivel, nivel) => {
+      const espacioVertical = 120;
+      const startY = (600 - (nodosNivel.length - 1) * espacioVertical) / 2;
 
-    // Calcular las coordenadas de los nodos
-    Object.keys(niveles).forEach((nivelStr) => {
-      const nivel = parseInt(nivelStr, 10);
-      const nodosEnNivel = niveles[nivel];
-      const startY = (600 - (nodosEnNivel.length - 1) * espacioVertical) / 2; // Centrar verticalmente
-
-      nodosEnNivel.forEach((nodo, index) => {
-        nodo.x = 150 + nivel * espacioHorizontal; // Mover de izquierda a derecha
+      nodosNivel.forEach((nodo, index) => {
+        nodo.x = 150 + nivel * 200;
         nodo.y = startY + index * espacioVertical;
       });
     });
   }
-
-  // Obtener el nivel de un nodo (basado en la distancia desde el inicio)
-  obtenerNivel(nodo: Nodo): number {
-    let nivel = 0;
-    let actual: Nodo | null = nodo;
-
-    while (actual) {
-      const conexionesEntrantes = this.conexiones.filter(
-        (c) => c.destino.id === actual!.id,
-      );
-      if (conexionesEntrantes.length > 0) {
-        actual = conexionesEntrantes[0].origen;
-        nivel++;
-      } else {
-        actual = null;
-      }
-    }
-
-    return nivel;
+  private calcularNivel(nodo: Nodo): number {
+    return this.conexiones
+      .filter((c) => c.destino.id === nodo.id)
+      .reduce((max, c) => Math.max(max, this.calcularNivel(c.origen) + 1), 0);
   }
 
-  // Calcula la ruta crítica
-  calcularRutaCritica(): void {
-    const tiemposTempranos: { [key: string]: number } = {};
-    this.nodos.forEach((nodo) => (tiemposTempranos[nodo.id] = 0));
+  // Método ajustado para cálculo de niveles sin ciclos
+  private obtenerNivel(nodo: Nodo): number {
+    const niveles = new Map<string, number>();
+    const cola: [Nodo, number][] = [[nodo, 0]];
 
-    this.conexiones.forEach((conexion) => {
-      const tiempoLlegada =
-        tiemposTempranos[conexion.origen.id] + conexion.peso;
-      if (tiempoLlegada > tiemposTempranos[conexion.destino.id]) {
-        tiemposTempranos[conexion.destino.id] = tiempoLlegada;
-      }
-    });
+    while (cola.length > 0) {
+      const [actual, nivel] = cola.shift()!;
 
-    const tiemposTardios: { [key: string]: number } = {};
-    const ultimoNodo = this.nodos[this.nodos.length - 1];
-    tiemposTardios[ultimoNodo.id] = tiemposTempranos[ultimoNodo.id];
-
-    for (let i = this.nodos.length - 2; i >= 0; i--) {
-      const nodo = this.nodos[i];
-      tiemposTardios[nodo.id] = Infinity;
-
-      this.conexiones.forEach((conexion) => {
-        if (conexion.origen.id === nodo.id) {
-          const tiempoSalida =
-            tiemposTardios[conexion.destino.id] - conexion.peso;
-          if (tiempoSalida < tiemposTardios[nodo.id]) {
-            tiemposTardios[nodo.id] = tiempoSalida;
-          }
+      if (niveles.has(actual.id)) {
+        if (nivel > niveles.get(actual.id)!) {
+          niveles.set(actual.id, nivel);
         }
-      });
+      } else {
+        niveles.set(actual.id, nivel);
+      }
+
+      this.conexiones
+        .filter((c) => c.destino.id === actual.id)
+        .forEach((c) => {
+          cola.push([c.origen, nivel + 1]);
+        });
     }
 
+    return Math.max(...Array.from(niveles.values()));
+  }
+
+  private calcularRutaCritica(): void {
+    // 1. Obtener orden topológico validado
+    const ordenTopologico = this.obtenerOrdenTopologico();
+
+    if (!ordenTopologico) {
+      this.mostrarError('No se puede calcular ruta crítica en grafos cíclicos');
+      return;
+    }
+
+    // 2. Calcular tiempos con el nuevo enfoque
+    const tiemposTempranos = new Map<string, number>();
+    const tiemposTardios = new Map<string, number>();
+
+    // Inicializar tiempos tempranos
+    this.nodos.forEach((nodo) => tiemposTempranos.set(nodo.id, 0));
+
+    // Calcular tiempos tempranos en orden topológico
+    ordenTopologico.forEach((nodo) => {
+      this.conexiones
+        .filter((c) => c.origen.id === nodo.id)
+        .forEach((conexion) => {
+          const nuevoTiempo = tiemposTempranos.get(nodo.id)! + conexion.peso;
+          if (nuevoTiempo > (tiemposTempranos.get(conexion.destino.id) || 0)) {
+            tiemposTempranos.set(conexion.destino.id, nuevoTiempo);
+          }
+        });
+    });
+
+    // Calcular tiempos tardíos en orden inverso
+    const tiempoMaximo = Math.max(...Array.from(tiemposTempranos.values()));
+    this.nodos.forEach((nodo) => tiemposTardios.set(nodo.id, tiempoMaximo));
+
+    ordenTopologico
+      .slice()
+      .reverse()
+      .forEach((nodo) => {
+        this.conexiones
+          .filter((c) => c.destino.id === nodo.id)
+          .forEach((conexion) => {
+            const nuevoTiempo = tiemposTardios.get(nodo.id)! - conexion.peso;
+            if (
+              nuevoTiempo < (tiemposTardios.get(conexion.origen.id) || Infinity)
+            ) {
+              tiemposTardios.set(conexion.origen.id, nuevoTiempo);
+            }
+          });
+      });
+
+    // 3. Calcular holguras y rutas críticas
     this.conexiones.forEach((conexion) => {
       const holgura =
-        tiemposTardios[conexion.destino.id] -
-        (tiemposTempranos[conexion.origen.id] + conexion.peso);
-      conexion.holgura = holgura;
+        tiemposTardios.get(conexion.destino.id)! -
+        (tiemposTempranos.get(conexion.origen.id)! + conexion.peso);
 
-      if (holgura === 0) {
-        conexion.rutaCritica = true; // Marcar como ruta crítica
+      conexion.holgura = holgura;
+      conexion.rutaCritica = holgura === 0;
+
+      // Actualizar colores de nodos relacionados
+      this.actualizarEstadoNodos(conexion);
+    });
+
+    // 4. Validar consistencia final
+    if (
+      this.conexiones.some((c) => c.holgura === null || c.holgura === undefined)
+    ) {
+      this.mostrarError('Error en cálculo de holguras');
+    }
+  }
+
+  private actualizarEstadoNodos(conexion: Conexion): void {
+    [conexion.origen, conexion.destino].forEach((nodo) => {
+      nodo.esCritico = this.conexiones.some(
+        (c) => (c.origen === nodo || c.destino === nodo) && c.rutaCritica,
+      );
+    });
+  }
+
+  // Método para obtener orden topológico (Kahn's algorithm)
+  private obtenerOrdenTopologico(): Nodo[] | null {
+    const gradosEntrada: Map<string, number> = new Map();
+    const nodosSinEntradas: Nodo[] = [];
+    const orden: Nodo[] = [];
+
+    // Inicializar grados de entrada
+    this.nodos.forEach((nodo) => gradosEntrada.set(nodo.id, 0));
+    this.conexiones.forEach((conexion) => {
+      gradosEntrada.set(
+        conexion.destino.id,
+        (gradosEntrada.get(conexion.destino.id) || 0) + 1,
+      );
+    });
+
+    // Encontrar nodos iniciales
+    this.nodos.forEach((nodo) => {
+      if (gradosEntrada.get(nodo.id) === 0) {
+        nodosSinEntradas.push(nodo);
       }
     });
 
-    this.dibujarGrafo();
+    // Procesar nodos
+    while (nodosSinEntradas.length > 0) {
+      const nodo = nodosSinEntradas.shift()!;
+      orden.push(nodo);
+
+      this.conexiones
+        .filter((c) => c.origen.id === nodo.id)
+        .forEach((c) => {
+          const gradoActual = gradosEntrada.get(c.destino.id)! - 1;
+          gradosEntrada.set(c.destino.id, gradoActual);
+
+          if (gradoActual === 0) {
+            nodosSinEntradas.push(c.destino);
+          }
+        });
+    }
+
+    // Verificar si hay ciclo
+    if (orden.length !== this.nodos.length) {
+      return null;
+    }
+
+    return orden;
+  }
+
+  // Cálculo de tiempos usando orden topológico
+  private calcularTiempos(ordenTopologico: Nodo[]): void {
+    const tiemposTempranos = new Map<string, number>();
+    const tiemposTardios = new Map<string, number>();
+
+    // Inicializar tiempos
+    this.nodos.forEach((nodo) => {
+      tiemposTempranos.set(nodo.id, 0);
+      tiemposTardios.set(nodo.id, 0);
+    });
+
+    // Cálculo de tiempos tempranos
+    ordenTopologico.forEach((nodo) => {
+      this.conexiones
+        .filter((c) => c.origen.id === nodo.id)
+        .forEach((c) => {
+          const nuevoTiempo = tiemposTempranos.get(nodo.id)! + c.peso;
+          if (nuevoTiempo > tiemposTempranos.get(c.destino.id)!) {
+            tiemposTempranos.set(c.destino.id, nuevoTiempo);
+          }
+        });
+    });
+
+    // Cálculo de tiempos tardíos (en orden inverso)
+    const tiempoMaximo = Math.max(...Array.from(tiemposTempranos.values()));
+    const ordenInverso = [...ordenTopologico].reverse();
+
+    ordenInverso.forEach((nodo) => {
+      tiemposTardios.set(nodo.id, tiempoMaximo);
+
+      this.conexiones
+        .filter((c) => c.destino.id === nodo.id)
+        .forEach((c) => {
+          const nuevoTiempo = tiemposTardios.get(nodo.id)! - c.peso;
+          if (nuevoTiempo < tiemposTardios.get(c.origen.id)!) {
+            tiemposTardios.set(c.origen.id, nuevoTiempo);
+          }
+        });
+    });
+
+    // Calcular holguras
+    this.conexiones.forEach((c) => {
+      const holgura =
+        tiemposTardios.get(c.destino.id)! -
+        (tiemposTempranos.get(c.origen.id)! + c.peso);
+      c.holgura = holgura;
+      c.rutaCritica = holgura === 0;
+    });
+  }
+
+  // Método mejorado para detección de ciclos (DFS)
+  private detectarCiclos(): boolean {
+    const visitados = new Set<string>();
+    const pilaRecursion = new Set<string>();
+
+    const esCiclico = (nodo: Nodo): boolean => {
+      if (pilaRecursion.has(nodo.id)) return true;
+      if (visitados.has(nodo.id)) return false;
+
+      visitados.add(nodo.id);
+      pilaRecursion.add(nodo.id);
+
+      const conexionesSalientes = this.conexiones.filter(
+        (c) => c.origen.id === nodo.id,
+      );
+      const tieneCiclo = conexionesSalientes.some((c) => esCiclico(c.destino));
+
+      pilaRecursion.delete(nodo.id);
+      return tieneCiclo;
+    };
+
+    return this.nodos.some(
+      (nodo) => !visitados.has(nodo.id) && esCiclico(nodo),
+    );
   }
 
   // Dibuja todos los nodos y conexiones
@@ -644,11 +771,7 @@ export class JohnsonCanvasComponent implements OnInit {
   }
 
   private esNodoCritico(nodo: Nodo): boolean {
-    return this.conexiones.some(
-      (conexion) =>
-        (conexion.origen.id === nodo.id || conexion.destino.id === nodo.id) &&
-        conexion.rutaCritica,
-    );
+    return nodo.esCritico;
   }
 
   // Dibuja una conexión entre dos nodos
@@ -834,17 +957,14 @@ export class JohnsonCanvasComponent implements OnInit {
     this.ctx.textAlign = 'center';
 
     this.conexiones.forEach((conexion) => {
-      // Calcular la holgura
       const holgura =
         conexion.destino.tiempoFin -
         conexion.origen.tiempoInicio -
         conexion.peso;
 
-      // Calcular la posición para mostrar la holgura (en el centro de la arista)
       const xMedio = (conexion.origen.x + conexion.destino.x) / 2;
       const yMedio = (conexion.origen.y + conexion.destino.y) / 2;
 
-      // Dibujar el texto de la holgura en el canvas
       this.ctx.fillText(`h=${holgura}`, xMedio, yMedio + 20);
     });
   }
@@ -852,10 +972,8 @@ export class JohnsonCanvasComponent implements OnInit {
     const input = event.target as HTMLInputElement;
     const valor = input.value;
 
-    // Eliminar caracteres no numéricos
-    input.value = valor.replace(/[^0-9]/g, '');
+    input.value = valor.replace(/[^0-9.]/g, '');
 
-    // Convertir a número y validar
     const numeroValor = Number(input.value);
     if (numeroValor < 0) {
       input.value = '0';
@@ -941,7 +1059,6 @@ export class JohnsonCanvasComponent implements OnInit {
 
         this.hayGrafo = true;
 
-        // Asegurarse de que el canvas esté inicializado
         if (!this.ctx) {
           setTimeout(() => {
             this.inicializarCanvas();
@@ -958,7 +1075,6 @@ export class JohnsonCanvasComponent implements OnInit {
           'Error al importar el archivo. Asegúrate de que sea un archivo JSON válido.',
         );
       } finally {
-        // Limpiar el input file
         input.value = '';
       }
     };

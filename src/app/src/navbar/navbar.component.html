@@ -42,17 +42,17 @@
         </a>
       }
     }
-    
   </nav>
   <button mat-button (click)="themeService.toggleTheme()">
-    <i class="bx" [ngClass]="themeService.isDarkMode() ? 'bx-moon' : 'bx-sun'"></i>
+    <i
+      class="bx"
+      [ngClass]="themeService.isDarkMode() ? 'bx-moon' : 'bx-sun'"
+    ></i>
   </button>
 
   <button mat-button [matMenuTriggerFor]="menu" class="menu-mobile">
     <i class="bx bx-menu"></i>
   </button>
-
-  
 
   <mat-menu #menu="matMenu">
     @for (ruta of rutas; track ruta.path) {
