@@ -115,13 +115,18 @@ export class JohnsonCanvasComponent implements OnInit {
       else this.zoomOut();
     });
   }
-  // Métodos auxiliares
   private mostrarError(mensaje: string): void {
-    this.dialog.open(ErrorDialogComponent, {
-      data: { mensaje },
-      width: '400px',
-      position: { top: '100px' },
-    });
+    try {
+      this.dialog.open(ErrorDialogComponent, {
+        data: { mensaje },
+        width: '400px',
+        autoFocus: true,
+        disableClose: false,
+      });
+    } catch (error) {
+      console.error('Error al mostrar el diálogo:', error);
+      alert(mensaje); // Fallback en caso de error
+    }
   }
 
   private existeBidireccionalidad(): boolean {

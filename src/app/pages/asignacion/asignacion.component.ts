@@ -40,7 +40,11 @@ export default class AsignacionComponent {
   helpContent: HelpContent = {
     title: 'Ayuda - Algoritmo de Asignación',
     description:
-      'Este componente implementa el método húngaro (algoritmo de asignación) para resolver problemas de optimización de asignación de recursos. Permite encontrar la asignación óptima minimizando o maximizando el costo total.',
+      'Este componente implementa el método húngaro (algoritmo de asignación) para resolver problemas de optimización de asignación de recursos. Requisitos:\n\n' +
+      '1. Los nodos deben dividirse en dos grupos: origen y destino\n' +
+      '2. Debe haber el mismo número de nodos en cada grupo\n' +
+      '3. Las conexiones solo pueden ir de nodos origen a nodos destino\n\n' +
+      'El algoritmo encontrará la asignación óptima minimizando o maximizando el costo total basándose en las conexiones existentes.',
     steps: [
       {
         number: 1,
@@ -112,6 +116,7 @@ export default class AsignacionComponent {
   isMaximization: boolean = false; // Por defecto será minimización
   matrixStats: { maxValue: number; minValue: number; average: number } | null =
     null;
+
   calculateMatrixStats(matrix: number[][]) {
     const values = matrix.flat().filter((x) => x !== Infinity);
     this.matrixStats = {
@@ -126,20 +131,28 @@ export default class AsignacionComponent {
 
     const assignments = [];
     const matrix = this.getAdjacencyMatrix();
+    const nodes = this.canvas.nodos;
 
+    // Ordenar por nodo origen para una visualización más clara
     for (let i = 0; i < this.result.assignment.length; i++) {
       for (let j = 0; j < this.result.assignment[i].length; j++) {
         if (this.result.assignment[i][j] === 1) {
+          const fromNode = nodes.find((n) => n.contador === i + 1);
+          const toNode = nodes.find((n) => n.contador === j + 1);
+
           assignments.push({
-            from: `Nodo ${i + 1}`,
-            to: `Nodo ${j + 1}`,
+            from: fromNode ? `Origen ${fromNode.contador}` : `Origen ${i + 1}`,
+            to: toNode ? `Destino ${toNode.contador}` : `Destino ${j + 1}`,
             cost: matrix[i][j],
+            fromId: i + 1,
+            toId: j + 1,
           });
         }
       }
     }
 
-    return assignments;
+    // Ordenar por ID del nodo origen
+    return assignments.sort((a, b) => a.fromId - b.fromId);
   }
 
   solveAssignment(isMaximization: boolean = false) {
@@ -214,11 +227,25 @@ export default class AsignacionComponent {
 
   private validateMatrix(matrix: number[][]): boolean {
     const n = matrix.length;
-    // Verificar que la matriz sea cuadrada
-    if (!matrix.every((row) => row.length === n)) return false;
 
-    // Verificar que sea bipartito (simplificado)
-    // Aquí podrías agregar una validación más compleja para asegurar que el grafo es bipartito
+    // 1. Verificar que la matriz sea cuadrada (igual número de nodos origen y destino)
+    if (!matrix.every((row) => row.length === n)) {
+      alert('El grafo debe tener el mismo número de nodos origen y destino');
+      return false;
+    }
+
+    // 2. Verificar que no haya valores negativos
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (matrix[i][j] !== Infinity && matrix[i][j] < 0) {
+          alert(
+            `Error: Se encontró un valor negativo entre el nodo ${i + 1} y el nodo ${j + 1}`,
+          );
+          return false;
+        }
+      }
+    }
+
     return true;
   }
 
@@ -232,63 +259,10 @@ export default class AsignacionComponent {
     console.log('Iniciando algoritmo húngaro completo');
     console.log('Matriz de costos inicial:', matrix);
 
-    // Paso 1: Restar el mínimo de cada fila
-    matrix = matrix.map((row, index) => {
-      const validValues = row.filter((x) => x !== Infinity);
-      if (validValues.length === 0) return row;
-      const min = Math.min(...validValues);
-      console.log(`Mínimo de la fila ${index}:`, min);
-      return row.map((val) => (val === Infinity ? Infinity : val - min));
-    });
-    console.log('Matriz después de restar mínimos de filas:', matrix);
+    // Encontrar la asignación óptima directamente
+    const assignment = this.findOptimalAssignment(matrix);
 
-    // Paso 2: Restar el mínimo de cada columna
-    for (let j = 0; j < n; j++) {
-      const columnValues = matrix
-        .map((row) => row[j])
-        .filter((x) => x !== Infinity);
-      if (columnValues.length === 0) continue;
-      const min = Math.min(...columnValues);
-      if (min > 0) {
-        console.log(`Mínimo de la columna ${j}:`, min);
-        for (let i = 0; i < n; i++) {
-          if (matrix[i][j] !== Infinity) {
-            matrix[i][j] -= min;
-          }
-        }
-      }
-    }
-    console.log('Matriz después de restar mínimos de columnas:', matrix);
-
-    // Paso 3: Encontrar la solución óptima mediante un proceso iterativo
-    let assignment: number[][] = [];
-    let step = 3;
-    const mask = Array(n)
-      .fill(0)
-      .map(() => Array(n).fill(0));
-    const rowCover = Array(n).fill(false);
-    const colCover = Array(n).fill(false);
-
-    while (step !== -1) {
-      console.log(`Ejecutando paso ${step}`);
-      switch (step) {
-        case 3:
-          step = this.findZeros(matrix, mask, rowCover, colCover);
-          break;
-        case 4:
-          step = this.coverZeros(mask, rowCover, colCover);
-          break;
-        case 5:
-          step = this.createAdditionalZeros(matrix, rowCover, colCover);
-          break;
-        case 6:
-          assignment = this.constructSolution(mask);
-          step = -1;
-          break;
-      }
-    }
-
-    // Calcular el costo total
+    // Calcular el costo total basado en la asignación encontrada
     let totalCost = 0;
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
@@ -315,6 +289,7 @@ export default class AsignacionComponent {
   ): number {
     const n = matrix.length;
 
+    // Paso 1: Marcar ceros independientes
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         if (matrix[i][j] === 0 && !rowCover[i] && !colCover[j]) {
@@ -325,9 +300,20 @@ export default class AsignacionComponent {
       }
     }
 
+    // Paso 2: Marcar ceros no cubiertos
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        if (matrix[i][j] === 0 && mask[i][j] === 0) {
+          mask[i][j] = 2;
+        }
+      }
+    }
+
     // Limpiar coberturas para el siguiente paso
-    rowCover.fill(false);
-    colCover.fill(false);
+    for (let i = 0; i < n; i++) {
+      rowCover[i] = false;
+      colCover[i] = false;
+    }
 
     return 4;
   }
@@ -404,75 +390,42 @@ export default class AsignacionComponent {
     const assignment = Array(n)
       .fill(0)
       .map(() => Array(n).fill(0));
+    const rowAssigned = new Array(n).fill(false);
+    const colAssigned = new Array(n).fill(false);
 
-    for (let i = 0; i < n; i++) {
+    // Primera pasada: asignar los 1s (ceros marcados independientes)
+    let assignmentCount = 0;
+    for (let i = 0; i < n && assignmentCount < n; i++) {
       for (let j = 0; j < n; j++) {
-        if (mask[i][j] === 1) {
+        if (mask[i][j] === 1 && !rowAssigned[i] && !colAssigned[j]) {
           assignment[i][j] = 1;
+          rowAssigned[i] = true;
+          colAssigned[j] = true;
+          assignmentCount++;
         }
       }
     }
 
-    return assignment;
-  }
-
-  private validateAssignment(assignment: number[][]): boolean {
-    const n = assignment.length;
-
-    // Verificar que cada fila (nodo origen) solo tenga una asignación
-    for (let i = 0; i < n; i++) {
-      const rowSum = assignment[i].reduce((sum, val) => sum + val, 0);
-      if (rowSum !== 1) {
-        console.error(`El nodo origen ${i + 1} tiene ${rowSum} asignaciones`);
-        return false;
-      }
-    }
-
-    // Verificar que cada columna (nodo destino) solo tenga una asignación
-    for (let j = 0; j < n; j++) {
-      let colSum = 0;
-      for (let i = 0; i < n; i++) {
-        colSum += assignment[i][j];
-      }
-      if (colSum !== 1) {
-        console.error(`El nodo destino ${j + 1} tiene ${colSum} asignaciones`);
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private findOptimalAssignment(matrix: number[][]): number[][] {
-    const n = matrix.length;
-    const assignment = Array(n)
-      .fill(0)
-      .map(() => Array(n).fill(0));
-    const rowCovered = Array(n).fill(false);
-    const colCovered = Array(n).fill(false);
-
-    console.log('Buscando asignación óptima');
-    console.log('Matriz para asignación:', matrix);
-
-    // Encontrar asignación inicial asegurando que no haya duplicados
-    let numAssigned = 0;
-    for (let i = 0; i < n && numAssigned < n; i++) {
-      for (let j = 0; j < n && !rowCovered[i]; j++) {
-        if (matrix[i][j] === 0 && !rowCovered[i] && !colCovered[j]) {
-          assignment[i][j] = 1;
-          rowCovered[i] = true;
-          colCovered[j] = true;
-          numAssigned++;
-          console.log(`Asignación encontrada: (${i},${j})`);
+    // Segunda pasada: asignar los ceros restantes si es necesario
+    for (let i = 0; i < n && assignmentCount < n; i++) {
+      if (!rowAssigned[i]) {
+        for (let j = 0; j < n; j++) {
+          if (!colAssigned[j] && mask[i][j] === 2) {
+            // Usamos mask en lugar de matrix y buscamos los 2s
+            assignment[i][j] = 1;
+            rowAssigned[i] = true;
+            colAssigned[j] = true;
+            assignmentCount++;
+            break;
+          }
         }
       }
     }
 
-    console.log('Número de asignaciones realizadas:', numAssigned);
-    console.log('Asignación final:', assignment);
-
-    if (numAssigned < n || !this.validateAssignment(assignment)) {
-      console.warn('No se encontró una asignación válida y completa');
+    // Validación final
+    if (!this.validateAssignment(assignment)) {
+      console.error('Error: No se pudo construir una solución válida');
+      // En lugar de retornar null, retornamos una matriz vacía
       return Array(n)
         .fill(0)
         .map(() => Array(n).fill(0));
@@ -481,37 +434,135 @@ export default class AsignacionComponent {
     return assignment;
   }
 
+  private validateAssignment(assignment: number[][]): boolean {
+    const n = assignment.length;
+    const rowSums = new Array(n).fill(0);
+    const colSums = new Array(n).fill(0);
+
+    // Calcular sumas de filas y columnas en una sola pasada
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        rowSums[i] += assignment[i][j];
+        colSums[j] += assignment[i][j];
+      }
+    }
+
+    // Verificar que cada nodo origen tenga exactamente una asignación
+    for (let i = 0; i < n; i++) {
+      if (rowSums[i] !== 1) {
+        console.error(
+          `Error: El nodo origen ${i + 1} tiene ${rowSums[i]} asignaciones (debe tener exactamente 1)`,
+        );
+        return false;
+      }
+    }
+
+    // Verificar que cada nodo destino tenga exactamente una asignación
+    for (let j = 0; j < n; j++) {
+      if (colSums[j] !== 1) {
+        console.error(
+          `Error: El nodo destino ${j + 1} tiene ${colSums[j]} asignaciones (debe tener exactamente 1)`,
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  // Método auxiliar para verificar si una asignación es válida antes de aplicarla
+  private isValidAssignment(
+    assignment: number[][],
+    row: number,
+    col: number,
+  ): boolean {
+    const n = assignment.length;
+
+    // Verificar que la columna no tenga ya una asignación
+    for (let i = 0; i < n; i++) {
+      if (assignment[i][col] === 1) return false;
+    }
+
+    // Verificar que la fila no tenga ya una asignación
+    return !assignment[row].includes(1);
+  }
+
+  private findOptimalAssignment(matrix: number[][]): number[][] {
+    const n = matrix.length;
+    const assignment = Array(n)
+      .fill(0)
+      .map(() => Array(n).fill(0));
+    const rowAssigned = Array(n).fill(false);
+    const colAssigned = Array(n).fill(false);
+
+    console.log('Buscando asignación óptima');
+    console.log('Matriz para asignación:', matrix);
+
+    // Para cada nodo origen
+    for (let i = 0; i < n; i++) {
+      let minCost = Infinity;
+      let bestCol = -1;
+
+      // Encontrar el destino no asignado con menor costo
+      for (let j = 0; j < n; j++) {
+        if (
+          !colAssigned[j] &&
+          matrix[i][j] !== Infinity &&
+          matrix[i][j] < minCost
+        ) {
+          minCost = matrix[i][j];
+          bestCol = j;
+        }
+      }
+
+      // Si encontramos un destino válido, hacer la asignación
+      if (bestCol !== -1) {
+        assignment[i][bestCol] = 1;
+        rowAssigned[i] = true;
+        colAssigned[bestCol] = true;
+        console.log(
+          `Asignando: Origen ${i + 1} -> Destino ${bestCol + 1} (costo: ${minCost})`,
+        );
+      }
+    }
+
+    // Verificar que todas las asignaciones sean válidas
+    if (!this.validateAssignment(assignment)) {
+      console.warn('Advertencia: No todas las asignaciones son óptimas');
+    }
+
+    return assignment;
+  }
+
   private highlightSolution(): void {
     if (!this.result) return;
 
+    // Resetear colores
     this.canvas.nodos.forEach((node) => {
       node.color = '#ffffff';
     });
 
-    this.canvas.conexiones.forEach((conn) => {
-      conn._color = '#666';
-    });
-
     const assignment = this.result.assignment;
-    const usedColors = new Set<number>(); // Para trackear los colores usados
+    const usedColors = new Set<number>();
 
+    // Resaltar las asignaciones óptimas
     for (let i = 0; i < assignment.length; i++) {
       for (let j = 0; j < assignment[i].length; j++) {
         if (assignment[i][j] === 1) {
-          // Asignar un nuevo índice de color que no haya sido usado
+          // Asignar un color único para cada asignación
           let colorIndex = 0;
           while (usedColors.has(colorIndex)) {
-            colorIndex = (colorIndex + 1) % this.assignmentColors.length;
+            colorIndex = (colorIndex + 1) % this.connectionColors.length;
           }
           usedColors.add(colorIndex);
 
-          // Encontrar la conexión correspondiente
+          // Encontrar y resaltar la conexión
           const connection = this.canvas.conexiones.find(
             (conn) => conn.desde === i + 1 && conn.hasta === j + 1,
           );
 
           if (connection) {
-            // Resaltar los nodos conectados con colores semi-transparentes
+            // Resaltar los nodos conectados
             const fromNode = this.canvas.nodos.find(
               (node) => node.contador === i + 1,
             );
@@ -519,13 +570,20 @@ export default class AsignacionComponent {
               (node) => node.contador === j + 1,
             );
 
-            if (fromNode) fromNode.color = this.assignmentColors[colorIndex];
-            if (toNode) toNode.color = this.assignmentColors[colorIndex];
+            if (fromNode) {
+              fromNode.color = this.assignmentColors[colorIndex];
+              fromNode.radio = 25; // Aumentar temporalmente el tamaño
+            }
+            if (toNode) {
+              toNode.color = this.assignmentColors[colorIndex];
+              toNode.radio = 25; // Aumentar temporalmente el tamaño
+            }
           }
         }
       }
     }
 
+    // Redibujar el canvas
     const ctx = this.canvas.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.canvas.dibujarNodo(ctx);

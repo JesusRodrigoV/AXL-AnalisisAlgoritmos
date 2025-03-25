@@ -60,6 +60,14 @@ export default class HomeComponent {
       route: '/asignacion',
       buttonText: 'COMENZAR',
     },
+    {
+      icon: 'sort',
+      title: 'Algoritmos de Ordenamiento',
+      description:
+        'Visualiza y comprende diferentes algoritmos de ordenamiento y su rendimiento.',
+      route: '/sorts/bubble',
+      buttonText: 'COMENZAR',
+    },
   ];
 
   protected beneficios: Benefits[] = [

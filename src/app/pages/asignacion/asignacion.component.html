@@ -10,10 +10,10 @@
               class="toggle-group"
             >
               <mat-button-toggle [value]="false">
-                <i class="bx bx-minus"></i> Minimización
+                Minimización
               </mat-button-toggle>
               <mat-button-toggle [value]="true">
-                <i class="bx bx-plus"></i> Maximización
+                Maximización
               </mat-button-toggle>
             </mat-button-toggle-group>
           </div>
@@ -85,15 +85,18 @@
               <div
                 mat-line
                 class="assignment-line"
-                [style.color]="assignmentColors[i]"
+                [style.backgroundColor]="assignmentColors[i]"
+                [style.padding]="'8px'"
+                [style.borderRadius]="'4px'"
+                [style.margin]="'4px 0'"
               >
-                <i class="bx bx-right-arrow"></i>
-                <span class="from-to"
-                  >{{ assignment.from }} → {{ assignment.to }}</span
-                >
-                <span class="assignment-cost"
-                  >Costo: {{ assignment.cost }}</span
-                >
+                <i class="bx bx-link"></i>
+                <strong class="from-to">
+                  {{ assignment.from }} ➜ {{ assignment.to }}
+                </strong>
+                <span class="assignment-cost">
+                  (Costo: {{ assignment.cost }})
+                </span>
               </div>
             </mat-list-item>
           </mat-list>
@@ -105,49 +108,7 @@
     <div class="canvas-section">
       <mat-card class="canvas-card">
         <mat-card-content>
-          <app-my-canvas />
-        </mat-card-content>
-      </mat-card>
-    </div>
-
-    <!-- Resultados -->
-    <div class="results-section" *ngIf="result" [@fadeInOut]>
-      <mat-card>
-        <mat-card-header>
-          <mat-card-title>
-            {{ isMaximization ? "Maximización" : "Minimización" }}
-          </mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="total-cost">
-            <i class="bx bx-dollar-circle"></i>
-            <span>Costo total:</span>
-            <span class="cost-value">{{ result.cost }}</span>
-          </div>
-
-          <div class="assignment-details">
-            <h3 class="assignments-title">Asignaciones Óptimas</h3>
-            <mat-list>
-              <mat-list-item
-                *ngFor="
-                  let assignment of getFormattedAssignments();
-                  let i = index
-                "
-                class="assignment-item"
-                [style.color]="assignmentColors[i]"
-              >
-                <i class="bx bx-right-arrow"></i>
-                <div mat-line class="assignment-line">
-                  <span class="from-to"
-                    >{{ assignment.from }} → {{ assignment.to }}</span
-                  >
-                  <span class="assignment-cost"
-                    >Costo: {{ assignment.cost }}</span
-                  >
-                </div>
-              </mat-list-item>
-            </mat-list>
-          </div>
+          <app-my-canvas [forceDirected]="true" />
         </mat-card-content>
       </mat-card>
     </div>

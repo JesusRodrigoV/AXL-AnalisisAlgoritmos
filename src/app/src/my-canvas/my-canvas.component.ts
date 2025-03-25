@@ -5,6 +5,7 @@ import {
   ElementRef,
   EventEmitter,
   inject,
+  Input,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -39,6 +40,8 @@ export class MyCanvasComponent {
   private exportImportService: ExportImportService =
     inject(ExportImportService);
   private undoRedoService: UndoRedoService = inject(UndoRedoService);
+
+  @Input() forceDirected: boolean = false; // Para forzar conexiones dirigidas
 
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
@@ -317,14 +320,14 @@ export class MyCanvasComponent {
       this.primerNodoSeleccionado !== null &&
       this.segundoNodoSeleccionado !== null
     ) {
-      this.conexiones.push(
-        new Conexion(
-          this.primerNodoSeleccionado,
-          this.segundoNodoSeleccionado,
-          datos.peso,
-          datos.dirigido,
-        ),
+      const nuevaConexion = new Conexion(
+        this.primerNodoSeleccionado,
+        this.segundoNodoSeleccionado,
+        datos.peso,
+        this.forceDirected ? true : datos.dirigido,
       );
+      nuevaConexion.dirigido = this.forceDirected ? true : datos.dirigido;
+      this.conexiones.push(nuevaConexion);
     }
     this.limpiarSeleccion();
     this.actualizarMatriz.emit();
@@ -403,14 +406,14 @@ export class MyCanvasComponent {
             ctx.fillStyle = 'black';
             ctx.fillText(peso.toString(), midX, midY);
           }
-          ctx.stroke(); // Asegura que la arista se dibuje
-
-          // Dibujar flecha en el punto final
-          this.dibujarFlecha(ctx, endX, endY, dx, dy);
-
           ctx.strokeStyle = conexion.color || '#666';
           ctx.lineWidth = 2;
-          ctx.stroke();
+          ctx.stroke(); // Asegura que la arista se dibuje
+
+          // Solo dibujar flecha si la conexión es dirigida
+          if (conexion.dirigido) {
+            this.dibujarFlecha(ctx, endX, endY, dx, dy);
+          }
 
           // Dibuja la flecha de Andres
           //if (conexion.dirigido) {
@@ -424,7 +427,6 @@ export class MyCanvasComponent {
           //    controlY,
           //  );
           //}
-
           // Dibujar el peso
           ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
@@ -610,7 +612,11 @@ export class MyCanvasComponent {
     const dialogRef = this.dialog.open(ModalContentComponent, {
       height: '265px',
       width: '200px',
-      data: { peso: this.peso, dirigido: this.arcoDirigido },
+      data: {
+        peso: this.peso,
+        dirigido: this.forceDirected ? true : this.arcoDirigido,
+        showDirectedOption: !this.forceDirected, // Ocultar opción si está forzado
+      },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -652,7 +658,15 @@ export class MyCanvasComponent {
         );
 
         this.nodos = result.nodos;
-        this.conexiones = result.conexiones;
+        // Convertir las conexiones usando el método fromJSON y preservar el estado dirigido
+        this.conexiones = result.conexiones.map((c: any) => {
+          const conexion = Conexion.fromJSON(c);
+          // Si forceDirected está activo, forzar dirigido a true
+          if (this.forceDirected) {
+            conexion.dirigido = true;
+          }
+          return conexion;
+        });
         this.contador = this.nodos.length;
 
         this.actualizarMatriz.emit();
