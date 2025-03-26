@@ -37,6 +37,7 @@ export default class AsignacionComponent {
     @Inject(PLATFORM_ID) private platformId: Object,
     private cdr: ChangeDetectorRef,
   ) {}
+
   helpContent: HelpContent = {
     title: 'Ayuda - Algoritmo de Asignación',
     description:
@@ -84,36 +85,36 @@ export default class AsignacionComponent {
     ],
     tips: ['Usa el botón derecho para eliminar elementos'],
   };
-  // Array de colores para las asignaciones
+
   assignmentColors: string[] = [
-    '#FF6B6B80', // Rojo con transparencia
-    '#4ECDC480', // Turquesa con transparencia
-    '#45B7D180', // Azul claro con transparencia
-    '#96CEB480', // Verde menta con transparencia
-    '#FFEEAD80', // Amarillo claro con transparencia
-    '#D4A5A580', // Rosa pálido con transparencia
-    '#9B5DE580', // Púrpura con transparencia
-    '#F15BB580', // Rosa con transparencia
-    '#00BBF980', // Azul brillante con transparencia
-    '#00F5D480', // Turquesa brillante con transparencia
+    '#FF6B6B80',
+    '#4ECDC480',
+    '#45B7D180',
+    '#96CEB480',
+    '#FFEEAD80',
+    '#D4A5A580',
+    '#9B5DE580',
+    '#F15BB580',
+    '#00BBF980',
+    '#00F5D480',
   ];
 
-  // Colores sólidos para las conexiones
   connectionColors: string[] = [
-    '#FF6B6B', // Rojo
-    '#4ECDC4', // Turquesa
-    '#45B7D1', // Azul claro
-    '#96CEB4', // Verde menta
-    '#FFEEAD', // Amarillo claro
-    '#D4A5A5', // Rosa pálido
-    '#9B5DE5', // Púrpura
-    '#F15BB5', // Rosa
-    '#00BBF9', // Azul brillante
-    '#00F5D4', // Turquesa brillante
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEEAD',
+    '#D4A5A5',
+    '#9B5DE5',
+    '#F15BB5',
+    '#00BBF9',
+    '#00F5D4',
   ];
+
   @ViewChild(MyCanvasComponent) canvas!: MyCanvasComponent;
   result: { assignment: number[][]; cost: number } | null = null;
-  isMaximization: boolean = false; // Por defecto será minimización
+  isMaximization: boolean = false;
   matrixStats: { maxValue: number; minValue: number; average: number } | null =
     null;
 
@@ -133,16 +134,14 @@ export default class AsignacionComponent {
     const matrix = this.getAdjacencyMatrix();
     const nodes = this.canvas.nodos;
 
-    // Ordenar por nodo origen para una visualización más clara
     for (let i = 0; i < this.result.assignment.length; i++) {
       for (let j = 0; j < this.result.assignment[i].length; j++) {
         if (this.result.assignment[i][j] === 1) {
           const fromNode = nodes.find((n) => n.contador === i + 1);
           const toNode = nodes.find((n) => n.contador === j + 1);
-
           assignments.push({
-            from: fromNode ? `Origen ${fromNode.contador}` : `Origen ${i + 1}`,
-            to: toNode ? `Destino ${toNode.contador}` : `Destino ${j + 1}`,
+            from: fromNode?.nombre ?? '',
+            to: toNode?.nombre ?? '',
             cost: matrix[i][j],
             fromId: i + 1,
             toId: j + 1,
@@ -151,19 +150,11 @@ export default class AsignacionComponent {
       }
     }
 
-    // Ordenar por ID del nodo origen
     return assignments.sort((a, b) => a.fromId - b.fromId);
   }
 
   solveAssignment(isMaximization: boolean = false) {
     try {
-      this.isMaximization = isMaximization;
-      console.log('Iniciando resolución del problema de asignación');
-      console.log(
-        'Modo:',
-        this.isMaximization ? 'Maximización' : 'Minimización',
-      );
-
       const matrix = this.getAdjacencyMatrix();
       console.log('Matriz original:', matrix);
 
@@ -174,32 +165,26 @@ export default class AsignacionComponent {
         return;
       }
 
-      // Si es maximización, convertimos el problema a minimización
       let workingMatrix = [...matrix.map((row) => [...row])];
       if (this.isMaximization) {
-        console.log('Convirtiendo problema de maximización a minimización');
         const maxValue = Math.max(
           ...matrix.flat().filter((x) => x !== Infinity),
         );
         workingMatrix = workingMatrix.map((row) =>
           row.map((val) => (val === Infinity ? Infinity : maxValue - val)),
         );
-        console.log('Matriz convertida para minimización:', workingMatrix);
       }
 
       this.result = this.hungarianAlgorithm(workingMatrix);
 
-      // Ajustar el costo final si era un problema de maximización
       if (this.isMaximization && this.result) {
         const n = matrix.length;
         const maxValue = Math.max(
           ...matrix.flat().filter((x) => x !== Infinity),
         );
         this.result.cost = maxValue * n - this.result.cost;
-        console.log('Costo ajustado para maximización:', this.result.cost);
       }
       this.highlightSolution();
-      // Forzar la detección de cambios
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error al resolver la asignación:', error);
@@ -228,13 +213,11 @@ export default class AsignacionComponent {
   private validateMatrix(matrix: number[][]): boolean {
     const n = matrix.length;
 
-    // 1. Verificar que la matriz sea cuadrada (igual número de nodos origen y destino)
     if (!matrix.every((row) => row.length === n)) {
       alert('El grafo debe tener el mismo número de nodos origen y destino');
       return false;
     }
 
-    // 2. Verificar que no haya valores negativos
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
         if (matrix[i][j] !== Infinity && matrix[i][j] < 0) {
