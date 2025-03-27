@@ -2,17 +2,31 @@
   <h1>Método de la Esquina Noroeste</h1>
 
   <label>Filas (Proveedores):</label>
-  <input type="number" [(ngModel)]="rows" (ngModelChange)="initializeMatrix()" min="1" />
+  <input
+    type="number"
+    [(ngModel)]="rows"
+    (ngModelChange)="initializeMatrix()"
+    min="1"
+  />
 
   <label>Columnas (Demandantes):</label>
-  <input type="number" [(ngModel)]="cols" (ngModelChange)="initializeMatrix()" min="1" />
+  <input
+    type="number"
+    [(ngModel)]="cols"
+    (ngModelChange)="initializeMatrix()"
+    min="1"
+  />
 
   <h2>Matriz de costos</h2>
   <table border="1">
     <tbody>
       <tr *ngFor="let row of matrix; let i = index; trackBy: trackByIndex">
         <td *ngFor="let col of row; let j = index; trackBy: trackByIndex">
-          <input type="number" [(ngModel)]="matrix[i][j]" (click)="$event.stopPropagation()" />
+          <input
+            type="number"
+            [(ngModel)]="matrix[i][j]"
+            (click)="$event.stopPropagation()"
+          />
         </td>
       </tr>
     </tbody>
@@ -22,19 +36,29 @@
   <div class="flex">
     <div>
       <h3>Oferta</h3>
-      <input type="number" *ngFor="let s of supply; let i = index; trackBy: trackByIndex" [(ngModel)]="supply[i]" />
+      <input
+        type="number"
+        *ngFor="let s of supply; let i = index; trackBy: trackByIndex"
+        [(ngModel)]="supply[i]"
+      />
     </div>
     <div>
       <h3>Demanda</h3>
-      <input type="number" *ngFor="let d of demand; let j = index; trackBy: trackByIndex" [(ngModel)]="demand[j]" />
+      <input
+        type="number"
+        *ngFor="let d of demand; let j = index; trackBy: trackByIndex"
+        [(ngModel)]="demand[j]"
+      />
     </div>
   </div>
 
   <div class="button-group">
     <label for="mode">Modo de Optimización:</label>
     <button (click)="solveMin()">Minimizar Costos</button>
-    <button (click)="solveMax()">Maximizar Ganancias (only northwest)</button>
-    <button (click)="solveMaxWithInversion()">Maximizar Ganancias (with inversion of costs)</button>
+    <!-- <button (click)="solveMax()">Maximizar Ganancias (only northwest)</button> -->
+    <button (click)="solveMaxWithInversion()">
+      Maximizar Ganancias (with inversion of costs)
+    </button>
   </div>
 
   <div *ngIf="showResults">
@@ -51,9 +75,9 @@
       </tr>
     </table>
   </div>
-  <h3 *ngIf="showResults">Número de iteración para solución: {{iterationModi}}</h3>
-  <h3 *ngIf="showResults">Costo Final: {{costoSolution}}</h3>
+  <h3 *ngIf="showResults">
+    Número de iteración para solución: {{ iterationModi }}
+  </h3>
+  <h3 *ngIf="showResults">Costo Final: {{ costoSolution }}</h3>
 </div>
-<app-help-button [helpContent]="helpContent"/>
-
-
+<app-help-button [helpContent]="helpContent" />

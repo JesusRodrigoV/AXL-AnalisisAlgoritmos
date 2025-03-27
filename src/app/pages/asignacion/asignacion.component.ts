@@ -86,25 +86,25 @@ export default class AsignacionComponent {
   };
   // Array de colores para las asignaciones
   assignmentColors: string[] = [
-    '#FF6B6B80', // Rojo con transparencia
-    '#4ECDC480', // Turquesa con transparencia
-    '#45B7D180', // Azul claro con transparencia
-    '#96CEB480', // Verde menta con transparencia
-    '#FFEEAD80', // Amarillo claro con transparencia
-    '#D4A5A580', // Rosa pálido con transparencia
-    '#9B5DE580', // Púrpura con transparencia
-    '#F15BB580', // Rosa con transparencia
-    '#00BBF980', // Azul brillante con transparencia
-    '#00F5D480', // Turquesa brillante con transparencia
+    '#FF6B6B80', // Rojo
+    '#FFEEAD80', // Turquesa
+    '#45B7D180', // Azul claro
+    '#96CEB480', // Verde menta
+    '#FA3EAD80', // Amarillo claro
+    '#D4A5A580', // Rosa pálido
+    '#9B5DE580', // Púrpura
+    '#F15BB580', // Rosa
+    '#00BBF980', // Azul brillante
+    '#00F5D480', // Turquesa brillante
   ];
 
   // Colores sólidos para las conexiones
   connectionColors: string[] = [
     '#FF6B6B', // Rojo
-    '#4ECDC4', // Turquesa
+    '#FFEEAD', // Turquesa
     '#45B7D1', // Azul claro
     '#96CEB4', // Verde menta
-    '#FFEEAD', // Amarillo claro
+    '#FA3EAD', // Amarillo claro
     '#D4A5A5', // Rosa pálido
     '#9B5DE5', // Púrpura
     '#F15BB5', // Rosa
@@ -203,9 +203,10 @@ export default class AsignacionComponent {
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error al resolver la asignación:', error);
-      alert(
+      /*
+      Algoritmoert(
         'Ocurrió un error al resolver la asignación. Por favor, verifica que el grafo sea válido.',
-      );
+      );*/
     }
   }
 
@@ -227,6 +228,8 @@ export default class AsignacionComponent {
 
   private validateMatrix(matrix: number[][]): boolean {
     const n = matrix.length;
+    const nodes = this.canvas.nodos;
+    const nodeIds = new Set(nodes.map((node) => node.contador));
 
     // 1. Verificar que la matriz sea cuadrada (igual número de nodos origen y destino)
     if (!matrix.every((row) => row.length === n)) {
@@ -234,9 +237,19 @@ export default class AsignacionComponent {
       return false;
     }
 
-    // 2. Verificar que no haya valores negativos
+    // 2. Verificar que no haya valores negativos y que los nodos existan
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
+        // Verificar que los nodos referenciados existan
+        if (!nodeIds.has(i + 1) || !nodeIds.has(j + 1)) {
+          // Limpiar las conexiones inválidas
+          this.cleanInvalidConnections();
+          alert(
+            'Se detectaron conexiones con nodos eliminados. Las conexiones han sido limpiadas.',
+          );
+          return false;
+        }
+
         if (matrix[i][j] !== Infinity && matrix[i][j] < 0) {
           alert(
             `Error: Se encontró un valor negativo entre el nodo ${i + 1} y el nodo ${j + 1}`,
@@ -247,6 +260,21 @@ export default class AsignacionComponent {
     }
 
     return true;
+  }
+
+  private cleanInvalidConnections(): void {
+    const nodeIds = new Set(this.canvas.nodos.map((node) => node.contador));
+
+    // Filtrar las conexiones, manteniendo solo aquellas donde ambos nodos existen
+    this.canvas.conexiones = this.canvas.conexiones.filter(
+      (conn) => nodeIds.has(conn.desde) && nodeIds.has(conn.hasta),
+    );
+
+    // Forzar el redibujado del canvas
+    const ctx = this.canvas.canvas.nativeElement.getContext('2d');
+    if (ctx) {
+      this.canvas.dibujarNodo(ctx);
+    }
   }
 
   private hungarianAlgorithm(costMatrix: number[][]): {

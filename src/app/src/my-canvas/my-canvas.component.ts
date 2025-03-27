@@ -199,13 +199,36 @@ export class MyCanvasComponent {
     if (nodoIndex !== -1) {
       const nodoEliminado = this.nodos[nodoIndex];
 
+      // Eliminar las conexiones relacionadas con el nodo
       this.conexiones = this.conexiones.filter(
         (conexion) =>
           conexion.desde !== nodoEliminado.contador &&
           conexion.hasta !== nodoEliminado.contador,
       );
 
+      // Eliminar el nodo
       this.nodos.splice(nodoIndex, 1);
+
+      // Reordenar los contadores de los nodos restantes
+      this.nodos.forEach((nodo, index) => {
+        const nuevoContador = index + 1;
+
+        // Actualizar las conexiones que referencian a este nodo
+        this.conexiones.forEach((conexion) => {
+          if (conexion.desde > nodoEliminado.contador) {
+            conexion.desde--;
+          }
+          if (conexion.hasta > nodoEliminado.contador) {
+            conexion.hasta--;
+          }
+        });
+
+        nodo.contador = nuevoContador;
+        nodo.nombre = `Nodo ${nuevoContador}`;
+      });
+
+      // Actualizar el contador general
+      this.contador = this.nodos.length;
     } else {
       const conexionIndex = this.conexiones.findIndex((conexion) => {
         const desde = this.nodos.find((c) => c.contador === conexion.desde);
