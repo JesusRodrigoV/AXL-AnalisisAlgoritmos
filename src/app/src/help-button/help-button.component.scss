@@ -1,0 +1,66 @@
+.help-button-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.help-button-container {
+  position: fixed; // Cambiado de relative a fixed
+  bottom: 20px; // Distancia desde el fondo
+  right: 20px; // Distancia desde la derecha
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    .help-prompt {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
+}
+
+.help-fab {
+  i {
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  margin: 8px;
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+}
+
+.help-prompt {
+  position: relative;
+  background: #323232;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease;
+  top: auto;
+  left: auto;
+  transform: none;
+  animation: none;
+
+  &::after {
+    content: "";
+    position: absolute;
+    right: 10px;
+    bottom: -8px;
+    border-width: 8px 8px 0 8px;
+    border-style: solid;
+    border-color: #323232 transparent transparent transparent;
+    left: auto;
+    transform: none;
+  }
+}

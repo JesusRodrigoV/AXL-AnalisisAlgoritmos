@@ -51,11 +51,14 @@ export class ThemeService {
 
   getThemeFromLocalStorage(): Theme {
     if (isPlatformBrowser(this.platformId)) {
-      return (localStorage.getItem(this.THEME_KEY) as Theme) ||
-             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      const storedTheme = localStorage.getItem(this.THEME_KEY) as Theme;
+      if (storedTheme) {
+        return storedTheme;
+      }
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
     }
-
-    // Si está en el servidor, devuelve un valor por defecto (sin usar window)
     return 'light';
   }
 }

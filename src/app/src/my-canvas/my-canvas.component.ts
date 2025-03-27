@@ -5,6 +5,7 @@ import {
   ElementRef,
   EventEmitter,
   inject,
+  Input,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -39,6 +40,8 @@ export class MyCanvasComponent {
   private exportImportService: ExportImportService =
     inject(ExportImportService);
   private undoRedoService: UndoRedoService = inject(UndoRedoService);
+
+  @Input() forceDirected: boolean = false; // Para forzar conexiones dirigidas
 
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
@@ -150,7 +153,28 @@ export class MyCanvasComponent {
         this.primerNodoSeleccionado = nodoSeleccionado.contador;
         nodoSeleccionado.selected = true;
       } else {
-        // Permitimos que el segundo nodo sea el mismo que el primero
+        // Validamos que no sea el mismo nodo
+        if (nodoSeleccionado.contador === this.primerNodoSeleccionado) {
+          alert('No se puede conectar un nodo consigo mismo');
+          this.limpiarSeleccion();
+          return;
+        }
+
+        // Validar que no exista ninguna conexión entre estos nodos
+        const existeConexion = this.conexiones.some(
+          (conn) =>
+            (conn.desde === this.primerNodoSeleccionado &&
+              conn.hasta === nodoSeleccionado.contador) ||
+            (conn.desde === nodoSeleccionado.contador &&
+              conn.hasta === this.primerNodoSeleccionado),
+        );
+
+        if (existeConexion) {
+          alert('Ya existe una conexión entre estos nodos');
+          this.limpiarSeleccion();
+          return;
+        }
+
         this.segundoNodoSeleccionado = nodoSeleccionado.contador;
         this.showModal();
       }
@@ -296,14 +320,14 @@ export class MyCanvasComponent {
       this.primerNodoSeleccionado !== null &&
       this.segundoNodoSeleccionado !== null
     ) {
-      this.conexiones.push(
-        new Conexion(
-          this.primerNodoSeleccionado,
-          this.segundoNodoSeleccionado,
-          datos.peso,
-          datos.dirigido,
-        ),
+      const nuevaConexion = new Conexion(
+        this.primerNodoSeleccionado,
+        this.segundoNodoSeleccionado,
+        datos.peso,
+        this.forceDirected ? true : datos.dirigido,
       );
+      nuevaConexion.dirigido = this.forceDirected ? true : datos.dirigido;
+      this.conexiones.push(nuevaConexion);
     }
     this.limpiarSeleccion();
     this.actualizarMatriz.emit();
@@ -382,14 +406,14 @@ export class MyCanvasComponent {
             ctx.fillStyle = 'black';
             ctx.fillText(peso.toString(), midX, midY);
           }
+          ctx.strokeStyle = conexion.color || '#666';
+          ctx.lineWidth = 2;
           ctx.stroke(); // Asegura que la arista se dibuje
 
-          // Dibujar flecha en el punto final
-          this.dibujarFlecha(ctx, endX, endY, dx, dy);
-
-          ctx.strokeStyle = '#666';
-          ctx.lineWidth = 2;
-          ctx.stroke();
+          // Solo dibujar flecha si la conexión es dirigida
+          if (conexion.dirigido) {
+            this.dibujarFlecha(ctx, endX, endY, dx, dy);
+          }
 
           // Dibuja la flecha de Andres
           //if (conexion.dirigido) {
@@ -403,7 +427,6 @@ export class MyCanvasComponent {
           //    controlY,
           //  );
           //}
-
           // Dibujar el peso
           ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
@@ -419,8 +442,10 @@ export class MyCanvasComponent {
     this.nodos.forEach((circulo) => {
       ctx.beginPath();
       ctx.arc(circulo.x, circulo.y, circulo.radio, 0, Math.PI * 2);
-      ctx.fillStyle = circulo.selected ? '#ff9800' : circulo.color; // Aquí se aplica el color
+      ctx.fillStyle = circulo.selected ? '#ff9800' : circulo.color; // Color de relleno
       ctx.fill();
+      ctx.strokeStyle = '#000000'; // Color del borde siempre negro
+      ctx.lineWidth = 2; // Grosor del borde
       ctx.stroke();
       ctx.font = '20px Source Sans Pro,Arial,sans-serif';
       ctx.fillStyle = 'black';
@@ -587,7 +612,11 @@ export class MyCanvasComponent {
     const dialogRef = this.dialog.open(ModalContentComponent, {
       height: '265px',
       width: '200px',
-      data: { peso: this.peso, dirigido: this.arcoDirigido },
+      data: {
+        peso: this.peso,
+        dirigido: this.forceDirected ? true : this.arcoDirigido,
+        showDirectedOption: !this.forceDirected, // Ocultar opción si está forzado
+      },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -629,7 +658,15 @@ export class MyCanvasComponent {
         );
 
         this.nodos = result.nodos;
-        this.conexiones = result.conexiones;
+        // Convertir las conexiones usando el método fromJSON y preservar el estado dirigido
+        this.conexiones = result.conexiones.map((c: any) => {
+          const conexion = Conexion.fromJSON(c);
+          // Si forceDirected está activo, forzar dirigido a true
+          if (this.forceDirected) {
+            conexion.dirigido = true;
+          }
+          return conexion;
+        });
         this.contador = this.nodos.length;
 
         this.actualizarMatriz.emit();

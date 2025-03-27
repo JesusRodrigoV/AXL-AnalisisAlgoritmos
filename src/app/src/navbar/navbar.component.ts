@@ -1,7 +1,6 @@
-import { Location } from '@angular/common';
+import { Location, NgClass } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -13,10 +12,10 @@ import { ThemeService } from '@app/services/theme/theme-service';
   imports: [
     MatToolbarModule,
     MatButtonModule,
-    MatIconModule,
     RouterLink,
     MatTooltipModule,
     MatMenuModule,
+    NgClass
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
@@ -49,6 +48,43 @@ export class NavbarComponent {
       path: '/asignacion',
       icon: 'bx-task',
       description: 'Algoritmo de asignación para optimización',
+    },
+    {
+      label: 'Sorts',
+      icon: 'bx-sort-alt-2',
+      description: 'Algoritmos de ordenamiento',
+      submenu: [
+        {
+          label: 'Bubble Sort',
+          path: '/sorts/bubble',
+          icon: 'bx-sort',
+          description: 'Ordenamiento de burbuja',
+        },
+        {
+          label: 'Insertion Sort',
+          path: '/sorts/insertion',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por inserción',
+        },
+        {
+          label: 'Merge Sort',
+          path: '/sorts/merge',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por mezcla',
+        },
+        {
+          label: 'Selection Sort',
+          path: '/sorts/selection',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por selección',
+        },
+        {
+          label: 'Shell Sort',
+          path: '/sorts/shell',
+          icon: 'bx-sort',
+          description: 'Ordenamiento Shell',
+        },
+      ],
     },
   ];
   private router: Router = inject(Router);

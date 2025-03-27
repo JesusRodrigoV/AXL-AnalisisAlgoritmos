@@ -1,0 +1,15 @@
+<div class="help-button-container">
+  @defer (on viewport) {
+    <button
+      mat-mini-fab
+      color="primary"
+      (click)="openHelpDialog()"
+      matTooltip="Ayuda"
+      class="help-fab"
+    >
+      <i class="bx bx-help-circle"></i>
+    </button>
+  } @placeholder {
+    <div class="help-button-placeholder"></div>
+  }
+</div>
