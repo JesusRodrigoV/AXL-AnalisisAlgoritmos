@@ -15,7 +15,7 @@ import { ThemeService } from '@app/services/theme/theme-service';
     RouterLink,
     MatTooltipModule,
     MatMenuModule,
-    NgClass
+    NgClass,
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.scss',
@@ -48,6 +48,12 @@ export class NavbarComponent {
       path: '/asignacion',
       icon: 'bx-task',
       description: 'Algoritmo de asignación para optimización',
+    },
+    {
+      label: 'Nor Oeste',
+      path: '/northwest',
+      icon: 'bx-compass',
+      description: 'Algoritmo Nor Oeste para optimización',
     },
     {
       label: 'Sorts',

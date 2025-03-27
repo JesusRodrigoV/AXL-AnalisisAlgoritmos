@@ -68,6 +68,14 @@ export default class HomeComponent {
       route: '/sorts/bubble',
       buttonText: 'COMENZAR',
     },
+    {
+      icon: 'explore',
+      title: 'Algoritmo Esquina Noroeste',
+      description:
+        'Resuelve problemas de transporte utilizando el método de la esquina noroeste.',
+      route: '/noroeste',
+      buttonText: 'COMENZAR',
+    },
   ];
 
   protected beneficios: Benefits[] = [
