@@ -56,10 +56,10 @@ export class NavbarComponent {
       description: 'Algoritmos de ordenamiento',
       submenu: [
         {
-          label: 'Bubble Sort',
-          path: '/sorts/bubble',
+          label: 'Selection Sort',
+          path: '/sorts/selection',
           icon: 'bx-sort',
-          description: 'Ordenamiento de burbuja',
+          description: 'Ordenamiento por selección',
         },
         {
           label: 'Insertion Sort',
@@ -68,22 +68,16 @@ export class NavbarComponent {
           description: 'Ordenamiento por inserción',
         },
         {
-          label: 'Merge Sort',
-          path: '/sorts/merge',
-          icon: 'bx-sort',
-          description: 'Ordenamiento por mezcla',
-        },
-        {
-          label: 'Selection Sort',
-          path: '/sorts/selection',
-          icon: 'bx-sort',
-          description: 'Ordenamiento por selección',
-        },
-        {
           label: 'Shell Sort',
           path: '/sorts/shell',
           icon: 'bx-sort',
           description: 'Ordenamiento Shell',
+        },
+        {
+          label: 'Merge Sort',
+          path: '/sorts/merge',
+          icon: 'bx-sort',
+          description: 'Ordenamiento por mezcla',
         },
       ],
     },

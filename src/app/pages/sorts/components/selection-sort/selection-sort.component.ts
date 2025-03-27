@@ -7,6 +7,7 @@ import {
   OnDestroy,
   Inject,
   PLATFORM_ID,
+  ChangeDetectorRef,
 } from '@angular/core';
 import * as echarts from 'echarts';
 import { SortService } from '@app/services/sort/sort.service';
@@ -32,11 +33,18 @@ import { FormsModule } from '@angular/forms';
     FormsModule,
   ],
 })
-export class SelectionSortComponent implements OnInit, AfterViewInit, OnDestroy {
+export class SelectionSortComponent
+  implements OnInit, AfterViewInit, OnDestroy
+{
   @ViewChild('chartContainer') chartContainer!: ElementRef;
   private chart: echarts.ECharts | null = null;
   arrayData: number[] = [];
   isSorting = false;
+  isPaused = false;
+  startTime: number = 0;
+  pauseStartTime: number = 0;
+  totalPausedTime: number = 0;
+  executionTime: number = 0;
 
   // Parámetros para la generación del array
   arraySize: number = 20;
@@ -53,6 +61,7 @@ export class SelectionSortComponent implements OnInit, AfterViewInit, OnDestroy 
   constructor(
     private sortService: SortService,
     @Inject(PLATFORM_ID) private platformId: Object,
+    private cdr: ChangeDetectorRef,
   ) {}
 
   ngOnInit() {
@@ -89,6 +98,7 @@ export class SelectionSortComponent implements OnInit, AfterViewInit, OnDestroy 
       this.minValue,
       this.maxValue,
     );
+    this.executionTime = 0; // Resetear el tiempo cuando se genera un nuevo array
     this.updateChart(this.arrayData);
   }
 
@@ -135,7 +145,9 @@ export class SelectionSortComponent implements OnInit, AfterViewInit, OnDestroy 
               },
             })),
             type: 'bar',
-            animation: true,
+            animation: false,
+            animationDuration: 0,
+            animationEasing: 'linear',
           },
         ],
       };
@@ -145,25 +157,65 @@ export class SelectionSortComponent implements OnInit, AfterViewInit, OnDestroy 
   }
 
   async startSort() {
-    if (this.isSorting || this.arrayData.length === 0) {
-      if (this.arrayData.length === 0) {
-        alert('Primero genera un array');
-      }
+    if (this.arrayData.length === 0) {
+      alert('Primero genera un array');
       return;
     }
 
-    this.isSorting = true;
-    await this.sortService.selectionSort(
-      this.arrayData,
-      this.sortOrder,
-      (arr, index1, index2) => {
-        this.arrayData = [...arr];
-        this.updateChart(arr, index1, index2);
-      },
-    );
-    this.isSorting = false;
+    if (!this.isSorting) {
+      // Iniciar nuevo ordenamiento
+      this.isSorting = true;
+      this.isPaused = false;
+      this.startTime = performance.now();
+      this.totalPausedTime = 0;
+    }
 
-    this.updateChart(this.arrayData);
+    try {
+      await this.sortService.selectionSort(
+        this.arrayData,
+        this.sortOrder,
+        async (arr, index1, index2) => {
+          this.arrayData = [...arr];
+          this.updateChart(arr, index1, index2);
+
+          // Actualizar tiempo en tiempo real
+          if (!this.isPaused) {
+            this.executionTime =
+              performance.now() - this.startTime - this.totalPausedTime;
+            this.cdr.detectChanges();
+          }
+
+          // Si está pausado, esperar hasta que se reanude
+          while (this.isPaused) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        },
+      );
+
+      this.executionTime =
+        performance.now() - this.startTime - this.totalPausedTime;
+      this.isSorting = false;
+      this.isPaused = false;
+      this.updateChart(this.arrayData);
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error durante el ordenamiento:', error);
+      this.isSorting = false;
+      this.isPaused = false;
+    }
+  }
+
+  togglePause() {
+    if (!this.isSorting) return;
+
+    this.isPaused = !this.isPaused;
+    if (this.isPaused) {
+      // Guardar el momento en que se pausó
+      this.pauseStartTime = performance.now();
+    } else {
+      // Calcular el tiempo total pausado
+      this.totalPausedTime += performance.now() - this.pauseStartTime;
+    }
   }
 
   ngOnDestroy() {

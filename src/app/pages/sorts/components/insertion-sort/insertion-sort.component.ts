@@ -49,7 +49,11 @@ export class InsertionSortComponent implements AfterViewInit, OnDestroy {
   ) {}
 
   ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId) && this.chartContainer && this.chartContainer.nativeElement) {
+    if (
+      isPlatformBrowser(this.platformId) &&
+      this.chartContainer &&
+      this.chartContainer.nativeElement
+    ) {
       this.chart = echarts.init(this.chartContainer.nativeElement);
     }
   }
@@ -130,7 +134,7 @@ export class InsertionSortComponent implements AfterViewInit, OnDestroy {
     }));
 
     const option = {
-      animation: true,
+      animation: false,
       title: {
         text: `Insertion Sort - ${
           this.sortingOrder === 'asc' ? 'Menor a Mayor' : 'Mayor a Menor'
@@ -150,9 +154,11 @@ export class InsertionSortComponent implements AfterViewInit, OnDestroy {
       },
       series: [
         {
-          data,
           type: 'bar',
-          animation: true,
+          data,
+          animation: false,
+          animationDuration: 0,
+          animationEasing: 'linear',
         },
       ],
       tooltip: {
