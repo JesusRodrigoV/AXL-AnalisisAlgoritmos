@@ -38,7 +38,14 @@
   </div>
 
   <div>
-  <h3>Solución:</h3>
+    <h3>Solución NorthWest:</h3>
+    <table border="1">
+      <tr *ngFor="let row of solutionNW; let i = index">
+        <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
+      </tr>
+    </table>
+    npm install -g firebase-tools
+  <h3>Solución optimizada:</h3>
   <table border="1">
     <tr *ngFor="let row of solution; let i = index">
       <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
@@ -46,6 +53,7 @@
   </table>
 </div>
 <h3>Numero de iteracion para solucion: {{iterationModi}}</h3>
+<h3>Costo: {{costoSolution}}</h3>
 </div>
 
 

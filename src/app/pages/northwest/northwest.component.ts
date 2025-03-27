@@ -13,8 +13,8 @@ import { min } from 'rxjs';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class NorthwestComponent {
-  rows: number = 3;
-  cols: number = 3;
+  rows: number = 0;
+  cols: number = 0;
   matrix: number[][] = [];
   supply: number[] = [];
   supplyN: number[] = [];
@@ -22,11 +22,13 @@ export default class NorthwestComponent {
   demand: number[] = [];
   demandN: number[] = [];
   solution: number[][] = [];
+  solutionNW: number[][] = [];
   costMatrix: number[][] = [];
   iterationModi: number = 1;
+  costoSolution: number =0;
 
   ngOnInit(): void {
-    //this.initializeMatrix();
+    this.initializeMatrix();
   }
 
   initializeMatrix() {
@@ -34,14 +36,16 @@ export default class NorthwestComponent {
     this.supply = Array(this.rows).fill(0);
     this.demand = Array(this.cols).fill(0);
     this.solution = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
+    this.solutionNW = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
     this.costMatrix = Array.from({ length: this.supply.length }, () => Array(this.demand.length).fill(0));
-    /*this.setMatrix([
+
+    this.setMatrix([
       [17, 20, 13, 12],
       [15, 21, 26, 25],
       [15, 14, 15, 17]
-    ]);*/
-    //this.supply = [70, 90, 115];
-    //this.demand = [50, 60, 70, 95];
+    ]);
+    this.supply = [70, 90, 115];
+    this.demand = [50, 60, 70, 95];
     this.supplyN =  [...this.supply];
     this.demandN =  [...this.demand];
   }
@@ -61,8 +65,11 @@ export default class NorthwestComponent {
 
   solveMin() {
     this.setCostMatrix(this.matrix);
+    this.supplyN =  [...this.supply];
+    this.demandN =  [...this.demand];
     console.log("Aplicando método Northwest Corner...");
     this.northwestCornerMin();
+    this.solutionNW = this.solution.map(row => [...row]);
     console.log(`Matriz de asignación inicial:  ${this.solution}`);
     console.log("Costo inicial:", this.calculateTotalCost());
     console.log("Optimizando con método MODI...");
@@ -71,20 +78,26 @@ export default class NorthwestComponent {
     console.log("Matriz optimizada:", this.solution);
     //console.log(`Matriz de solucion:  ${this.solution}`);
     console.log("Costo mínimo obtenido:", this.calculateTotalCost());
+    this.costoSolution = this.calculateTotalCost();
   }
 
   solveMax() {
     this.setCostMatrix(this.matrix);
+    this.supplyN =  [...this.supply];
+    this.demandN =  [...this.demand];
     console.log("Aplicando método Northwest Corner...");
     this.northwestCornerMax();
+    this.solutionNW = this.solution.map(row => [...row]);
     console.log(`Matriz de asignación inicial:  ${this.solution}`);
-    console.log("Costo inicial:", this.calculateTotalCost());/*
+    console.log("Costo inicial:", this.calculateTotalCost());
     console.log("Optimizando con método MODI...");
     console.log(`Matriz de solucion:  ${this.solution}`);
+    this.prepareCostMatrixForMODI()
     this.optimizeMODI();
     console.log("Matriz optimizada:", this.solution);
     console.log(`Matriz de solucion:  ${this.solution}`);
-    console.log("Costo mínimo obtenido:", this.calculateTotalCost());*/
+    console.log("Costo mínimo obtenido:", this.calculateTotalCost());
+    this.costoSolution = this.calculateTotalCost() * -1;
   }
 
   northwestCornerMin() {
@@ -108,6 +121,7 @@ export default class NorthwestComponent {
 
       this.supplyN[i] -= qty;
       this.demandN[j] -= qty;
+      console.log(`Numero de iteraciones de NorthWest: ${this.solution}`);
     }
 
     console.log("Numero de iteraciones de NorthWest: "+iteration);
@@ -153,6 +167,10 @@ export default class NorthwestComponent {
       }
     }
     return totalCost;
+  }
+
+  prepareCostMatrixForMODI() {
+    this.costMatrix = this.costMatrix.map(row => row.map(val => -val));
   }
 
   // Método MODI para optimización
