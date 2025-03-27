@@ -138,7 +138,7 @@ export class ShellSortComponent implements OnInit, AfterViewInit, OnDestroy {
     }));
 
     const option = {
-      animation: true,
+      animation: false,
       title: {
         text: `Shell Sort - ${
           this.sortOrder === 'asc' ? 'Menor a mayor' : 'Mayor a menor'
@@ -164,7 +164,9 @@ export class ShellSortComponent implements OnInit, AfterViewInit, OnDestroy {
         {
           type: 'bar',
           data,
-          animation: true,
+          animation: false,
+          animationDuration: 0,
+          animationEasing: 'linear',
         },
       ],
     };
