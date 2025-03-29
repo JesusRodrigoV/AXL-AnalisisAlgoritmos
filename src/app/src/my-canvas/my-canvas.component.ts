@@ -78,6 +78,8 @@ export class MyCanvasComponent {
   private radio: number = 30;
 
   @Output() actualizarMatriz = new EventEmitter<void>();
+  @Output() nodosActualizados = new EventEmitter<Nodo[]>();
+  @Output() conexionActualizada = new EventEmitter<Conexion[]>();
 
   // Maneja el cambio de modo de la herramienta seleccionada
   onModeToggled(event: { id: string; active: boolean }) {
@@ -351,12 +353,18 @@ export class MyCanvasComponent {
       );
       nuevaConexion.dirigido = this.forceDirected ? true : datos.dirigido;
       this.conexiones.push(nuevaConexion);
+
+      const nodoOrigen = this.nodos.find(
+        (n) => n.contador === this.primerNodoSeleccionado,
+      );
+      if (nodoOrigen) {
+        nodoOrigen.esOrigen = true;
+      }
     }
     this.limpiarSeleccion();
     this.actualizarMatriz.emit();
   }
 
-  //Cancela la conexión en proceso y limpia la selección
   cancelarConexion() {
     this.limpiarSeleccion();
   }
@@ -383,6 +391,12 @@ export class MyCanvasComponent {
 
     ctx.fillStyle = this.colorFondo;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // Asegurar que los arrays están sincronizados antes de dibujar
+    console.log('Estado antes de dibujar:', {
+      nodos: this.nodos.length,
+      conexiones: this.conexiones.length,
+    });
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
@@ -480,6 +494,27 @@ export class MyCanvasComponent {
         circulo.y,
       );
     });
+
+    // Emitir actualizaciones solo si hay cambios
+    if (this.nodos && this.nodos.length > 0) {
+      console.log('Emitiendo nodos desde canvas:', {
+        total: this.nodos.length,
+        detalles: this.nodos.map((n) => ({ id: n.contador, nombre: n.nombre })),
+      });
+      this.nodosActualizados.emit([...this.nodos]);
+    }
+
+    if (this.conexiones && this.conexiones.length > 0) {
+      console.log('Emitiendo conexiones desde canvas:', {
+        total: this.conexiones.length,
+        detalles: this.conexiones.map((c) => ({
+          desde: c.desde,
+          hasta: c.hasta,
+          peso: c.peso,
+        })),
+      });
+      this.conexionActualizada.emit([...this.conexiones]);
+    }
 
     this.actualizarMatriz.emit();
   }
@@ -681,10 +716,8 @@ export class MyCanvasComponent {
         );
 
         this.nodos = result.nodos;
-        // Convertir las conexiones usando el método fromJSON y preservar el estado dirigido
         this.conexiones = result.conexiones.map((c: any) => {
           const conexion = Conexion.fromJSON(c);
-          // Si forceDirected está activo, forzar dirigido a true
           if (this.forceDirected) {
             conexion.dirigido = true;
           }
@@ -693,7 +726,7 @@ export class MyCanvasComponent {
         this.contador = this.nodos.length;
 
         this.actualizarMatriz.emit();
-
+        console.log('nodo', this.nodos);
         setTimeout(() => {
           this.dibujar();
           this.actualizarMatriz.emit();
@@ -855,17 +888,46 @@ export class MyCanvasComponent {
   }
 
   // Limpia completamente el canvas y reinicia el estado del grafo
-  limpiarCanvas() {
+  limpiarCanvas(preserveState: boolean = false) {
     const ctx = this.canvas.nativeElement.getContext('2d');
-    this.nodos = [];
-    this.conexiones = [];
-    this.contador = 0;
-    //this.colorFondo = '#fff';
-    if (ctx) {
-      this.dibujarNodo(ctx);
+
+    if (!preserveState) {
+      // Solo limpiamos los arrays si no queremos preservar el estado
+      this.nodos = [];
+      this.conexiones = [];
+      this.contador = 0;
     }
+
+    if (ctx) {
+      // Primero pintamos el fondo
+      ctx.fillStyle = this.colorFondo;
+      ctx.fillRect(
+        0,
+        0,
+        this.canvas.nativeElement.width,
+        this.canvas.nativeElement.height,
+      );
+
+      // Si hay nodos y conexiones que preservar, los redibujamos
+      if (this.nodos.length > 0 || this.conexiones.length > 0) {
+        requestAnimationFrame(() => {
+          this.dibujarNodo(ctx);
+        });
+      }
+    }
+
+    // Emitimos los eventos solo si hay datos que emitir
+    if (this.nodos.length > 0) {
+      this.nodosActualizados.emit([...this.nodos]);
+    }
+    if (this.conexiones.length > 0) {
+      this.conexionActualizada.emit([...this.conexiones]);
+    }
+
     this.actualizarMatriz.emit();
-    this.guardarEstado();
+    if (!preserveState) {
+      this.guardarEstado();
+    }
   }
 
   undo(): void {

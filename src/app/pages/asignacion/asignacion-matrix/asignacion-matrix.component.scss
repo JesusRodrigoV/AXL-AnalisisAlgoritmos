@@ -1,0 +1,36 @@
+.matrix-container {
+  margin: 20px;
+  overflow-x: auto;
+}
+
+table {
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: center;
+  min-width: 60px;
+}
+
+th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+td.infinity {
+  color: #999;
+  font-style: italic;
+}
+
+thead th {
+  background-color: #e0e0e0;
+}
+
+tbody th {
+  background-color: #e0e0e0;
+}

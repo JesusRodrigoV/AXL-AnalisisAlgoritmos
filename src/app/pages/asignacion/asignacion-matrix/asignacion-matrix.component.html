@@ -1,0 +1,25 @@
+<div class="matrix-container">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <!-- Esquina superior izquierda vacía -->
+        @for (destino of nodosDestino; track $index) {
+          <th>{{ destino.nombre }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (origen of nodosOrigen; track $index) {
+        <tr>
+          <th>{{ origen.nombre }}</th>
+          @for (destino of nodosDestino; track $index) {
+            <td [class.infinity]="!getConexionPeso(origen, destino)">
+              {{ getConexionPeso(origen, destino) || "∞" }}
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

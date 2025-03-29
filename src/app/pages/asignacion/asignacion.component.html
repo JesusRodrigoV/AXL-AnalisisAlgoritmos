@@ -21,7 +21,7 @@
             mat-raised-button
             color="primary"
             class="solve-button"
-            (click)="solveAssignment(isMaximization)"
+            (click)="solveAssignment()"
           >
             <i class="bx bx-calculator"></i>
             Resolver Asignación
@@ -31,7 +31,7 @@
     </mat-card>
 
     <!-- Estadísticas de la matriz -->
-    <mat-card *ngIf="matrixStats" class="stats-card" [@fadeInOut]>
+    <mat-card *ngIf="matrixStats" class="stats-card">
       <mat-card-header>
         <mat-card-title>Estadísticas de la Matriz</mat-card-title>
       </mat-card-header>
@@ -59,7 +59,7 @@
     </mat-card>
 
     <!-- Resultados -->
-    <mat-card *ngIf="result" class="result-card" [@fadeInOut]>
+    <mat-card *ngIf="result" class="result-card">
       <mat-card-header>
         <mat-card-title>
           Resultado {{ isMaximization ? "Maximización" : "Minimización" }}
@@ -77,25 +77,29 @@
           <mat-list>
             <mat-list-item
               *ngFor="
-                let assignment of getFormattedAssignments();
-                let i = index
+                let assignment of result.assignment;
+                let i = index;
+                trackBy: trackByAssignment
               "
               class="assignment-item"
             >
               <div
                 mat-line
                 class="assignment-line"
-                [style.backgroundColor]="assignmentColors[i]"
+                [style.backgroundColor]="
+                  assignmentColors[i % assignmentColors.length]
+                "
                 [style.padding]="'8px'"
                 [style.borderRadius]="'4px'"
                 [style.margin]="'4px 0'"
               >
                 <i class="bx bx-link"></i>
                 <strong class="from-to">
-                  {{ assignment.from }} ➜ {{ assignment.to }}
+                  {{ getNodeName(i, true) }} ➜
+                  {{ getNodeName(i, false) }}
                 </strong>
-                <span class="assignment-cost">
-                  (Costo: {{ assignment.cost }})
+                <span class="assignment-cost" *ngIf="canvas?.nodos">
+                  (Costo: {{ getAssignmentCost(i, assignment) }})
                 </span>
               </div>
             </mat-list-item>
@@ -104,14 +108,25 @@
       </mat-card-content>
     </mat-card>
   </div>
+
   <div class="right-section">
     <div class="canvas-section">
       <mat-card class="canvas-card">
         <mat-card-content>
-          <app-my-canvas [forceDirected]="true" />
+          <app-my-canvas
+            [forceDirected]="true"
+            (nodosActualizados)="onNodosActual($event)"
+            (conexionActualizada)="onConectionActual($event)"
+          ></app-my-canvas>
+
+          <app-asignacion-matrix
+            [nodos]="currentNodes"
+            [conexiones]="currentConections"
+          ></app-asignacion-matrix>
         </mat-card-content>
       </mat-card>
     </div>
   </div>
-  <app-help-button [helpContent]="helpContent" />
+
+  <app-help-button [helpContent]="helpContent"></app-help-button>
 </div>
