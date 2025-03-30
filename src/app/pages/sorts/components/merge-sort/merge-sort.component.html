@@ -9,6 +9,14 @@
   <mat-card-content>
     <div class="input-container">
       <mat-form-field>
+        <mat-label>Modo de ingreso</mat-label>
+        <mat-select [(ngModel)]="inputMode" (selectionChange)="onInputModeChange()">
+          <mat-option value="auto">Automático</mat-option>
+          <mat-option value="manual">Manual</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
         <mat-label>Tamaño del Array</mat-label>
         <input
           matInput
@@ -17,15 +25,30 @@
         />
       </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Valor Mínimo</mat-label>
-        <input matInput type="number" [(ngModel)]="minValue" />
-      </mat-form-field>
+      <ng-container *ngIf="inputMode === 'auto'">
+        <mat-form-field>
+          <mat-label>Valor Mínimo</mat-label>
+          <input matInput type="number" [(ngModel)]="minValue" />
+        </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Valor Máximo</mat-label>
-        <input matInput type="number" [(ngModel)]="maxValue" />
-      </mat-form-field>
+        <mat-form-field>
+          <mat-label>Valor Máximo</mat-label>
+          <input matInput type="number" [(ngModel)]="maxValue" />
+        </mat-form-field>
+      </ng-container>
+
+      <ng-container *ngIf="inputMode === 'manual'">
+        <mat-form-field class="manual-input">
+          <mat-label>Valores (separados por comas)</mat-label>
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="manualInput"
+            [placeholder]="'Ingrese ' + arraySize + ' valores separados por comas'"
+          />
+          <mat-hint>Ejemplo: 5, 2, 8, 1, 9, ...</mat-hint>
+        </mat-form-field>
+      </ng-container>
 
       <mat-form-field>
         <mat-label>Tipo de Ordenamiento</mat-label>
@@ -38,7 +61,7 @@
     </div>
 
     <div #chartContainer class="chart-container"></div>
-    <div class="execution-time-container">
+    <div class="execuion-time-container">
       <mat-card-subtitle>
         Tiempo de ejecución: {{ executionTime.toFixed(2) }} ms
       </mat-card-subtitle>
@@ -73,45 +96,3 @@
     </button>
   </mat-card-actions>
 </mat-card>
-
-<style>
-  .sort-card {
-    margin: 20px;
-    padding: 20px;
-  }
-
-  .input-container {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
-
-  .chart-container {
-    width: 100%;
-    height: 400px;
-    margin: 20px 0;
-  }
-
-  mat-card-actions {
-    display: flex;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  mat-form-field {
-    min-width: 150px;
-    flex: 1;
-  }
-
-  @media (max-width: 600px) {
-    .input-container {
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    mat-form-field {
-      width: 100%;
-    }
-  }
-</style>
