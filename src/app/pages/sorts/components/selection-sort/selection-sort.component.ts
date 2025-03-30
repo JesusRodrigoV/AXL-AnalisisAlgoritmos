@@ -45,6 +45,7 @@ export class SelectionSortComponent
   pauseStartTime: number = 0;
   totalPausedTime: number = 0;
   executionTime: number = 0;
+  private sortCancelled = false; // Variable para controlar la cancelación del ordenamiento
 
   // Parámetros para la generación del array
   arraySize: number = 20;
@@ -79,10 +80,6 @@ export class SelectionSortComponent
   }
 
   validateInputs(): boolean {
-    if (this.arraySize <= 0 || this.arraySize > 100) {
-      alert('El tamaño del array debe estar entre 1 y 100');
-      return false;
-    }
     if (this.minValue >= this.maxValue) {
       alert('El valor mínimo debe ser menor que el valor máximo');
       return false;
@@ -92,6 +89,13 @@ export class SelectionSortComponent
 
   generateNewArray() {
     if (!this.validateInputs()) return;
+
+    // Si hay un ordenamiento en curso, cancelarlo
+    if (this.isSorting) {
+      this.sortCancelled = true;
+      this.isSorting = false;
+      this.isPaused = false;
+    }
 
     this.arrayData = this.sortService.generarArray(
       this.arraySize,
@@ -162,46 +166,120 @@ export class SelectionSortComponent
       return;
     }
 
-    if (!this.isSorting) {
-      // Iniciar nuevo ordenamiento
-      this.isSorting = true;
+    // Si está pausado, simplemente reanudar
+    if (this.isSorting && this.isPaused) {
       this.isPaused = false;
-      this.startTime = performance.now();
-      this.totalPausedTime = 0;
+      this.totalPausedTime += performance.now() - this.pauseStartTime;
+      return;
     }
 
-    try {
-      await this.sortService.selectionSort(
-        this.arrayData,
-        this.sortOrder,
-        async (arr, index1, index2) => {
-          this.arrayData = [...arr];
-          this.updateChart(arr, index1, index2);
+    // Si ya está ordenando y no está pausado, no hacer nada
+    if (this.isSorting && !this.isPaused) {
+      return;
+    }
 
-          // Actualizar tiempo en tiempo real
-          if (!this.isPaused) {
-            this.executionTime =
-              performance.now() - this.startTime - this.totalPausedTime;
-            this.cdr.detectChanges();
+    // Iniciar nuevo ordenamiento
+    this.isSorting = true;
+    this.isPaused = false;
+    this.sortCancelled = false; // Resetear la bandera de cancelación
+    this.startTime = performance.now();
+    this.totalPausedTime = 0;
+
+    try {
+      // Crear una copia del array original para trabajar con él
+      const arrayCopy = [...this.arrayData];
+
+      // Implementar Selection Sort directamente aquí para tener más control
+      const n = arrayCopy.length;
+
+      for (let i = 0; i < n; i++) {
+        // Si el ordenamiento fue cancelado, salir del bucle
+        if (this.sortCancelled) {
+          break;
+        }
+
+        let optimalIdx = i;
+        for (let j = i + 1; j < n; j++) {
+          // Si el ordenamiento fue cancelado, salir del bucle
+          if (this.sortCancelled) {
+            break;
           }
 
-          // Si está pausado, esperar hasta que se reanude
-          while (this.isPaused) {
+          // Mientras esté pausado, esperar
+          while (this.isPaused && !this.sortCancelled) {
             await new Promise((resolve) => setTimeout(resolve, 100));
           }
-        },
-      );
 
-      this.executionTime =
-        performance.now() - this.startTime - this.totalPausedTime;
+          // Si se canceló durante la pausa, salir
+          if (this.sortCancelled) {
+            break;
+          }
+
+          // Lógica de ordenamiento según orden ascendente o descendente
+          if (this.sortOrder === 'asc') {
+            if (arrayCopy[j] < arrayCopy[optimalIdx]) {
+              optimalIdx = j;
+            }
+          } else {
+            if (arrayCopy[j] > arrayCopy[optimalIdx]) {
+              optimalIdx = j;
+            }
+          }
+
+          // Actualizar la visualización en cada comparación
+          this.updateChart(arrayCopy, i, j);
+
+          // Actualizar el tiempo de ejecución en tiempo real
+          this.executionTime =
+            performance.now() - this.startTime - this.totalPausedTime;
+          this.cdr.detectChanges();
+
+          // Pequeña pausa para visualizar cada paso
+          await new Promise((resolve) => setTimeout(resolve, 50));
+        }
+
+        // Si el ordenamiento fue cancelado, salir del bucle
+        if (this.sortCancelled) {
+          break;
+        }
+
+        // Intercambiar elementos
+        if (optimalIdx !== i) {
+          const temp = arrayCopy[i];
+          arrayCopy[i] = arrayCopy[optimalIdx];
+          arrayCopy[optimalIdx] = temp;
+
+          // Actualizar la visualización después del intercambio
+          this.updateChart(arrayCopy, i, optimalIdx);
+
+          // Pequeña pausa para visualizar el intercambio
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+
+        // Actualizar el tiempo de ejecución
+        this.executionTime =
+          performance.now() - this.startTime - this.totalPausedTime;
+        this.cdr.detectChanges();
+      }
+
+      // Actualizar array final
+      this.arrayData = arrayCopy;
+
+      // Si no fue cancelado, mostrar estado final
+      if (!this.sortCancelled) {
+        this.executionTime =
+          performance.now() - this.startTime - this.totalPausedTime;
+        this.updateChart(this.arrayData);
+      }
+
       this.isSorting = false;
       this.isPaused = false;
-      this.updateChart(this.arrayData);
       this.cdr.detectChanges();
     } catch (error) {
       console.error('Error durante el ordenamiento:', error);
       this.isSorting = false;
       this.isPaused = false;
+      this.sortCancelled = false;
     }
   }
 
@@ -219,6 +297,8 @@ export class SelectionSortComponent
   }
 
   ngOnDestroy() {
+    // Asegurarse de cancelar cualquier ordenamiento en curso
+    this.sortCancelled = true;
     if (this.chart) {
       this.chart.dispose();
     }

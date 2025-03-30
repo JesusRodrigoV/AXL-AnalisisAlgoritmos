@@ -1,83 +1,123 @@
 <mat-card class="sort-card">
   <mat-card-header>
     <mat-card-title>Shell Sort</mat-card-title>
+    <mat-card-subtitle
+      >Visualización del algoritmo de ordenamiento Shell Sort</mat-card-subtitle
+    >
   </mat-card-header>
 
   <mat-card-content>
     <div class="input-container">
-      <mat-form-field appearance="outline">
-        <mat-label>Tamaño del array</mat-label>
+      <mat-form-field>
+        <mat-label>Tamaño del Array</mat-label>
         <input
           matInput
           type="number"
           [(ngModel)]="arraySize"
-          min="5"
-          max="100"
         />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Valor mínimo</mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="minValue"
-          min="0"
-          max="999"
-        />
+      <mat-form-field>
+        <mat-label>Valor Mínimo</mat-label>
+        <input matInput type="number" [(ngModel)]="minValue" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Valor máximo</mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="maxValue"
-          min="1"
-          max="1000"
-        />
+      <mat-form-field>
+        <mat-label>Valor Máximo</mat-label>
+        <input matInput type="number" [(ngModel)]="maxValue" />
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Valor inicial de h (gap)</mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="hValue"
-          min="1"
-          [max]="arraySize"
-        />
-        <mat-hint>Debe ser menor o igual al tamaño del array</mat-hint>
+      <mat-form-field>
+        <mat-label>Valor de h</mat-label>
+        <input matInput type="number" [(ngModel)]="hValue" min="1" />
+        <mat-hint>Valor inicial para el intervalo</mat-hint>
       </mat-form-field>
 
-      <mat-form-field appearance="outline">
-        <mat-label>Orden</mat-label>
+      <mat-form-field>
+        <mat-label>Tipo de Ordenamiento</mat-label>
         <mat-select [(ngModel)]="sortOrder">
-          <mat-option value="asc">Menor a mayor</mat-option>
-          <mat-option value="desc">Mayor a menor</mat-option>
+          <mat-option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
     </div>
 
     <div #chartContainer class="chart-container"></div>
+    <div class="execution-time-container">
+      <mat-card-subtitle>
+        Tiempo de ejecución: {{ executionTime.toFixed(2) }} ms
+      </mat-card-subtitle>
+    </div>
   </mat-card-content>
 
   <mat-card-actions>
     <button
       mat-raised-button
-      color="primary"
-      (click)="generateArray()"
-      [disabled]="sorting"
+      color="accent"
+      (click)="generateNewArray()"
+      [disabled]="isSorting"
     >
       Generar Array
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="startSort()"
+      [disabled]="isSorting && !isPaused"
+    >
+      {{ !isSorting ? "Ordenar" : isPaused ? "Continuar" : "Ordenando..." }}
     </button>
     <button
       mat-raised-button
       color="accent"
-      (click)="sort()"
-      [disabled]="sorting || !array.length || !isValidHValue()"
+      (click)="togglePause()"
+      [disabled]="!isSorting"
     >
-      Iniciar ordenamiento
+      {{ isPaused ? "Continuar" : "Pausar" }}
     </button>
   </mat-card-actions>
 </mat-card>
+
+<style>
+  .sort-card {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .input-container {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+
+  .chart-container {
+    width: 100%;
+    height: 400px;
+    margin: 20px 0;
+  }
+
+  mat-card-actions {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  mat-form-field {
+    min-width: 150px;
+    flex: 1;
+  }
+
+  @media (max-width: 600px) {
+    .input-container {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    mat-form-field {
+      width: 100%;
+    }
+  }
+</style>
