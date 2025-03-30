@@ -22,7 +22,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-insertion-sort',
   templateUrl: './insertion-sort.component.html',
-  standalone: true,
+  styleUrls: ['./insertion-sort.component.scss'],
   imports: [
     CommonModule,
     MatButtonModule,
@@ -46,6 +46,11 @@ export class InsertionSortComponent
   totalPausedTime: number = 0;
   executionTime: number = 0;
   private sortCancelled = false;
+
+  // Modo de ingreso de datos
+  inputMode: 'auto' | 'manual' = 'auto';
+  manualInput: string = '';
+  manualValues: number[] = [];
 
   // Parámetros para la generación del array
   arraySize: number = 20;
@@ -87,6 +92,47 @@ export class InsertionSortComponent
     return true;
   }
 
+  onInputModeChange() {
+    this.arrayData = [];
+    this.manualInput = '';
+    this.manualValues = [];
+  }
+
+  onArraySizeChange() {
+    if (this.inputMode === 'manual') {
+      this.manualInput = ''; // Limpiar el input cuando cambia el tamaño
+      this.manualValues = [];
+    }
+  }
+
+  validateManualInput(): boolean {
+    if (!this.manualInput.trim()) {
+      alert('Por favor ingrese valores');
+      return false;
+    }
+
+    const values = this.manualInput
+      .split(',')
+      .map((val) => val.trim())
+      .filter((val) => val !== '');
+
+    if (values.length !== this.arraySize) {
+      alert(
+        `Por favor ingrese exactamente ${this.arraySize} valores separados por comas`,
+      );
+      return false;
+    }
+
+    const numbers = values.map((v) => Number(v));
+    if (numbers.some(isNaN)) {
+      alert('Todos los valores deben ser números válidos');
+      return false;
+    }
+
+    this.manualValues = numbers;
+    return true;
+  }
+
   generateNewArray() {
     if (!this.validateInputs()) return;
 
@@ -95,6 +141,19 @@ export class InsertionSortComponent
       this.sortCancelled = true;
       this.isSorting = false;
       this.isPaused = false;
+    }
+
+    if (this.inputMode === 'auto') {
+      this.arrayData = this.sortService.generarArray(
+        this.arraySize,
+        this.minValue,
+        this.maxValue,
+      );
+    } else {
+      if (!this.validateManualInput()) {
+        return;
+      }
+      this.arrayData = [...this.manualValues];
     }
 
     this.arrayData = this.sortService.generarArray(
