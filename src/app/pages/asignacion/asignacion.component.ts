@@ -47,16 +47,16 @@ export default class AsignacionComponent {
   readonly HIGHLIGHT_RADIUS = 25;
 
   assignmentColors: string[] = [
-    '#FF000080', // Rojo
-    '#00FF0080', // Verde
-    '#0000FF80', // Azul
-    '#FFA50080', // Naranja
-    '#80008080', // Púrpura
-    '#00FFFF80', // Cian
-    '#FF00FF80', // Magenta
-    '#FFD70080', // Dorado
-    '#4B008280', // Índigo
-    '#98FB9880', // Verde claro
+    '#1976d280', // Azul principal
+    '#03a9f480', // Azul claro
+    '#0288d180', // Azul oscuro
+    '#00acc180', // Azul verdoso
+    '#2196f380', // Azul brillante
+    '#42a5f580', // Azul cielo
+    '#1565c080', // Azul profundo
+    '#0277bd80', // Azul oceánico
+    '#0097a780', // Azul turquesa
+    '#00838f80', // Azul marino
   ];
 
   // Colores sólidos para las conexiones
@@ -296,32 +296,6 @@ export default class AsignacionComponent {
     return matrix;
   }
 
-  private validateMatrix(
-    matrix: number[][],
-    originNodes: Node[],
-    destNodes: Node[],
-  ): boolean {
-    if (originNodes.length !== destNodes.length) {
-      this.snackBar.open(
-        'Debe haber la misma cantidad de nodos origen y destino',
-        'Cerrar',
-        { duration: 3000 },
-      );
-      return false;
-    }
-
-    if (matrix.some((row) => row.every((v) => v === Infinity))) {
-      this.snackBar.open(
-        'Existen nodos origen sin conexiones válidas',
-        'Cerrar',
-        { duration: 3000 },
-      );
-      return false;
-    }
-
-    return true;
-  }
-
   private highlightSolution(origins: Nodo[], destinations: Nodo[]): void {
     this.storeOriginalSizes();
 
@@ -390,43 +364,6 @@ export default class AsignacionComponent {
           this.canvas.dibujarNodo(ctx);
           this.cdr.detectChanges();
         });
-      }
-    }
-  }
-
-  private storeOriginalRadii(): void {
-    this.canvas.nodos.forEach((n) =>
-      this.originalRadii.set(n.contador, n.radio),
-    );
-  }
-
-  private applyHighlight(node: Nodo, color: string): void {
-    node.color = color;
-    node.radio = this.HIGHLIGHT_RADIUS;
-  }
-
-  private redrawCanvas(): void {
-    const ctx = this.canvas.canvas.nativeElement.getContext('2d');
-    if (ctx) {
-      this.canvas.limpiarCanvas();
-      this.canvas.dibujarNodo(ctx);
-    }
-  }
-
-  private resetNodes(): void {
-    if (!this.canvas) return;
-
-    this.canvas.nodos.forEach((n) => {
-      n.color = this.DEFAULT_NODE_COLOR;
-      const originalSize = this.originalRadii.get(n.contador);
-      n.radio = originalSize ? originalSize : 20;
-    });
-
-    // Solo redibujamos si hay nodos que restaurar
-    if (this.canvas.nodos.length > 0) {
-      const ctx = this.canvas.canvas.nativeElement.getContext('2d');
-      if (ctx) {
-        this.canvas.dibujarNodo(ctx);
       }
     }
   }

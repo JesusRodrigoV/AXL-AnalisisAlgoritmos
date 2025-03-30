@@ -888,18 +888,15 @@ export class MyCanvasComponent {
   }
 
   // Limpia completamente el canvas y reinicia el estado del grafo
-  limpiarCanvas(preserveState: boolean = false) {
+  limpiarCanvas() {
+    // Reiniciamos todos los datos
+    this.nodos = [];
+    this.conexiones = [];
+    this.contador = 0;
+
     const ctx = this.canvas.nativeElement.getContext('2d');
-
-    if (!preserveState) {
-      // Solo limpiamos los arrays si no queremos preservar el estado
-      this.nodos = [];
-      this.conexiones = [];
-      this.contador = 0;
-    }
-
     if (ctx) {
-      // Primero pintamos el fondo
+      // Limpiamos el canvas completamente
       ctx.fillStyle = this.colorFondo;
       ctx.fillRect(
         0,
@@ -907,27 +904,12 @@ export class MyCanvasComponent {
         this.canvas.nativeElement.width,
         this.canvas.nativeElement.height,
       );
-
-      // Si hay nodos y conexiones que preservar, los redibujamos
-      if (this.nodos.length > 0 || this.conexiones.length > 0) {
-        requestAnimationFrame(() => {
-          this.dibujarNodo(ctx);
-        });
-      }
     }
 
-    // Emitimos los eventos solo si hay datos que emitir
-    if (this.nodos.length > 0) {
-      this.nodosActualizados.emit([...this.nodos]);
-    }
-    if (this.conexiones.length > 0) {
-      this.conexionActualizada.emit([...this.conexiones]);
-    }
-
+    // Notificamos que los datos han sido limpiados
+    this.nodosActualizados.emit([]);
+    this.conexionActualizada.emit([]);
     this.actualizarMatriz.emit();
-    if (!preserveState) {
-      this.guardarEstado();
-    }
   }
 
   undo(): void {
