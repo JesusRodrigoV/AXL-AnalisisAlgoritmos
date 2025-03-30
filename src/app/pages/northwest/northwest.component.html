@@ -8,24 +8,12 @@
       <div class="input-section">
         <mat-form-field appearance="outline">
           <mat-label>Filas (Proveedores)</mat-label>
-          <input
-            matInput
-            type="number"
-            [(ngModel)]="rows"
-            (ngModelChange)="initializeMatrix()"
-            min="1"
-          />
+          <input matInput type="number" [(ngModel)]="rows" min="1" />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Columnas (Demandantes)</mat-label>
-          <input
-            matInput
-            type="number"
-            [(ngModel)]="cols"
-            (ngModelChange)="initializeMatrix()"
-            min="1"
-          />
+          <input matInput type="number" [(ngModel)]="cols" min="1" />
         </mat-form-field>
       </div>
 
@@ -35,8 +23,9 @@
         </mat-card-header>
         <mat-card-content>
           <div class="matrix-container">
-            <table mat-table>
+            <table class="matrix-table">
               <tbody>
+                <!-- Filas de la matriz de costos + columna de ofertas -->
                 <tr
                   *ngFor="
                     let row of matrix;
@@ -44,6 +33,7 @@
                     trackBy: trackByIndex
                   "
                 >
+                  <!-- Celdas de costos -->
                   <td
                     *ngFor="
                       let col of row;
@@ -60,41 +50,41 @@
                       />
                     </mat-form-field>
                   </td>
+                  <!-- Columna de ofertas -->
+                  <td class="supply-cell">
+                    <mat-form-field appearance="outline">
+                      <input
+                        matInput
+                        type="number"
+                        [(ngModel)]="supply[i]"
+                        placeholder="Oferta"
+                      />
+                    </mat-form-field>
+                  </td>
+                </tr>
+                <!-- Fila de demandas -->
+                <tr class="demand-row">
+                  <td
+                    *ngFor="
+                      let d of demand;
+                      let j = index;
+                      trackBy: trackByIndex
+                    "
+                  >
+                    <mat-form-field appearance="outline">
+                      <input
+                        matInput
+                        type="number"
+                        [(ngModel)]="demand[j]"
+                        placeholder="Demanda"
+                      />
+                    </mat-form-field>
+                  </td>
+                  <!-- Celda vacía en la esquina -->
+                  <td></td>
                 </tr>
               </tbody>
             </table>
-          </div>
-        </mat-card-content>
-      </mat-card>
-
-      <mat-card class="supply-demand-card">
-        <mat-card-header>
-          <mat-card-title>Oferta y Demanda</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <div class="flex-container">
-            <div class="supply-section">
-              <h3>Oferta</h3>
-              <div class="input-list">
-                <mat-form-field
-                  appearance="outline"
-                  *ngFor="let s of supply; let i = index; trackBy: trackByIndex"
-                >
-                  <input matInput type="number" [(ngModel)]="supply[i]" />
-                </mat-form-field>
-              </div>
-            </div>
-            <div class="demand-section">
-              <h3>Demanda</h3>
-              <div class="input-list">
-                <mat-form-field
-                  appearance="outline"
-                  *ngFor="let d of demand; let j = index; trackBy: trackByIndex"
-                >
-                  <input matInput type="number" [(ngModel)]="demand[j]" />
-                </mat-form-field>
-              </div>
-            </div>
           </div>
         </mat-card-content>
       </mat-card>
@@ -122,7 +112,7 @@
             <mat-card-title>Solución NorthWest</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <table mat-table>
+            <table class="result-table">
               <tr *ngFor="let row of solutionNW; let i = index">
                 <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
               </tr>
@@ -135,7 +125,7 @@
             <mat-card-title>Solución optimizada</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <table mat-table>
+            <table class="result-table">
               <tr *ngFor="let row of solution; let i = index">
                 <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
               </tr>

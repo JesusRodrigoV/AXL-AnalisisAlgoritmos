@@ -1,5 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -23,9 +27,35 @@ import { MatTableModule } from '@angular/material/table';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class NorthwestComponent {
-  rows: number = 0;
-  cols: number = 0;
+  private _rows: number = 0;
+  private _cols: number = 0;
   matrix: number[][] = []; //Matriz para interfaz de costos
+
+  get rows(): number {
+    return this._rows;
+  }
+
+  set rows(value: number) {
+    if (value !== this._rows) {
+      this._rows = value;
+      this.initializeMatrix();
+      this.cdr.detectChanges();
+    }
+  }
+
+  get cols(): number {
+    return this._cols;
+  }
+
+  set cols(value: number) {
+    if (value !== this._cols) {
+      this._cols = value;
+      this.initializeMatrix();
+      this.cdr.detectChanges();
+    }
+  }
+
+  constructor(private cdr: ChangeDetectorRef) {}
   supply: number[] = []; //Valores de supply
   supplyN: number[] = []; //Copia de oferta para trabajar northwest
   demand: number[] = []; //Valores de demand

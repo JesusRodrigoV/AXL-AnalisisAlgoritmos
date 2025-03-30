@@ -30,12 +30,15 @@
       overflow-x: auto;
       margin: 16px 0;
 
-      table {
-        border-collapse: collapse;
+      .matrix-table {
         width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        background: var(--mdc-theme-surface);
 
         td {
           padding: 4px;
+          border: 1px solid var(--mdc-theme-divider, rgba(0, 0, 0, 0.12));
 
           mat-form-field {
             width: 80px;
@@ -45,6 +48,35 @@
               min-height: 40px;
             }
           }
+        }
+
+        .supply-cell {
+          background-color: rgba(var(--mdc-theme-primary-rgb), 0.05);
+          mat-form-field {
+            width: 100px;
+          }
+        }
+
+        .demand-row {
+          background-color: rgba(var(--mdc-theme-accent-rgb), 0.05);
+          td {
+            mat-form-field {
+              width: 100px;
+            }
+          }
+        }
+      }
+
+      .result-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        background: var(--mdc-theme-surface);
+
+        td {
+          padding: 8px;
+          border: 1px solid var(--mdc-theme-divider, rgba(0, 0, 0, 0.12));
+          text-align: center;
         }
       }
     }
