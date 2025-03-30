@@ -5,6 +5,7 @@ import {
   ElementRef,
   EventEmitter,
   inject,
+  Input,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -39,6 +40,8 @@ export class MyCanvasComponent {
   private exportImportService: ExportImportService =
     inject(ExportImportService);
   private undoRedoService: UndoRedoService = inject(UndoRedoService);
+
+  @Input() forceDirected: boolean = false; // Para forzar conexiones dirigidas
 
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
@@ -75,6 +78,8 @@ export class MyCanvasComponent {
   private radio: number = 30;
 
   @Output() actualizarMatriz = new EventEmitter<void>();
+  @Output() nodosActualizados = new EventEmitter<Nodo[]>();
+  @Output() conexionActualizada = new EventEmitter<Conexion[]>();
 
   // Maneja el cambio de modo de la herramienta seleccionada
   onModeToggled(event: { id: string; active: boolean }) {
@@ -196,13 +201,36 @@ export class MyCanvasComponent {
     if (nodoIndex !== -1) {
       const nodoEliminado = this.nodos[nodoIndex];
 
+      // Eliminar las conexiones relacionadas con el nodo
       this.conexiones = this.conexiones.filter(
         (conexion) =>
           conexion.desde !== nodoEliminado.contador &&
           conexion.hasta !== nodoEliminado.contador,
       );
 
+      // Eliminar el nodo
       this.nodos.splice(nodoIndex, 1);
+
+      // Reordenar los contadores de los nodos restantes
+      this.nodos.forEach((nodo, index) => {
+        const nuevoContador = index + 1;
+
+        // Actualizar las conexiones que referencian a este nodo
+        this.conexiones.forEach((conexion) => {
+          if (conexion.desde > nodoEliminado.contador) {
+            conexion.desde--;
+          }
+          if (conexion.hasta > nodoEliminado.contador) {
+            conexion.hasta--;
+          }
+        });
+
+        nodo.contador = nuevoContador;
+        nodo.nombre = `Nodo ${nuevoContador}`;
+      });
+
+      // Actualizar el contador general
+      this.contador = this.nodos.length;
     } else {
       const conexionIndex = this.conexiones.findIndex((conexion) => {
         const desde = this.nodos.find((c) => c.contador === conexion.desde);
@@ -317,20 +345,26 @@ export class MyCanvasComponent {
       this.primerNodoSeleccionado !== null &&
       this.segundoNodoSeleccionado !== null
     ) {
-      this.conexiones.push(
-        new Conexion(
-          this.primerNodoSeleccionado,
-          this.segundoNodoSeleccionado,
-          datos.peso,
-          datos.dirigido,
-        ),
+      const nuevaConexion = new Conexion(
+        this.primerNodoSeleccionado,
+        this.segundoNodoSeleccionado,
+        datos.peso,
+        this.forceDirected ? true : datos.dirigido,
       );
+      nuevaConexion.dirigido = this.forceDirected ? true : datos.dirigido;
+      this.conexiones.push(nuevaConexion);
+
+      const nodoOrigen = this.nodos.find(
+        (n) => n.contador === this.primerNodoSeleccionado,
+      );
+      if (nodoOrigen) {
+        nodoOrigen.esOrigen = true;
+      }
     }
     this.limpiarSeleccion();
     this.actualizarMatriz.emit();
   }
 
-  //Cancela la conexión en proceso y limpia la selección
   cancelarConexion() {
     this.limpiarSeleccion();
   }
@@ -357,6 +391,12 @@ export class MyCanvasComponent {
 
     ctx.fillStyle = this.colorFondo;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // Asegurar que los arrays están sincronizados antes de dibujar
+    console.log('Estado antes de dibujar:', {
+      nodos: this.nodos.length,
+      conexiones: this.conexiones.length,
+    });
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
@@ -403,14 +443,14 @@ export class MyCanvasComponent {
             ctx.fillStyle = 'black';
             ctx.fillText(peso.toString(), midX, midY);
           }
-          ctx.stroke(); // Asegura que la arista se dibuje
-
-          // Dibujar flecha en el punto final
-          this.dibujarFlecha(ctx, endX, endY, dx, dy);
-
           ctx.strokeStyle = conexion.color || '#666';
           ctx.lineWidth = 2;
-          ctx.stroke();
+          ctx.stroke(); // Asegura que la arista se dibuje
+
+          // Solo dibujar flecha si la conexión es dirigida
+          if (conexion.dirigido) {
+            this.dibujarFlecha(ctx, endX, endY, dx, dy);
+          }
 
           // Dibuja la flecha de Andres
           //if (conexion.dirigido) {
@@ -424,7 +464,6 @@ export class MyCanvasComponent {
           //    controlY,
           //  );
           //}
-
           // Dibujar el peso
           ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
@@ -455,6 +494,27 @@ export class MyCanvasComponent {
         circulo.y,
       );
     });
+
+    // Emitir actualizaciones solo si hay cambios
+    if (this.nodos && this.nodos.length > 0) {
+      console.log('Emitiendo nodos desde canvas:', {
+        total: this.nodos.length,
+        detalles: this.nodos.map((n) => ({ id: n.contador, nombre: n.nombre })),
+      });
+      this.nodosActualizados.emit([...this.nodos]);
+    }
+
+    if (this.conexiones && this.conexiones.length > 0) {
+      console.log('Emitiendo conexiones desde canvas:', {
+        total: this.conexiones.length,
+        detalles: this.conexiones.map((c) => ({
+          desde: c.desde,
+          hasta: c.hasta,
+          peso: c.peso,
+        })),
+      });
+      this.conexionActualizada.emit([...this.conexiones]);
+    }
 
     this.actualizarMatriz.emit();
   }
@@ -610,7 +670,11 @@ export class MyCanvasComponent {
     const dialogRef = this.dialog.open(ModalContentComponent, {
       height: '265px',
       width: '200px',
-      data: { peso: this.peso, dirigido: this.arcoDirigido },
+      data: {
+        peso: this.peso,
+        dirigido: this.forceDirected ? true : this.arcoDirigido,
+        showDirectedOption: !this.forceDirected, // Ocultar opción si está forzado
+      },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -652,11 +716,17 @@ export class MyCanvasComponent {
         );
 
         this.nodos = result.nodos;
-        this.conexiones = result.conexiones;
+        this.conexiones = result.conexiones.map((c: any) => {
+          const conexion = Conexion.fromJSON(c);
+          if (this.forceDirected) {
+            conexion.dirigido = true;
+          }
+          return conexion;
+        });
         this.contador = this.nodos.length;
 
         this.actualizarMatriz.emit();
-
+        console.log('nodo', this.nodos);
         setTimeout(() => {
           this.dibujar();
           this.actualizarMatriz.emit();
@@ -819,16 +889,27 @@ export class MyCanvasComponent {
 
   // Limpia completamente el canvas y reinicia el estado del grafo
   limpiarCanvas() {
-    const ctx = this.canvas.nativeElement.getContext('2d');
+    // Reiniciamos todos los datos
     this.nodos = [];
     this.conexiones = [];
     this.contador = 0;
-    //this.colorFondo = '#fff';
+
+    const ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
-      this.dibujarNodo(ctx);
+      // Limpiamos el canvas completamente
+      ctx.fillStyle = this.colorFondo;
+      ctx.fillRect(
+        0,
+        0,
+        this.canvas.nativeElement.width,
+        this.canvas.nativeElement.height,
+      );
     }
+
+    // Notificamos que los datos han sido limpiados
+    this.nodosActualizados.emit([]);
+    this.conexionActualizada.emit([]);
     this.actualizarMatriz.emit();
-    this.guardarEstado();
   }
 
   undo(): void {

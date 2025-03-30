@@ -1,1 +1,58 @@
-<p>northwest works!</p>
+<div class="container">
+  <h1>Método de la Esquina Noroeste</h1>
+
+  <label>Filas (Proveedores):</label>
+  <input type="number" [(ngModel)]="rows" (ngModelChange)="initializeMatrix()" min="1" />
+
+  <label>Columnas (Demandantes):</label>
+  <input type="number" [(ngModel)]="cols" (ngModelChange)="initializeMatrix()" min="1" />
+
+  <h2>Matriz de costos</h2>
+  <table border="1">
+    <tbody>
+      <tr *ngFor="let row of matrix; let i = index; trackBy: trackByIndex">
+        <td *ngFor="let col of row; let j = index; trackBy: trackByIndex">
+          <input type="number" [(ngModel)]="matrix[i][j]" (click)="$event.stopPropagation()" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Oferta y Demanda</h2>
+  <div class="flex">
+    <div>
+      <h3>Oferta</h3>
+      <input type="number" *ngFor="let s of supply; let i = index; trackBy: trackByIndex" [(ngModel)]="supply[i]" />
+    </div>
+    <div>
+      <h3>Demanda</h3>
+      <input type="number" *ngFor="let d of demand; let j = index; trackBy: trackByIndex" [(ngModel)]="demand[j]" />
+    </div>
+  </div>
+
+  <div class="button-group">
+    <label for="mode">Modo de Optimización:</label>
+    <button (click)="solveMin()">Minimizar Costos</button>
+    <button (click)="solveMax()">Maximizar Ganancias (only northwest)</button>
+    <button (click)="solveMaxWithInversion()">Maximizar Ganancias (with inversion of costs)</button>
+  </div>
+
+  <div *ngIf="showResults">
+    <h3>Solución NorthWest:</h3>
+    <table border="1">
+      <tr *ngFor="let row of solutionNW; let i = index">
+        <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
+      </tr>
+    </table>
+    <h3>Solución optimizada:</h3>
+    <table border="1">
+      <tr *ngFor="let row of solution; let i = index">
+        <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
+      </tr>
+    </table>
+  </div>
+  <h3 *ngIf="showResults">Número de iteración para solución: {{iterationModi}}</h3>
+  <h3 *ngIf="showResults">Costo Final: {{costoSolution}}</h3>
+</div>
+
+

@@ -1,13 +1,23 @@
+import {
+  Component,
+  ChangeDetectorRef,
+  ViewChild,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, ViewChild } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MyCanvasComponent } from '@app/src/my-canvas';
-import { MatListModule } from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatListModule } from '@angular/material/list';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { HelpContent } from '@app/models/Help.model';
+import { MyCanvasComponent } from '@app/src/my-canvas';
 import { HelpButtonComponent } from '@app/src/help-button';
+import { AssignmentSolverService } from '@app/services/assignment-solver';
+import { HelpContent } from '@app/models/Help.model';
+import { Conexion, Nodo } from '@app/models';
+import { AsignacionMatrixComponent } from './asignacion-matrix';
 
 @Component({
   selector: 'app-asignacion',
@@ -20,82 +30,352 @@ import { HelpButtonComponent } from '@app/src/help-button';
     MatButtonToggleModule,
     MatCardModule,
     HelpButtonComponent,
+    AsignacionMatrixComponent,
   ],
   templateUrl: './asignacion.component.html',
-  styleUrl: './asignacion.component.scss',
+  styleUrls: ['./asignacion.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class AsignacionComponent {
-  helpContent: HelpContent = {
-    title: 'Ayuda - Algoritmo de Johnson',
-    description:
-      'Este componente te permite resolver problemas usando el algoritmo de Johnson...',
-    steps: [
-      {
-        number: 1,
-        title: 'Crear nodos',
-        description: 'Haz clic en el canvas para crear un nuevo nodo',
-        image: 'assets/create-node.png',
-      },
-      {
-        number: 2,
-        title: 'Crear nodos',
-        description: 'Haz clic en el canvas para crear un nuevo nodo',
-        image: 'assets/create-node.png',
-      },
-      {
-        number: 3,
-        title: 'Crear nodos',
-        description: 'Haz clic en el canvas para crear un nuevo nodo',
-        image: 'assets/create-node.png',
-      },
-    ],
-    images: [
-      {
-        url: 'assets/example1.png',
-        caption: 'Ejemplo de un grafo completo',
-        alt: 'Grafo de ejemplo',
-      },
-    ],
-    tips: [
-      'Puedes arrastrar los nodos para reorganizarlos',
-      'Usa el botón derecho para eliminar elementos',
-    ],
-  };
-  // Array de colores para las asignaciones
+  private isProcessing = false;
+  @ViewChild(MyCanvasComponent) canvas!: MyCanvasComponent;
+  private assignmentSolver = inject(AssignmentSolverService);
+  currentNodes: Nodo[] = [];
+  currentConections: Conexion[] = [];
+
+  readonly DEFAULT_NODE_COLOR = '#aa0';
+  readonly HIGHLIGHT_RADIUS = 25;
+
   assignmentColors: string[] = [
-    '#FF6B6B80', // Rojo con transparencia
-    '#4ECDC480', // Turquesa con transparencia
-    '#45B7D180', // Azul claro con transparencia
-    '#96CEB480', // Verde menta con transparencia
-    '#FFEEAD80', // Amarillo claro con transparencia
-    '#D4A5A580', // Rosa pálido con transparencia
-    '#9B5DE580', // Púrpura con transparencia
-    '#F15BB580', // Rosa con transparencia
-    '#00BBF980', // Azul brillante con transparencia
-    '#00F5D480', // Turquesa brillante con transparencia
+    '#1976d280', // Azul principal
+    '#03a9f480', // Azul claro
+    '#0288d180', // Azul oscuro
+    '#00acc180', // Azul verdoso
+    '#2196f380', // Azul brillante
+    '#42a5f580', // Azul cielo
+    '#1565c080', // Azul profundo
+    '#0277bd80', // Azul oceánico
+    '#0097a780', // Azul turquesa
+    '#00838f80', // Azul marino
   ];
 
   // Colores sólidos para las conexiones
   connectionColors: string[] = [
-    '#FF6B6B', // Rojo
-    '#4ECDC4', // Turquesa
-    '#45B7D1', // Azul claro
-    '#96CEB4', // Verde menta
-    '#FFEEAD', // Amarillo claro
-    '#D4A5A5', // Rosa pálido
-    '#9B5DE5', // Púrpura
-    '#F15BB5', // Rosa
-    '#00BBF9', // Azul brillante
-    '#00F5D4', // Turquesa brillante
+    '#FF0000', // Rojo
+    '#00FF00', // Verde
+    '#0000FF', // Azul
+    '#FFA500', // Naranja
+    '#800080', // Púrpura
+    '#00FFFF', // Cian
+    '#FF00FF', // Magenta
+    '#FFD700', // Dorado
+    '#4B0082', // Índigo
+    '#98FB98', // Verde claro
   ];
-  @ViewChild(MyCanvasComponent) canvas!: MyCanvasComponent;
+
   result: { assignment: number[][]; cost: number } | null = null;
-  isMaximization: boolean = false; // Por defecto será minimización
+  isMaximization = false;
   matrixStats: { maxValue: number; minValue: number; average: number } | null =
     null;
-  calculateMatrixStats(matrix: number[][]) {
-    const values = matrix.flat().filter((x) => x !== Infinity);
+  private originalRadii = new Map<number, number>();
+
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private snackBar: MatSnackBar,
+  ) {}
+
+  solveAssignment(): void {
+    try {
+      if (this.isProcessing) {
+        console.warn('Ya hay un proceso de resolución en curso');
+        return;
+      }
+      this.isProcessing = true;
+
+      setTimeout(() => {
+        try {
+          this.resetPreviousState();
+          const { matrix, originNodes, destNodes } = this.prepareData();
+
+          // Validación temprana
+          if (!this.validateProblem(originNodes, destNodes, matrix)) {
+            this.isProcessing = false;
+            return;
+          }
+
+          console.time('hungarianAlgorithm');
+          this.result = this.assignmentSolver.solve(
+            matrix,
+            this.isMaximization,
+          );
+          console.timeEnd('hungarianAlgorithm');
+
+          // Actualizar UI en un nuevo ciclo
+          requestAnimationFrame(() => {
+            this.calculateMatrixStats(matrix);
+            this.highlightSolution(originNodes, destNodes);
+
+            // Forzar sincronización con el canvas
+            if (this.canvas) {
+              this.canvas.nodos = [...this.currentNodes];
+              this.canvas.conexiones = [...this.currentConections];
+              const ctx = this.canvas.canvas.nativeElement.getContext('2d');
+              if (ctx) {
+                this.canvas.dibujarNodo(ctx);
+              }
+            }
+
+            this.cdr.detectChanges();
+            this.isProcessing = false;
+          });
+        } catch (error) {
+          this.isProcessing = false;
+          this.handleError(error);
+        }
+      }, 0);
+    } catch (error) {
+      this.isProcessing = false;
+      this.handleError(error);
+    }
+  }
+
+  private prepareData() {
+    if (!this.currentNodes || this.currentNodes.length === 0) {
+      throw new Error('No hay nodos en el canvas');
+    }
+
+    if (!this.currentConections || this.currentConections.length === 0) {
+      throw new Error('No hay conexiones definidas');
+    }
+
+    // Forzar actualización de tipos antes de filtrar
+    this.updateNodeTypes();
+
+    const nodes = [...this.currentNodes];
+    const connections = [...this.currentConections];
+
+    const originNodes = nodes.filter((n) => n.esOrigen);
+    const destNodes = nodes.filter((n) => !n.esOrigen);
+
+    console.log('Preparando datos:', {
+      totalNodos: nodes.length,
+      nodosOrigen: originNodes.map((n) => ({
+        id: n.contador,
+        nombre: n.nombre,
+      })),
+      nodosDestino: destNodes.map((n) => ({
+        id: n.contador,
+        nombre: n.nombre,
+      })),
+      conexiones: connections.map((c) => ({
+        desde: c.desde,
+        hasta: c.hasta,
+        peso: c.peso,
+      })),
+    });
+
+    if (originNodes.length === 0) {
+      throw new Error(
+        'No se encontraron nodos origen. Asegúrate de crear conexiones desde los nodos que deberían ser origen.',
+      );
+    }
+
+    if (originNodes.length !== destNodes.length) {
+      throw new Error(
+        `El número de nodos origen (${originNodes.length}) debe ser igual al número de nodos destino (${destNodes.length})`,
+      );
+    }
+
+    const matrix = this.buildAdjacencyMatrix(originNodes, destNodes);
+
+    return {
+      matrix,
+      originNodes,
+      destNodes,
+    };
+  }
+
+  private updateNodeTypes(): void {
+    if (!this.currentNodes || !this.currentConections) {
+      console.warn('No hay nodos o conexiones disponibles');
+      return;
+    }
+
+    // Crear un Set de los IDs de nodos origen para mejor rendimiento
+    const origenIds = new Set(
+      this.currentConections.map((conexion) => conexion.desde),
+    );
+
+    // Actualizar el estado de todos los nodos
+    this.currentNodes.forEach((node) => {
+      const esOrigen = origenIds.has(node.contador);
+      if (node.esOrigen !== esOrigen) {
+        console.log(
+          `Actualizando nodo ${node.contador}: esOrigen = ${esOrigen}`,
+        );
+        node.esOrigen = esOrigen;
+      }
+    });
+
+    // Validación después de la actualización
+    const origenes = this.currentNodes.filter((n) => n.esOrigen);
+    const destinos = this.currentNodes.filter((n) => !n.esOrigen);
+
+    console.log('Después de updateNodeTypes:');
+    console.log(`- Total nodos: ${this.currentNodes.length}`);
+    console.log(`- Nodos origen: ${origenes.length}`);
+    console.log(`- Nodos destino: ${destinos.length}`);
+    console.log(`- Total conexiones: ${this.currentConections.length}`);
+  }
+
+  private buildAdjacencyMatrix(
+    origins: Nodo[],
+    destinations: Nodo[],
+  ): number[][] {
+    if (!this.currentConections || this.currentConections.length === 0) {
+      throw new Error('No hay conexiones disponibles');
+    }
+
+    // Debug de estado actual
+    console.log('Estado actual:', {
+      origenes: origins.map((o) => ({ id: o.contador, nombre: o.nombre })),
+      destinos: destinations.map((d) => ({ id: d.contador, nombre: d.nombre })),
+      conexiones: this.currentConections.map((c) => ({
+        desde: c.desde,
+        hasta: c.hasta,
+        peso: c.peso,
+      })),
+    });
+    console.log('Construyendo matriz con:', {
+      origins: origins.map((o) => o.contador),
+      destinations: destinations.map((d) => d.contador),
+      conexiones: this.currentConections.map(
+        (c) => `${c.desde}->${c.hasta}:${c.peso}`,
+      ),
+    });
+
+    const matrix = origins.map((origin) =>
+      destinations.map((dest) => {
+        const conexion = this.currentConections.find(
+          (c) => c.desde === origin.contador && c.hasta === dest.contador,
+        );
+        const peso = conexion?.peso;
+
+        // Validación adicional para debugging
+        console.log(
+          `Buscando conexión ${origin.contador} -> ${dest.contador}: ${peso ?? 'no encontrada'}`,
+        );
+
+        return peso ?? Infinity;
+      }),
+    );
+
+    // Validación de la matriz generada
+    if (matrix.length === 0 || matrix[0].length === 0) {
+      throw new Error('La matriz generada está vacía');
+    }
+
+    // Validar que al menos cada nodo origen tenga una conexión válida
+    const rowsWithoutConnections = matrix.map((row, i) => ({
+      nodeId: origins[i].contador,
+      hasConnection: row.some((value) => value !== Infinity),
+    }));
+
+    const invalidNodes = rowsWithoutConnections.filter(
+      (row) => !row.hasConnection,
+    );
+    if (invalidNodes.length > 0) {
+      throw new Error(
+        `Los siguientes nodos origen no tienen conexiones válidas: ${invalidNodes
+          .map((n) => n.nodeId)
+          .join(', ')}`,
+      );
+    }
+
+    console.log('Matriz final:', matrix);
+    return matrix;
+  }
+
+  private highlightSolution(origins: Nodo[], destinations: Nodo[]): void {
+    this.storeOriginalSizes();
+
+    // Primero, restaurar todos los nodos a su estado original
+    this.currentNodes.forEach((node) => {
+      node.color = this.DEFAULT_NODE_COLOR;
+      const originalSize = this.originalRadii.get(node.contador);
+      if (originalSize) {
+        node.radio = originalSize;
+      }
+    });
+
+    // Luego aplicar los nuevos estilos
+    this.result?.assignment.forEach((row, i) => {
+      const j = row.indexOf(1);
+      if (j === -1) {
+        console.warn(`No se encontró asignación para el origen ${i}`);
+        return;
+      }
+
+      const color = this.assignmentColors[i % this.assignmentColors.length];
+      console.log(
+        `Asignando color ${color} a nodos: origen ${i} -> destino ${j}`,
+      );
+
+      // Actualizar tanto en currentNodes como en los arrays originales
+      const originNode = origins[i];
+      const destNode = destinations[j];
+
+      if (!originNode || !destNode) {
+        console.error(`Nodos no encontrados para asignación ${i} -> ${j}`);
+        return;
+      }
+
+      this.applyNodeStyle(originNode, color);
+      this.applyNodeStyle(destNode, color);
+
+      // Actualizar en currentNodes
+      const currentOrigin = this.currentNodes.find(
+        (n) => n.contador === originNode.contador,
+      );
+      const currentDest = this.currentNodes.find(
+        (n) => n.contador === destNode.contador,
+      );
+
+      if (currentOrigin) {
+        this.applyNodeStyle(currentOrigin, color);
+        console.log(
+          `Nodo origen ${currentOrigin.contador} coloreado con ${color}`,
+        );
+      }
+      if (currentDest) {
+        this.applyNodeStyle(currentDest, color);
+        console.log(
+          `Nodo destino ${currentDest.contador} coloreado con ${color}`,
+        );
+      }
+    });
+
+    // Forzar actualización del canvas
+    if (this.canvas) {
+      this.canvas.nodos = [...this.currentNodes];
+      const ctx = this.canvas.canvas.nativeElement.getContext('2d');
+      if (ctx) {
+        requestAnimationFrame(() => {
+          this.canvas.dibujarNodo(ctx);
+          this.cdr.detectChanges();
+        });
+      }
+    }
+  }
+
+  private calculateMatrixStats(matrix: number[][]): void {
+    const values = matrix.flat().filter((v) => v !== Infinity);
+
+    if (values.length === 0) {
+      this.matrixStats = null;
+      return;
+    }
+
     this.matrixStats = {
       maxValue: Math.max(...values),
       minValue: Math.min(...values),
@@ -103,375 +383,176 @@ export default class AsignacionComponent {
     };
   }
 
-  getFormattedAssignments() {
-    if (!this.result) return [];
-
-    const assignments = [];
-    const matrix = this.getAdjacencyMatrix();
-
-    for (let i = 0; i < this.result.assignment.length; i++) {
-      for (let j = 0; j < this.result.assignment[i].length; j++) {
-        if (this.result.assignment[i][j] === 1) {
-          assignments.push({
-            from: `Nodo ${i + 1}`,
-            to: `Nodo ${j + 1}`,
-            cost: matrix[i][j],
-          });
-        }
-      }
-    }
-
-    return assignments;
+  private handleError(error: any): void {
+    console.error('Error:', error);
+    this.snackBar.open(
+      error.message || 'Error al resolver la asignación',
+      'Cerrar',
+      { duration: 5000, panelClass: ['error-snackbar'] },
+    );
   }
-
-  solveAssignment(isMaximization: boolean = false) {
-    this.isMaximization = isMaximization;
-    console.log('Iniciando resolución del problema de asignación');
-    console.log('Modo:', this.isMaximization ? 'Maximización' : 'Minimización');
-
-    const matrix = this.getAdjacencyMatrix();
-    console.log('Matriz original:', matrix);
-
-    if (!this.validateMatrix(matrix)) {
-      alert(
-        'El grafo debe ser bipartito y tener igual número de nodos en ambos conjuntos',
-      );
-      return;
-    }
-
-    // Si es maximización, convertimos el problema a minimización
-    let workingMatrix = [...matrix.map((row) => [...row])];
-    if (this.isMaximization) {
-      console.log('Convirtiendo problema de maximización a minimización');
-      const maxValue = Math.max(...matrix.flat().filter((x) => x !== Infinity));
-      workingMatrix = workingMatrix.map((row) =>
-        row.map((val) => (val === Infinity ? Infinity : maxValue - val)),
-      );
-      console.log('Matriz convertida para minimización:', workingMatrix);
-    }
-
-    this.result = this.hungarianAlgorithm(workingMatrix);
-
-    // Ajustar el costo final si era un problema de maximización
-    if (this.isMaximization && this.result) {
-      const n = matrix.length;
-      const maxValue = Math.max(...matrix.flat().filter((x) => x !== Infinity));
-      this.result.cost = maxValue * n - this.result.cost;
-      console.log('Costo ajustado para maximización:', this.result.cost);
-    }
-    this.highlightSolution();
+  trackByAssignment(index: number, item: any): number {
+    return index;
   }
-
-  private getAdjacencyMatrix(): number[][] {
-    const nodes = this.canvas.nodos;
-    const connections = this.canvas.conexiones;
-    const n = nodes.length;
-    const matrix: number[][] = Array(n)
-      .fill(0)
-      .map(() => Array(n).fill(Infinity));
-
-    // Llenar la matriz con los pesos de las conexiones
-    for (const conn of connections) {
-      matrix[conn.desde - 1][conn.hasta - 1] = conn.peso || Infinity;
+  private validateProblem(
+    origins: Nodo[],
+    destinations: Nodo[],
+    matrix: number[][],
+  ): boolean {
+    if (origins.length !== destinations.length) {
+      this.handleError('Debe haber igual cantidad de nodos origen y destino');
+      return false;
     }
 
-    return matrix;
-  }
+    if (origins.length === 0 || destinations.length === 0) {
+      this.handleError('Debe existir al menos un nodo origen y un destino');
+      return false;
+    }
 
-  private validateMatrix(matrix: number[][]): boolean {
-    const n = matrix.length;
-    // Verificar que la matriz sea cuadrada
-    if (!matrix.every((row) => row.length === n)) return false;
+    if (matrix.some((row) => row.every((v) => v === Infinity))) {
+      this.handleError('Existen nodos origen sin conexiones válidas');
+      return false;
+    }
 
-    // Verificar que sea bipartito (simplificado)
-    // Aquí podrías agregar una validación más compleja para asegurar que el grafo es bipartito
     return true;
   }
-
-  private hungarianAlgorithm(costMatrix: number[][]): {
-    assignment: number[][];
-    cost: number;
-  } {
-    const n = costMatrix.length;
-    let matrix = costMatrix.map((row) => [...row]); // Copia de la matriz
-
-    console.log('Iniciando algoritmo húngaro completo');
-    console.log('Matriz de costos inicial:', matrix);
-
-    // Paso 1: Restar el mínimo de cada fila
-    matrix = matrix.map((row, index) => {
-      const validValues = row.filter((x) => x !== Infinity);
-      if (validValues.length === 0) return row;
-      const min = Math.min(...validValues);
-      console.log(`Mínimo de la fila ${index}:`, min);
-      return row.map((val) => (val === Infinity ? Infinity : val - min));
+  private storeOriginalSizes(): void {
+    this.canvas.nodos.forEach((n) => {
+      this.originalRadii.set(n.contador, n.radio);
     });
-    console.log('Matriz después de restar mínimos de filas:', matrix);
-
-    // Paso 2: Restar el mínimo de cada columna
-    for (let j = 0; j < n; j++) {
-      const columnValues = matrix
-        .map((row) => row[j])
-        .filter((x) => x !== Infinity);
-      if (columnValues.length === 0) continue;
-      const min = Math.min(...columnValues);
-      if (min > 0) {
-        console.log(`Mínimo de la columna ${j}:`, min);
-        for (let i = 0; i < n; i++) {
-          if (matrix[i][j] !== Infinity) {
-            matrix[i][j] -= min;
-          }
-        }
-      }
-    }
-    console.log('Matriz después de restar mínimos de columnas:', matrix);
-
-    // Paso 3: Encontrar la solución óptima mediante un proceso iterativo
-    let assignment: number[][] = [];
-    let step = 3;
-    const mask = Array(n)
-      .fill(0)
-      .map(() => Array(n).fill(0));
-    const rowCover = Array(n).fill(false);
-    const colCover = Array(n).fill(false);
-
-    while (step !== -1) {
-      console.log(`Ejecutando paso ${step}`);
-      switch (step) {
-        case 3:
-          step = this.findZeros(matrix, mask, rowCover, colCover);
-          break;
-        case 4:
-          step = this.coverZeros(mask, rowCover, colCover);
-          break;
-        case 5:
-          step = this.createAdditionalZeros(matrix, rowCover, colCover);
-          break;
-        case 6:
-          assignment = this.constructSolution(mask);
-          step = -1;
-          break;
-      }
-    }
-
-    // Calcular el costo total
-    let totalCost = 0;
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (assignment[i][j] === 1) {
-          totalCost += costMatrix[i][j];
-        }
-      }
-    }
-
-    console.log('Solución encontrada:', assignment);
-    console.log('Costo total:', totalCost);
-
-    return {
-      assignment: assignment,
-      cost: totalCost,
-    };
   }
-
-  private findZeros(
-    matrix: number[][],
-    mask: number[][],
-    rowCover: boolean[],
-    colCover: boolean[],
-  ): number {
-    const n = matrix.length;
-
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (matrix[i][j] === 0 && !rowCover[i] && !colCover[j]) {
-          mask[i][j] = 1;
-          rowCover[i] = true;
-          colCover[j] = true;
-        }
-      }
-    }
-
-    // Limpiar coberturas para el siguiente paso
-    rowCover.fill(false);
-    colCover.fill(false);
-
-    return 4;
+  private applyNodeStyle(node: Nodo, color: string): void {
+    node.color = color;
+    node.radio = this.HIGHLIGHT_RADIUS;
   }
+  private resetPreviousState(): void {
+    this.result = null;
+    this.matrixStats = null;
 
-  private coverZeros(
-    mask: number[][],
-    rowCover: boolean[],
-    colCover: boolean[],
-  ): number {
-    const n = mask.length;
-    let zerosFound = 0;
-
-    // Marcar todas las columnas con un 1 en mask
-    for (let j = 0; j < n; j++) {
-      for (let i = 0; i < n; i++) {
-        if (mask[i][j] === 1) {
-          colCover[j] = true;
-          zerosFound++;
-          break;
+    // Restaurar colores y tamaños originales tanto en currentNodes como en canvas.nodos
+    if (this.currentNodes && this.currentNodes.length > 0) {
+      this.currentNodes.forEach((node) => {
+        node.color = this.DEFAULT_NODE_COLOR;
+        const originalSize = this.originalRadii.get(node.contador);
+        if (originalSize) {
+          node.radio = originalSize;
         }
-      }
+      });
     }
 
-    if (zerosFound >= n) {
-      return 6; // Solución encontrada
-    }
-    return 5; // Necesitamos crear más ceros
-  }
+    if (this.canvas) {
+      // Asegurarnos de que canvas.nodos esté sincronizado con currentNodes
+      this.canvas.nodos = [...this.currentNodes];
+      this.canvas.conexiones = [...this.currentConections];
 
-  private createAdditionalZeros(
-    matrix: number[][],
-    rowCover: boolean[],
-    colCover: boolean[],
-  ): number {
-    const n = matrix.length;
-
-    // Encontrar el valor mínimo no cubierto
-    let minValue = Infinity;
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (!rowCover[i] && !colCover[j] && matrix[i][j] < minValue) {
-          minValue = matrix[i][j];
-        }
-      }
-    }
-
-    if (minValue === Infinity) {
-      return 6; // No hay más movimientos posibles
-    }
-
-    // Restar el mínimo de las filas no cubiertas
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (!rowCover[i] && !colCover[j]) {
-          matrix[i][j] -= minValue;
-        }
-      }
-    }
-
-    // Sumar el mínimo a los elementos doblemente cubiertos
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (rowCover[i] && colCover[j]) {
-          matrix[i][j] += minValue;
-        }
-      }
-    }
-
-    return 3;
-  }
-
-  private constructSolution(mask: number[][]): number[][] {
-    const n = mask.length;
-    const assignment = Array(n)
-      .fill(0)
-      .map(() => Array(n).fill(0));
-
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (mask[i][j] === 1) {
-          assignment[i][j] = 1;
-        }
-      }
-    }
-
-    return assignment;
-  }
-
-  private findOptimalAssignment(matrix: number[][]): number[][] {
-    const n = matrix.length;
-    const assignment = Array(n)
-      .fill(0)
-      .map(() => Array(n).fill(0));
-    const rowCovered = Array(n).fill(false);
-    const colCovered = Array(n).fill(false);
-
-    console.log('Buscando asignación óptima');
-    console.log('Matriz para asignación:', matrix);
-
-    // Encontrar asignación inicial
-    let numAssigned = 0;
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (matrix[i][j] === 0 && !rowCovered[i] && !colCovered[j]) {
-          assignment[i][j] = 1;
-          rowCovered[i] = true;
-          colCovered[j] = true;
-          numAssigned++;
-          console.log(`Asignación encontrada: (${i},${j})`);
-        }
-      }
-    }
-
-    console.log('Número de asignaciones realizadas:', numAssigned);
-    console.log('Asignación final:', assignment);
-
-    // Si no se han asignado todos los elementos, se podría mejorar
-    // el algoritmo aquí implementando los pasos adicionales del
-    // método húngaro completo (líneas, etc.)
-    if (numAssigned < n) {
-      console.warn('No se encontró una asignación completa óptima');
-    }
-
-    return assignment;
-  }
-
-  private highlightSolution(): void {
-    if (!this.result) return;
-
-    // Resetear colores
-    this.canvas.nodos.forEach((node) => {
-      node.color = '#ffffff';
-    });
-
-    // Resetear colores de conexiones
-    this.canvas.conexiones.forEach((conn) => {
-      conn._color = '#666';
-    });
-
-    // Resaltar las conexiones de la solución
-    const assignment = this.result.assignment;
-    const usedColors = new Set<number>(); // Para trackear los colores usados
-
-    for (let i = 0; i < assignment.length; i++) {
-      for (let j = 0; j < assignment[i].length; j++) {
-        if (assignment[i][j] === 1) {
-          // Asignar un nuevo índice de color que no haya sido usado
-          let colorIndex = 0;
-          while (usedColors.has(colorIndex)) {
-            colorIndex = (colorIndex + 1) % this.assignmentColors.length;
-          }
-          usedColors.add(colorIndex);
-
-          // Encontrar la conexión correspondiente
-          const connection = this.canvas.conexiones.find(
-            (conn) => conn.desde === i + 1 && conn.hasta === j + 1,
+      // Redibujar el canvas con el estado actualizado
+      requestAnimationFrame(() => {
+        const ctx = this.canvas.canvas.nativeElement.getContext('2d');
+        if (ctx) {
+          // Forzar un redibujado completo
+          ctx.fillStyle = '#ffffff'; // O el color de fondo que uses
+          ctx.fillRect(
+            0,
+            0,
+            this.canvas.canvas.nativeElement.width,
+            this.canvas.canvas.nativeElement.height,
           );
-
-          if (connection) {
-            // Resaltar los nodos conectados con colores semi-transparentes
-            const fromNode = this.canvas.nodos.find(
-              (node) => node.contador === i + 1,
-            );
-            const toNode = this.canvas.nodos.find(
-              (node) => node.contador === j + 1,
-            );
-
-            if (fromNode) fromNode.color = this.assignmentColors[colorIndex];
-            if (toNode) toNode.color = this.assignmentColors[colorIndex];
-          }
+          this.canvas.dibujarNodo(ctx);
         }
-      }
+        this.cdr.detectChanges();
+      });
     }
 
-    // Redibujar el canvas
-    const ctx = this.canvas.canvas.nativeElement.getContext('2d');
-    if (ctx) {
-      this.canvas.dibujarNodo(ctx);
+    this.snackBar.dismiss();
+  }
+  getNodeName(rowIndex: number, isOrigin: boolean): string {
+    if (!this.currentNodes || !this.result) return '';
+
+    const nodes = this.currentNodes.filter((n) => n.esOrigen === isOrigin);
+    if (isOrigin) {
+      return nodes[rowIndex]?.nombre || '';
+    } else {
+      const destIndex = this.result.assignment[rowIndex].indexOf(1);
+      return nodes[destIndex]?.nombre || '';
     }
   }
+
+  getAssignmentCost(rowIndex: number, assignmentRow: number[]): number {
+    const colIndex = assignmentRow.indexOf(1);
+    if (colIndex === -1) return 0;
+
+    const origins = this.currentNodes.filter((n) => n.esOrigen);
+    const destinations = this.currentNodes.filter((n) => !n.esOrigen);
+
+    // Verificar que los índices sean válidos
+    if (rowIndex >= origins.length || colIndex >= destinations.length) return 0;
+
+    const originId = origins[rowIndex].contador;
+    const destinationId = destinations[colIndex].contador;
+
+    const conexion = this.currentConections.find(
+      (c) => c.desde === originId && c.hasta === destinationId,
+    );
+
+    return conexion?.peso || 0;
+  }
+  onNodosActual(nodos: Nodo[]): void {
+    console.log('Nodos recibidos en asignacion:', nodos.length);
+    this.currentNodes = [...nodos];
+    this.cdr.detectChanges();
+  }
+
+  onConectionActual(conn: Conexion[]): void {
+    console.log('Conexiones recibidos en asignacion:', conn.length);
+    this.currentConections = [...conn];
+    this.cdr.detectChanges();
+  }
+
+  helpContent: HelpContent = {
+    title: 'Ayuda - Algoritmo de Asignación',
+    description:
+      'Este componente implementa el método húngaro (algoritmo de asignación) para resolver problemas de optimización de asignación de recursos. Requisitos:\n\n' +
+      '1. Los nodos deben dividirse en dos grupos: origen y destino\n' +
+      '2. Debe haber el mismo número de nodos en cada grupo\n' +
+      '3. Las conexiones solo pueden ir de nodos origen a nodos destino\n\n' +
+      'El algoritmo encontrará la asignación óptima minimizando o maximizando el costo total basándose en las conexiones existentes.',
+    steps: [
+      {
+        number: 1,
+        title: 'Crear Nodos',
+        description:
+          'Haz doble clic en el canvas para crear los nodos que representarán recursos y tareas. El grafo debe ser bipartito con igual número de nodos en ambos conjuntos.',
+        image: 'assets/asignacion/create-node.png',
+      },
+      {
+        number: 2,
+        title: 'Establecer Conexiones',
+        description:
+          'Selecciona el modo "Conexión" y haz clic en dos nodos para crear una conexión. Ingresa el costo/peso de la asignación en el diálogo emergente.',
+        image: 'assets/asignacion/create-connection.png',
+      },
+      {
+        number: 3,
+        title: 'Configurar Optimización',
+        description:
+          'Elige entre minimización o maximización según tu objetivo. La minimización busca reducir el costo total, mientras que la maximización busca aumentarlo.',
+        image: 'assets/asignacion/optimization-toggle.png',
+      },
+      {
+        number: 4,
+        title: 'Resolver',
+        description:
+          'Presiona el botón "Resolver Asignación" para ejecutar el algoritmo. Las asignaciones óptimas se mostrarán resaltadas en el grafo y en el panel de resultados.',
+        image: 'assets/asignacion/solve-button.png',
+      },
+    ],
+    images: [
+      {
+        url: 'assets/asignacion/example1.png',
+        caption: 'Ejemplo de un grafo completo',
+        alt: 'Grafo de ejemplo',
+      },
+    ],
+    tips: ['Usa el botón derecho para eliminar elementos'],
+  };
 }

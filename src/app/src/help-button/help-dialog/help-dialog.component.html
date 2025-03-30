@@ -1,44 +1,83 @@
 <h2 mat-dialog-title>{{ data.title }}</h2>
 
 <mat-dialog-content class="help-content">
-  <div *ngIf="data.description" class="description">
-    {{ data.description }}
-  </div>
+  @if (data.description) {
+    <div class="description">
+      <p>{{ data.description }}</p>
+    </div>
+  }
 
-  <div *ngIf="data.steps?.length" class="steps-section">
-    <h3>Pasos a seguir:</h3>
-    <mat-vertical-stepper>
-      <mat-step *ngFor="let step of data.steps">
-        <ng-template matStepLabel>{{ step.title }}</ng-template>
-        <div class="step-content">
-          <p>{{ step.description }}</p>
-          <img *ngIf="step.image" [src]="step.image" [alt]="step.title" />
-        </div>
-      </mat-step>
-    </mat-vertical-stepper>
-  </div>
+  @if (data.steps?.length) {
+    <div class="steps-section">
+      <h3>Pasos a seguir:</h3>
+      <mat-vertical-stepper>
+        @for (step of data.steps; track step.title) {
+          <mat-step>
+            <ng-template matStepLabel>{{ step.title }}</ng-template>
+            <div class="step-content">
+              <p>{{ step.description }}</p>
+              @if (step.image) {
+                <img [src]="step.image" [alt]="step.title" />
+              }
+            </div>
+          </mat-step>
+        }
+      </mat-vertical-stepper>
+    </div>
+  }
 
-  <div *ngIf="data.images?.length" class="images-section">
-    <h3>Imágenes de referencia:</h3>
-    <mat-grid-list cols="2" rowHeight="200px" gutterSize="16px">
-      <mat-grid-tile *ngFor="let image of data.images">
-        <figure>
-          <img [src]="image.url" [alt]="image.alt" />
-          <figcaption>{{ image.caption }}</figcaption>
-        </figure>
-      </mat-grid-tile>
-    </mat-grid-list>
-  </div>
+  @if (data.images?.length) {
+    <div class="images-section">
+      <h3>Imágenes de referencia:</h3>
+      <mat-grid-list cols="2" rowHeight="200px" gutterSize="16px">
+        @for (image of data.images; track image.url) {
+          <mat-grid-tile>
+            <figure>
+              <img [src]="image.url" [alt]="image.alt" />
+              <figcaption>{{ image.caption }}</figcaption>
+            </figure>
+          </mat-grid-tile>
+        }
+      </mat-grid-list>
+    </div>
+  }
 
-  <div *ngIf="data.tips?.length" class="tips-section">
-    <h3>Consejos útiles:</h3>
-    <mat-list>
-      <mat-list-item *ngFor="let tip of data.tips">
-        <mat-icon matListItemIcon>lightbulb</mat-icon>
-        <span matListItemTitle>{{ tip }}</span>
-      </mat-list-item>
-    </mat-list>
-  </div>
+  @if (data.tips?.length) {
+    <div class="tips-section">
+      <h3>Consejos útiles:</h3>
+      <mat-list>
+        @for (tip of data.tips; track $index) {
+          <mat-list-item>
+            <mat-icon matListItemIcon>lightbulb</mat-icon>
+            <span matListItemTitle>{{ tip }}</span>
+          </mat-list-item>
+        }
+      </mat-list>
+    </div>
+  }
+
+  @if (data.videos?.length) {
+    <div class="videos-section">
+      <h3>Video Tutoriales:</h3>
+      <mat-accordion>
+        @for (video of data.videos; track video.url) {
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{ video.title }}</mat-panel-title>
+            </mat-expansion-panel-header>
+            <iframe
+              [src]="video.url | safeUrl"
+              width="100%"
+              height="400"
+              frameborder="0"
+              allowfullscreen
+            >
+            </iframe>
+          </mat-expansion-panel>
+        }
+      </mat-accordion>
+    </div>
+  }
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

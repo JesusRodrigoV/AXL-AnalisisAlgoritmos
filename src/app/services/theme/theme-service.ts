@@ -23,6 +23,8 @@ export class ThemeService {
     this.setTheme(this.getThemeFromLocalStorage());
   }
 
+
+
   toggleTheme() {
     if (this.currentTheme() === 'light') {
       this.setTheme('dark');
@@ -57,7 +59,6 @@ export class ThemeService {
         ? 'dark'
         : 'light';
     }
-    // Default theme for server-side rendering
     return 'light';
   }
 }

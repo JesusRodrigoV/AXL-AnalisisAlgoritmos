@@ -58,6 +58,17 @@
                 </mat-error>
               </mat-form-field>
             </div>
+            <div class="table-cell delete-cell">
+              <button
+                mat-icon-button
+                color="warn"
+                (click)="eliminarActividad(actividad)"
+                [disabled]="actividades.length === 1"
+                matTooltip="Eliminar actividad"
+              >
+                <i class="bx bx-trash"></i>
+              </button>
+            </div>
           </div>
         }
       </div>
@@ -85,14 +96,14 @@
           (click)="exportarGrafo()"
           matTooltip="Exportar grafo"
         >
-          <mat-icon>file_download</mat-icon>
+          <i class="bx bx-download"></i>
         </button>
         <button
           mat-raised-button
           (click)="triggerFileInput()"
           matTooltip="Importar grafo"
         >
-          <mat-icon>file_upload</mat-icon>
+          <i class="bx bx-upload"></i>
         </button>
       </div>
     </mat-card-content>
@@ -101,13 +112,13 @@
   <div class="canvas-container" #canvasContainer>
     <div class="canvas-controls">
       <button mat-mini-fab aria-label (click)="zoomIn()">
-        <mat-icon>zoom_in</mat-icon>
+        <i class="bx bx-zoom-in"></i>
       </button>
       <button mat-mini-fab aria-label (click)="zoomOut()">
-        <mat-icon>zoom_out</mat-icon>
+        <i class="bx bx-zoom-out"></i>
       </button>
       <button mat-mini-fab aria-label (click)="resetZoom()">
-        <mat-icon>refresh</mat-icon>
+        <i class="bx bx-refresh"></i>
       </button>
     </div>
     <div

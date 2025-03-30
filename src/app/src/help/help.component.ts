@@ -13,15 +13,14 @@ export class HelpComponent {
   isModalOpen = false;
   selectedImage = '';
 
+  private readonly ASSETS_PATH = 'assets/';
+
   menuOptions = [
-    /*
-    { label: 'Move', image: 'assets/move.png' },
-    */
-    { label: 'Modo Conexión', image: 'assets/conexion.png' },
-    { label: 'Eliminar', image: 'assets/delete.png' },
-    { label: 'Exportar', image: 'assets/export.png' },
-    { label: 'Importar', image: 'assets/import.png' },
-    { label: 'Limpiar', image: 'assets/clean.png' },
+    { label: 'Modo Conexión', image: this.ASSETS_PATH + 'conexion.png' },
+    { label: 'Eliminar', image: this.ASSETS_PATH + 'delete.png' },
+    { label: 'Exportar', image: this.ASSETS_PATH + 'export.png' },
+    { label: 'Importar', image: this.ASSETS_PATH + 'import.png' },
+    { label: 'Limpiar', image: this.ASSETS_PATH + 'clean.png' },
   ];
 
   toggleMenu() {

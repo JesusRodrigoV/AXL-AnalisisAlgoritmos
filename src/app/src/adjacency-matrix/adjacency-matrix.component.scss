@@ -1,30 +1,117 @@
-td {
-  border: 1px solid #000000; /* Bordes para las celdas */
-  text-align: center; /* Centrar el texto en las celdas */
+.matrix-placeholder,
+.matrix-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  min-height: 200px;
+
+  p {
+    margin-top: 1rem;
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+.matrix-error {
+  color: #f44336;
+  i {
+    color: #f44336;
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.matrix-container {
+  margin: 1rem;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  background: var(--mat-table-background-color);
+}
+
+td,
+th {
+  padding: 12px;
+  text-align: center;
+  border: 1px solid var(--mat-table-row-item-outline-color, rgba(0, 0, 0, 0.12));
+  font-size: 14px;
+  transition: background-color 0.2s ease;
 }
 
 th {
-  border: 1px solid #000000; /* Bordes para los encabezados */
-  background-color: #f0f0f0; /* Color de fondo gris claro para los encabezados */
-  text-align: center; /* Centrar el texto en los encabezados */
+  background-color: var(--mat-table-header-background-color);
+  color: var(--mat-table-header-text-color);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+td {
+  color: var(--mat-table-row-item-text-color);
 }
 
 .nodo-nombre {
-  background-color: #ffffff; /* Fondo blanco para los nombres de los nodos */
-  font-weight: bold; /* Hacer en negrita los nombres de los nodos */
+  background-color: var(--mat-table-header-background-color);
+  color: var(--mat-table-header-text-color);
+  font-weight: 500;
 }
 
 .suma-columna-fila {
-  background-color: #f0f0f0; /* Fondo gris claro para la columna de sumas y fila de sumas */
-  font-weight: normal; /* No en negrita las sumas */
+  background-color: var(
+    --mat-table-footer-background-color,
+    rgba(0, 0, 0, 0.04)
+  );
+  color: var(--mat-table-row-item-text-color);
+  font-weight: normal;
 }
 
-th:nth-child(1),
-td:nth-child(1) {
-  font-weight: bold; /* Hacer en negrita la primera columna de nombres de nodos */
+// Efectos hover
+tr:not(:last-child):hover {
+  td {
+    background-color: var(
+      --mat-table-hover-background-color,
+      rgba(0, 0, 0, 0.04)
+    );
+  }
 }
 
-th,
-td {
-  padding: 5px; /* Añadir algo de espacio entre el texto y el borde */
+// Bordes redondeados para las esquinas de la tabla
+tr:first-child {
+  th:first-child {
+    border-top-left-radius: 8px;
+  }
+  th:last-child {
+    border-top-right-radius: 8px;
+  }
+}
+
+tr:last-child {
+  td:first-child {
+    border-bottom-left-radius: 8px;
+  }
+  td:last-child {
+    border-bottom-right-radius: 8px;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .matrix-container {
+    margin: 0.5rem;
+  }
+
+  td,
+  th {
+    padding: 8px;
+    font-size: 13px;
+  }
 }

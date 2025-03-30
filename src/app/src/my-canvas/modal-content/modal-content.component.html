@@ -7,6 +7,7 @@
         matInput
         type="text"
         formControlName="peso"
+        (keydown.enter)="form.get('peso')?.valid && onSave()"
         [class.is-invalid]="
           form.get('peso')?.invalid && (enviado || form.get('peso')?.touched)
         "
@@ -19,7 +20,9 @@
         {{ getMensajeError() }}
       </mat-error>
     </mat-form-field>
-    <mat-checkbox formControlName="dirigido">Conexion Dirigida</mat-checkbox>
+    @if (data.showDirectedOption) {
+      <mat-checkbox formControlName="dirigido"> Dirigido </mat-checkbox>
+    }
   </form>
 </div>
 <div mat-dialog-actions>

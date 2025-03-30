@@ -8,7 +8,14 @@ import {
   MatDialogRef,
   MatDialogTitle,
 } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormsModule,
+  NgForm,
+  Validators,
+} from '@angular/forms';
 
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -19,6 +26,7 @@ import { CommonModule } from '@angular/common';
 @Component({
   selector: 'app-modal-content',
   imports: [
+    FormsModule,
     MatDialogTitle,
     MatDialogContent,
     MatDialogActions,
@@ -41,7 +49,12 @@ export class ModalContentComponent {
   constructor(
     private fb: FormBuilder,
     public dialogRef: MatDialogRef<ModalContentComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: { peso: number; dirigido: boolean },
+    @Inject(MAT_DIALOG_DATA)
+    public data: {
+      peso: number;
+      dirigido: boolean;
+      showDirectedOption: boolean;
+    },
   ) {
     this.form = this.fb.group({
       peso: [
@@ -53,7 +66,7 @@ export class ModalContentComponent {
           Validators.max(Number.MAX_SAFE_INTEGER),
         ],
       ],
-      dirigido: [data.dirigido],
+      dirigido: [data.dirigido || false],
     });
   }
 
@@ -64,8 +77,11 @@ export class ModalContentComponent {
       return;
     }
 
-    const formValue = this.form.value;
-    formValue.peso = Number(formValue.peso); // Convertir a número
+    const formValue = {
+      peso: Number(this.form.get('peso')?.value),
+      dirigido: this.form.get('dirigido')?.value === true,
+    };
+
     this.dialogRef.close(formValue);
   }
 
