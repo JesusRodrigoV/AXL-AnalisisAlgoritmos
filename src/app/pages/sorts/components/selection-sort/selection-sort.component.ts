@@ -22,7 +22,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-selection-sort',
   templateUrl: './selection-sort.component.html',
-  standalone: true,
+  styleUrls: ['./selection-sort.component.scss'],
   imports: [
     CommonModule,
     MatButtonModule,
@@ -46,6 +46,11 @@ export class SelectionSortComponent
   totalPausedTime: number = 0;
   executionTime: number = 0;
   private sortCancelled = false; // Variable para controlar la cancelación del ordenamiento
+
+  // Modo de ingreso de datos
+  inputMode: 'auto' | 'manual' = 'auto';
+  manualInput: string = '';
+  manualValues: number[] = [];
 
   // Parámetros para la generación del array
   arraySize: number = 20;
@@ -87,8 +92,49 @@ export class SelectionSortComponent
     return true;
   }
 
+  onInputModeChange() {
+    this.arrayData = [];
+    this.manualInput = '';
+    this.manualValues = [];
+  }
+
+  onArraySizeChange() {
+    if (this.inputMode === 'manual') {
+      this.manualInput = ''; // Limpiar el input cuando cambia el tamaño
+      this.manualValues = [];
+    }
+  }
+
+  validateManualInput(): boolean {
+    if (!this.manualInput.trim()) {
+      alert('Por favor ingrese valores');
+      return false;
+    }
+
+    const values = this.manualInput
+      .split(',')
+      .map((val) => val.trim())
+      .filter((val) => val !== '');
+
+    if (values.length !== this.arraySize) {
+      alert(
+        `Por favor ingrese exactamente ${this.arraySize} valores separados por comas`,
+      );
+      return false;
+    }
+
+    const numbers = values.map((v) => Number(v));
+    if (numbers.some(isNaN)) {
+      alert('Todos los valores deben ser números válidos');
+      return false;
+    }
+
+    this.manualValues = numbers;
+    return true;
+  }
+
   generateNewArray() {
-    if (!this.validateInputs()) return;
+    if (this.inputMode === 'auto' && !this.validateInputs()) return;
 
     // Si hay un ordenamiento en curso, cancelarlo
     if (this.isSorting) {
@@ -97,11 +143,19 @@ export class SelectionSortComponent
       this.isPaused = false;
     }
 
-    this.arrayData = this.sortService.generarArray(
-      this.arraySize,
-      this.minValue,
-      this.maxValue,
-    );
+    if (this.inputMode === 'auto') {
+      this.arrayData = this.sortService.generarArray(
+        this.arraySize,
+        this.minValue,
+        this.maxValue,
+      );
+    } else {
+      if (!this.validateManualInput()) {
+        return;
+      }
+      this.arrayData = [...this.manualValues];
+    }
+
     this.executionTime = 0; // Resetear el tiempo cuando se genera un nuevo array
     this.updateChart(this.arrayData);
   }
