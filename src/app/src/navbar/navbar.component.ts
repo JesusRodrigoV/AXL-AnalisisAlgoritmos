@@ -86,6 +86,12 @@ export class NavbarComponent {
         },
       ],
     },
+    {
+      label: 'Árboles',
+      path: '/arboles',
+      icon: 'bx bxs-tree',
+      description: 'Simulador de árboles binarios',
+    },
   ];
   private router: Router = inject(Router);
   private location: Location = inject(Location);

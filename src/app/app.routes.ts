@@ -63,6 +63,10 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'arboles',
+    loadComponent: () => import('./pages/arboles/arboles.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',
