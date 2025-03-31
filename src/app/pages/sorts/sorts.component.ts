@@ -6,8 +6,6 @@ import * as echarts from 'echarts';
   imports: [],
   templateUrl: './sorts.component.html',
   styleUrl: './sorts.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SortsComponent {
-
-}
+export default class SortsComponent {}
