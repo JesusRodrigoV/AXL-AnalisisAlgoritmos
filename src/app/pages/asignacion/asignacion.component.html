@@ -37,46 +37,6 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Estadísticas de la matriz -->
-    <mat-card *ngIf="matrixStats" class="stats-card" appearance="outlined">
-      <mat-card-header>
-        <mat-card-title> Estadísticas de la Matriz </mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="stats-grid">
-          <div class="stat-card max-value">
-            <div class="stat-icon">
-              <i class="bx bx-up-arrow"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-label">Valor Máximo</span>
-              <span class="stat-value">{{ matrixStats.maxValue }}</span>
-            </div>
-          </div>
-          <div class="stat-card min-value">
-            <div class="stat-icon">
-              <i class="bx bx-down-arrow"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-label">Valor Mínimo</span>
-              <span class="stat-value">{{ matrixStats.minValue }}</span>
-            </div>
-          </div>
-          <div class="stat-card average">
-            <div class="stat-icon">
-              <i class="bx bx-bar-chart-alt-2"></i>
-            </div>
-            <div class="stat-info">
-              <span class="stat-label">Promedio</span>
-              <span class="stat-value">{{
-                matrixStats.average | number: "1.2-2"
-              }}</span>
-            </div>
-          </div>
-        </div>
-      </mat-card-content>
-    </mat-card>
-
     <!-- Resultados -->
     <mat-card *ngIf="result" class="result-card" appearance="outlined">
       <mat-card-header>
@@ -133,6 +93,45 @@
         </div>
       </mat-card-content>
     </mat-card>
+    <!-- Estadísticas de la matriz -->
+    <mat-card *ngIf="matrixStats" class="stats-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title> Estadísticas de la Matriz </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="stats-grid">
+          <div class="stat-card max-value">
+            <div class="stat-icon">
+              <i class="bx bx-up-arrow"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Valor Máximo</span>
+              <span class="stat-value">{{ matrixStats.maxValue }}</span>
+            </div>
+          </div>
+          <div class="stat-card min-value">
+            <div class="stat-icon">
+              <i class="bx bx-down-arrow"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Valor Mínimo</span>
+              <span class="stat-value">{{ matrixStats.minValue }}</span>
+            </div>
+          </div>
+          <div class="stat-card average">
+            <div class="stat-icon">
+              <i class="bx bx-bar-chart-alt-2"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Promedio</span>
+              <span class="stat-value">{{
+                matrixStats.average | number: "1.2-2"
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
   </div>
 
   <div class="right-section">
@@ -144,14 +143,14 @@
             (nodosActualizados)="onNodosActual($event)"
             (conexionActualizada)="onConectionActual($event)"
           ></app-my-canvas>
-
-          <app-asignacion-matrix
-            [nodos]="currentNodes"
-            [conexiones]="currentConections"
-          ></app-asignacion-matrix>
         </mat-card-content>
       </mat-card>
     </div>
+
+    <app-asignacion-matrix
+      [nodos]="currentNodes"
+      [conexiones]="currentConections"
+    ></app-asignacion-matrix>
   </div>
 
   <app-help-button [helpContent]="helpContent"></app-help-button>

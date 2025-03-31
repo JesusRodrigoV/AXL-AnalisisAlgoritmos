@@ -61,19 +61,19 @@ export default class HomeComponent {
       buttonText: 'COMENZAR',
     },
     {
-      icon: 'sort',
-      title: 'Algoritmos de Ordenamiento',
-      description:
-        'Visualiza y comprende diferentes algoritmos de ordenamiento y su rendimiento.',
-      route: '/sorts/bubble',
-      buttonText: 'COMENZAR',
-    },
-    {
       icon: 'explore',
       title: 'Algoritmo Esquina Noroeste',
       description:
         'Resuelve problemas de transporte utilizando el método de la esquina noroeste.',
-      route: '/noroeste',
+      route: '/northwest',
+      buttonText: 'COMENZAR',
+    },
+    {
+      icon: 'sort',
+      title: 'Algoritmos de Ordenamiento',
+      description:
+        'Visualiza y comprende diferentes algoritmos de ordenamiento y su rendimiento.',
+      route: '/sorts/selection',
       buttonText: 'COMENZAR',
     },
   ];

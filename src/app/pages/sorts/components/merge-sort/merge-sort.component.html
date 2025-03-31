@@ -9,55 +9,90 @@
   <mat-card-content>
     <div class="input-container">
       <mat-form-field>
+        <mat-label>Modo de ingreso</mat-label>
+        <mat-select [(ngModel)]="inputMode" (selectionChange)="onInputModeChange()">
+          <mat-option value="auto">Automático</mat-option>
+          <mat-option value="manual">Manual</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
         <mat-label>Tamaño del Array</mat-label>
         <input
           matInput
           type="number"
           [(ngModel)]="arraySize"
-          min="1"
-          max="100"
         />
-        <mat-hint>Valor entre 1 y 100</mat-hint>
       </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Valor Mínimo</mat-label>
-        <input matInput type="number" [(ngModel)]="minValue" />
-      </mat-form-field>
+      <ng-container *ngIf="inputMode === 'auto'">
+        <mat-form-field>
+          <mat-label>Valor Mínimo</mat-label>
+          <input matInput type="number" [(ngModel)]="minValue" />
+        </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Valor Máximo</mat-label>
-        <input matInput type="number" [(ngModel)]="maxValue" />
-      </mat-form-field>
+        <mat-form-field>
+          <mat-label>Valor Máximo</mat-label>
+          <input matInput type="number" [(ngModel)]="maxValue" />
+        </mat-form-field>
+      </ng-container>
+
+      <ng-container *ngIf="inputMode === 'manual'">
+        <mat-form-field class="manual-input">
+          <mat-label>Valores (separados por comas)</mat-label>
+          <input
+            matInput
+            type="text"
+            [(ngModel)]="manualInput"
+            [placeholder]="'Ingrese ' + arraySize + ' valores separados por comas'"
+          />
+          <mat-hint>Ejemplo: 5, 2, 8, 1, 9, ...</mat-hint>
+        </mat-form-field>
+      </ng-container>
 
       <mat-form-field>
         <mat-label>Tipo de Ordenamiento</mat-label>
-        <mat-select [(ngModel)]="sortingOrder">
-          <mat-option value="asc">Menor a mayor</mat-option>
-          <mat-option value="desc">Mayor a menor</mat-option>
+        <mat-select [(ngModel)]="sortOrder">
+          <mat-option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
         </mat-select>
       </mat-form-field>
     </div>
 
     <div #chartContainer class="chart-container"></div>
+    <div class="execuion-time-container">
+      <mat-card-subtitle>
+        Tiempo de ejecución: {{ executionTime.toFixed(2) }} ms
+      </mat-card-subtitle>
+    </div>
   </mat-card-content>
 
   <mat-card-actions>
     <button
       mat-raised-button
       color="accent"
-      (click)="generateArray()"
+      (click)="generateNewArray()"
       [disabled]="isSorting"
     >
       Generar Array
     </button>
+
     <button
       mat-raised-button
       color="primary"
       (click)="startSort()"
-      [disabled]="isSorting || array.length === 0"
+      [disabled]="isSorting && !isPaused"
     >
-      {{ isSorting ? "Ordenando..." : "Iniciar Ordenamiento" }}
+      {{ !isSorting ? "Ordenar" : isPaused ? "Continuar" : "Ordenando..." }}
+    </button>
+    <button
+      mat-raised-button
+      color="accent"
+      (click)="togglePause()"
+      [disabled]="!isSorting"
+    >
+      {{ isPaused ? "Continuar" : "Pausar" }}
     </button>
   </mat-card-actions>
 </mat-card>
