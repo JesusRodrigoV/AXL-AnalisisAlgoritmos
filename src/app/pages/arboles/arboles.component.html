@@ -1,0 +1,22 @@
+<div class="arboles-container">
+    <div class="sidebar">
+      <h2>Crear Árbol</h2>
+      <button (click)="agregarNumero()">Agregar número</button>
+      <button (click)="generarRandom()">Generar random</button>
+  
+      <h3>Crear con lista</h3>
+      <input [(ngModel)]="preOrderInput" placeholder="Pre-orden">
+      <button (click)="guardarPreOrder()">Guardar pre-orden</button>
+  
+      <input [(ngModel)]="inOrderInput" placeholder="In-orden">
+      <button (click)="guardarInOrder()">Guardar in-orden</button>
+  
+      <input [(ngModel)]="postOrderInput" placeholder="Post-orden">
+      <button (click)="guardarPostOrder()">Guardar post-orden</button>
+    </div>
+  
+    <div class="canvas-wrapper">
+      <canvas #canvas width="800" height="600"></canvas>
+    </div>
+  </div>
+  
