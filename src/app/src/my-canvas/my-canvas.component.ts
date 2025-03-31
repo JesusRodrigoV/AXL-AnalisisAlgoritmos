@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   inject,
   Input,
   Output,
@@ -20,6 +21,7 @@ import { AdjacencyMatrixComponent } from '../adjacency-matrix';
 import { ColorService } from '@app/services/color';
 import { ExportImportService } from '@app/services/export-import';
 import { UndoRedoService } from '@app/services/undo-redo';
+import { ExportModalComponent } from '../export-modal';
 
 @Component({
   selector: 'app-my-canvas',
@@ -41,6 +43,10 @@ export class MyCanvasComponent {
     inject(ExportImportService);
   private undoRedoService: UndoRedoService = inject(UndoRedoService);
 
+  canvasWidth: number = 0;
+  canvasHeight: number = 0;
+  private resizeObserver: ResizeObserver;
+
   @Input() forceDirected: boolean = false; // Para forzar conexiones dirigidas
 
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
@@ -55,6 +61,9 @@ export class MyCanvasComponent {
 
   @ViewChild('myCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
+
+  @ViewChild('canvasContainer', { static: true })
+  canvasContainer!: ElementRef;
   @ViewChild('fileInput', { static: false })
   fileInput!: ElementRef<HTMLInputElement>;
   readonly dialog = inject(MatDialog);
@@ -75,7 +84,8 @@ export class MyCanvasComponent {
   private segundoNodoSeleccionado: number | null = null;
   mostrarModal = false;
   colorFondo: string = '#ffffff';
-  private radio: number = 30;
+  private readonly NODO_RADIO_BASE: number = 30; // Radio base fijo para los nodos
+  private radio: number = this.NODO_RADIO_BASE; // Radio actual que se usará para dibujar
 
   @Output() actualizarMatriz = new EventEmitter<void>();
   @Output() nodosActualizados = new EventEmitter<Nodo[]>();
@@ -389,6 +399,11 @@ export class MyCanvasComponent {
   dibujarNodo(ctx: CanvasRenderingContext2D): void {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+    // Ajustar el radio basado en el tamaño del canvas manteniendo proporciones razonables
+    const minDimension = Math.min(ctx.canvas.width, ctx.canvas.height);
+    this.radio = Math.min(this.NODO_RADIO_BASE, minDimension / 20); // Limitar el tamaño máximo
+    this.radio = Math.max(this.radio, 20); // Establecer un tamaño mínimo
+
     ctx.fillStyle = this.colorFondo;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -690,8 +705,21 @@ export class MyCanvasComponent {
   }
 
   // Exporta el grafo actual a un archivo JSON
-  async exportarJSON(): Promise<void> {
-    await this.exportImportService.exportToJSON(this.nodos, this.conexiones);
+  async exportar(): Promise<void> {
+    const dialogRef = this.dialog.open(ExportModalComponent, {
+      width: '300px',
+    });
+
+    dialogRef.afterClosed().subscribe(async (result: 'json' | 'png') => {
+      if (result === 'json') {
+        await this.exportImportService.exportToJSON(
+          this.nodos,
+          this.conexiones,
+        );
+      } else if (result === 'png') {
+        await this.exportImportService.exportToPNG(this.canvas.nativeElement);
+      }
+    });
   }
 
   // Activa el selector de archivos para importar un grafo
@@ -952,5 +980,37 @@ export class MyCanvasComponent {
       this.conexiones,
       this.contador,
     );
+  }
+
+  // Actualiza el tamaño del canvas cuando el contenedor cambia de tamaño
+  private updateCanvasSize(): void {
+    if (!this.canvasContainer) return;
+
+    const container = this.canvasContainer.nativeElement;
+    const rect = container.getBoundingClientRect();
+
+    this.canvasWidth = rect.width;
+    this.canvasHeight = rect.height;
+
+    const canvas = this.canvas.nativeElement;
+    canvas.width = this.canvasWidth;
+    canvas.height = this.canvasHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = this.colorFondo;
+      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.dibujarNodo(ctx);
+    }
+  }
+
+  // Añadir método para actualizar el tamaño cuando la ventana cambia
+  @HostListener('window:resize')
+  onResize(): void {
+    this.updateCanvasSize();
+  }
+
+  ngAfterViewInit() {
+    this.updateCanvasSize();
   }
 }

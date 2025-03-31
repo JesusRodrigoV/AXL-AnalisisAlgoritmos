@@ -1,0 +1,17 @@
+<h2 mat-dialog-title>Exportar Grafo</h2>
+<mat-dialog-content>
+  <p>Seleccione el formato de exportación:</p>
+  <div class="export-options">
+    <button mat-button (click)="selectFormat('json')">
+      <i class="bx bx-file"></i>
+      JSON
+    </button>
+    <button mat-button (click)="selectFormat('png')">
+      <i class="bx bx-image"></i>
+      PNG
+    </button>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+</mat-dialog-actions>

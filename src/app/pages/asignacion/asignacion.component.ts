@@ -47,30 +47,29 @@ export default class AsignacionComponent {
   readonly HIGHLIGHT_RADIUS = 25;
 
   assignmentColors: string[] = [
-    '#1976d280', // Azul principal
-    '#03a9f480', // Azul claro
-    '#0288d180', // Azul oscuro
-    '#00acc180', // Azul verdoso
-    '#2196f380', // Azul brillante
-    '#42a5f580', // Azul cielo
-    '#1565c080', // Azul profundo
-    '#0277bd80', // Azul oceánico
-    '#0097a780', // Azul turquesa
-    '#00838f80', // Azul marino
+    '#FF000085',
+    '#00FF0085',
+    '#0000FF85',
+    '#FFA50085',
+    '#80008085',
+    '#00FFFF85',
+    '#FF00FF85',
+    '#FFD70085',
+    '#4B008285',
+    '#98FB9885',
   ];
 
-  // Colores sólidos para las conexiones
   connectionColors: string[] = [
-    '#FF0000', // Rojo
-    '#00FF00', // Verde
-    '#0000FF', // Azul
-    '#FFA500', // Naranja
-    '#800080', // Púrpura
-    '#00FFFF', // Cian
-    '#FF00FF', // Magenta
-    '#FFD700', // Dorado
-    '#4B0082', // Índigo
-    '#98FB98', // Verde claro
+    '#FF0000',
+    '#00FF00',
+    '#0000FF',
+    '#FFA500',
+    '#800080',
+    '#00FFFF',
+    '#FF00FF',
+    '#FFD700',
+    '#4B0082',
+    '#98FB98',
   ];
 
   result: { assignment: number[][]; cost: number } | null = null;
@@ -78,11 +77,9 @@ export default class AsignacionComponent {
   matrixStats: { maxValue: number; minValue: number; average: number } | null =
     null;
   private originalRadii = new Map<number, number>();
+  private snackBar = inject(MatSnackBar);
 
-  constructor(
-    private cdr: ChangeDetectorRef,
-    private snackBar: MatSnackBar,
-  ) {}
+  constructor(private cdr: ChangeDetectorRef) {}
 
   solveAssignment(): void {
     try {
@@ -148,7 +145,6 @@ export default class AsignacionComponent {
       throw new Error('No hay conexiones definidas');
     }
 
-    // Forzar actualización de tipos antes de filtrar
     this.updateNodeTypes();
 
     const nodes = [...this.currentNodes];
@@ -156,23 +152,6 @@ export default class AsignacionComponent {
 
     const originNodes = nodes.filter((n) => n.esOrigen);
     const destNodes = nodes.filter((n) => !n.esOrigen);
-
-    console.log('Preparando datos:', {
-      totalNodos: nodes.length,
-      nodosOrigen: originNodes.map((n) => ({
-        id: n.contador,
-        nombre: n.nombre,
-      })),
-      nodosDestino: destNodes.map((n) => ({
-        id: n.contador,
-        nombre: n.nombre,
-      })),
-      conexiones: connections.map((c) => ({
-        desde: c.desde,
-        hasta: c.hasta,
-        peso: c.peso,
-      })),
-    });
 
     if (originNodes.length === 0) {
       throw new Error(
@@ -220,12 +199,6 @@ export default class AsignacionComponent {
     // Validación después de la actualización
     const origenes = this.currentNodes.filter((n) => n.esOrigen);
     const destinos = this.currentNodes.filter((n) => !n.esOrigen);
-
-    console.log('Después de updateNodeTypes:');
-    console.log(`- Total nodos: ${this.currentNodes.length}`);
-    console.log(`- Nodos origen: ${origenes.length}`);
-    console.log(`- Nodos destino: ${destinos.length}`);
-    console.log(`- Total conexiones: ${this.currentConections.length}`);
   }
 
   private buildAdjacencyMatrix(
@@ -236,35 +209,12 @@ export default class AsignacionComponent {
       throw new Error('No hay conexiones disponibles');
     }
 
-    // Debug de estado actual
-    console.log('Estado actual:', {
-      origenes: origins.map((o) => ({ id: o.contador, nombre: o.nombre })),
-      destinos: destinations.map((d) => ({ id: d.contador, nombre: d.nombre })),
-      conexiones: this.currentConections.map((c) => ({
-        desde: c.desde,
-        hasta: c.hasta,
-        peso: c.peso,
-      })),
-    });
-    console.log('Construyendo matriz con:', {
-      origins: origins.map((o) => o.contador),
-      destinations: destinations.map((d) => d.contador),
-      conexiones: this.currentConections.map(
-        (c) => `${c.desde}->${c.hasta}:${c.peso}`,
-      ),
-    });
-
     const matrix = origins.map((origin) =>
       destinations.map((dest) => {
         const conexion = this.currentConections.find(
           (c) => c.desde === origin.contador && c.hasta === dest.contador,
         );
         const peso = conexion?.peso;
-
-        // Validación adicional para debugging
-        console.log(
-          `Buscando conexión ${origin.contador} -> ${dest.contador}: ${peso ?? 'no encontrada'}`,
-        );
 
         return peso ?? Infinity;
       }),
@@ -355,7 +305,6 @@ export default class AsignacionComponent {
       }
     });
 
-    // Forzar actualización del canvas
     if (this.canvas) {
       this.canvas.nodos = [...this.currentNodes];
       const ctx = this.canvas.canvas.nativeElement.getContext('2d');
@@ -391,9 +340,11 @@ export default class AsignacionComponent {
       { duration: 5000, panelClass: ['error-snackbar'] },
     );
   }
+
   trackByAssignment(index: number, item: any): number {
     return index;
   }
+
   private validateProblem(
     origins: Nodo[],
     destinations: Nodo[],
@@ -429,7 +380,6 @@ export default class AsignacionComponent {
     this.result = null;
     this.matrixStats = null;
 
-    // Restaurar colores y tamaños originales tanto en currentNodes como en canvas.nodos
     if (this.currentNodes && this.currentNodes.length > 0) {
       this.currentNodes.forEach((node) => {
         node.color = this.DEFAULT_NODE_COLOR;
@@ -441,15 +391,12 @@ export default class AsignacionComponent {
     }
 
     if (this.canvas) {
-      // Asegurarnos de que canvas.nodos esté sincronizado con currentNodes
       this.canvas.nodos = [...this.currentNodes];
       this.canvas.conexiones = [...this.currentConections];
 
-      // Redibujar el canvas con el estado actualizado
       requestAnimationFrame(() => {
         const ctx = this.canvas.canvas.nativeElement.getContext('2d');
         if (ctx) {
-          // Forzar un redibujado completo
           ctx.fillStyle = '#ffffff'; // O el color de fondo que uses
           ctx.fillRect(
             0,
@@ -497,13 +444,11 @@ export default class AsignacionComponent {
     return conexion?.peso || 0;
   }
   onNodosActual(nodos: Nodo[]): void {
-    console.log('Nodos recibidos en asignacion:', nodos.length);
     this.currentNodes = [...nodos];
     this.cdr.detectChanges();
   }
 
   onConectionActual(conn: Conexion[]): void {
-    console.log('Conexiones recibidos en asignacion:', conn.length);
     this.currentConections = [...conn];
     this.cdr.detectChanges();
   }

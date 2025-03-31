@@ -5,7 +5,30 @@ import { Nodo, Conexion } from '@app/models';
   providedIn: 'root',
 })
 export class ExportImportService {
-  //Exporta el grafo actual a un archivo JSON
+  exportToPNG(
+    canvas: HTMLCanvasElement,
+    defaultFileName: string = 'grafo',
+  ): Promise<boolean> {
+    return new Promise((resolve) => {
+      const fileName = prompt(
+        'Ingrese el nombre del archivo (sin extensión):',
+        defaultFileName,
+      );
+      if (!fileName) {
+        resolve(false);
+        return;
+      }
+
+      const url = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${fileName}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      resolve(true);
+    });
+  }
+
   exportToJSON(
     nodos: Nodo[],
     conexiones: Conexion[],
@@ -39,7 +62,6 @@ export class ExportImportService {
     });
   }
 
-  // Importa un grafo desde un archivo JSON
   importFromJSON(
     file: File,
     radio: number,
