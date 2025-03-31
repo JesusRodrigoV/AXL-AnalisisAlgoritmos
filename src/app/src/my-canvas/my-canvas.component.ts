@@ -21,6 +21,7 @@ import { AdjacencyMatrixComponent } from '../adjacency-matrix';
 import { ColorService } from '@app/services/color';
 import { ExportImportService } from '@app/services/export-import';
 import { UndoRedoService } from '@app/services/undo-redo';
+import { ExportModalComponent } from '../export-modal';
 
 @Component({
   selector: 'app-my-canvas',
@@ -704,8 +705,21 @@ export class MyCanvasComponent {
   }
 
   // Exporta el grafo actual a un archivo JSON
-  async exportarJSON(): Promise<void> {
-    await this.exportImportService.exportToJSON(this.nodos, this.conexiones);
+  async exportar(): Promise<void> {
+    const dialogRef = this.dialog.open(ExportModalComponent, {
+      width: '300px',
+    });
+
+    dialogRef.afterClosed().subscribe(async (result: 'json' | 'png') => {
+      if (result === 'json') {
+        await this.exportImportService.exportToJSON(
+          this.nodos,
+          this.conexiones,
+        );
+      } else if (result === 'png') {
+        await this.exportImportService.exportToPNG(this.canvas.nativeElement);
+      }
+    });
   }
 
   // Activa el selector de archivos para importar un grafo
