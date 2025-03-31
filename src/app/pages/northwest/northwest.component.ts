@@ -60,13 +60,24 @@ export default class NorthwestComponent {
   supplyN: number[] = []; //Copia de oferta para trabajar northwest
   demand: number[] = []; //Valores de demand
   demandN: number[] = []; //Copia de demanda para trabajar northwest
+  providerNames: string[] = []; // Nombres de los proveedores
+  destinationNames: string[] = []; // Nombres de los destinos
   solutionNW: number[][] = []; //Solucion despues de NorthWest
   solution: number[][] = []; //Solucion despues de MODI
   costMatrix: number[][] = []; //Matriz de costos (copia para evitar cambios)
   iterationModi: number = 1; //Numero de iteraciones( asumimos que northwest siempre es 1 solucion minimo)
   costoSolution: number = 0; //Costo final de la solucion
+  costoSolutionNW: number = 0;
 
   showResults: boolean = false; //Variable de visualizacion
+
+  getTotalSupply(): number {
+    return this.supply.reduce((acc, curr) => acc + (curr || 0), 0);
+  }
+
+  getTotalDemand(): number {
+    return this.demand.reduce((acc, curr) => acc + (curr || 0), 0);
+  }
 
   ngOnInit(): void {
     this.initializeMatrix();
@@ -78,6 +89,12 @@ export default class NorthwestComponent {
     );
     this.supply = Array(this.rows).fill(0);
     this.demand = Array(this.cols).fill(0);
+    this.providerNames = Array(this.rows)
+      .fill('')
+      .map((_, i) => `Proveedor ${i + 1}`);
+    this.destinationNames = Array(this.cols)
+      .fill('')
+      .map((_, i) => `Destino ${i + 1}`);
     this.solution = Array.from({ length: this.supply.length }, () =>
       Array(this.demand.length).fill(0),
     );
@@ -126,7 +143,9 @@ export default class NorthwestComponent {
     console.log('Matriz optimizada:', this.solution);
     //console.log(`Matriz de solucion:  ${this.solution}`);
     console.log('Costo mínimo obtenido:', this.calculateTotalCost());
+
     this.costoSolution = this.calculateTotalCost();
+    this.costoSolutionNW = this.calculateTotalCostNW();
     this.showResults = true;
   }
 
@@ -147,6 +166,7 @@ export default class NorthwestComponent {
     console.log(`Matriz de solucion:  ${this.solution}`);
     console.log('Costo mínimo obtenido:', this.calculateTotalCost());
     this.costoSolution = this.calculateTotalCost() * -1;
+    this.costoSolutionNW = this.calculateTotalCostNW() * -1;
     this.showResults = true;
   }
 
@@ -167,6 +187,7 @@ export default class NorthwestComponent {
     console.log(`Matriz de solucion:  ${this.solution}`);
     console.log('Costo mínimo obtenido:', this.calculateTotalCost());
     this.costoSolution = this.calculateTotalCost() * -1;
+    this.costoSolutionNW = this.calculateTotalCostNW() * -1;
     this.showResults = true;
   }
 
@@ -249,6 +270,20 @@ export default class NorthwestComponent {
           this.costMatrix[i][j] !== undefined
         ) {
           totalCost += this.solution[i][j] * this.costMatrix[i][j];
+        }
+      }
+    }
+    return totalCost;
+  }
+  calculateTotalCostNW(): number {
+    let totalCost = 0;
+    for (let i = 0; i < this.solutionNW.length; i++) {
+      for (let j = 0; j < this.solutionNW[i].length; j++) {
+        if (
+          this.solutionNW[i][j] !== undefined &&
+          this.costMatrix[i][j] !== undefined
+        ) {
+          totalCost += this.solutionNW[i][j] * this.costMatrix[i][j];
         }
       }
     }

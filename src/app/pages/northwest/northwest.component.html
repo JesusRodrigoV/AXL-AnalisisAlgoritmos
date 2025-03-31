@@ -24,6 +24,29 @@
         <mat-card-content>
           <div class="matrix-container">
             <table class="matrix-table">
+              <thead>
+                <tr class="name-inputs-row">
+                  <th></th>
+                  <th
+                    *ngFor="let d of demand; let j = index"
+                    class="destination-header"
+                  >
+                    <mat-form-field appearance="outline" class="name-input">
+                      <input
+                        matInput
+                        [(ngModel)]="destinationNames[j]"
+                        placeholder="Nombre destino"
+                      />
+                    </mat-form-field>
+                  </th>
+                  <th class="supply-header">
+                    <div class="header-label">
+                      <i class="material-icons">local_shipping</i>
+                      <span>Oferta Total</span>
+                    </div>
+                  </th>
+                </tr>
+              </thead>
               <tbody>
                 <!-- Filas de la matriz de costos + columna de ofertas -->
                 <tr
@@ -33,6 +56,15 @@
                     trackBy: trackByIndex
                   "
                 >
+                  <th class="origin-header">
+                    <mat-form-field appearance="outline" class="name-input">
+                      <input
+                        matInput
+                        [(ngModel)]="providerNames[i]"
+                        placeholder="Nombre proveedor"
+                      />
+                    </mat-form-field>
+                  </th>
                   <!-- Celdas de costos -->
                   <td
                     *ngFor="
@@ -40,6 +72,7 @@
                       let j = index;
                       trackBy: trackByIndex
                     "
+                    class="cost-cell"
                   >
                     <mat-form-field appearance="outline">
                       <input
@@ -48,40 +81,51 @@
                         [(ngModel)]="matrix[i][j]"
                         (click)="$event.stopPropagation()"
                       />
+                      <mat-hint>Costo</mat-hint>
                     </mat-form-field>
                   </td>
                   <!-- Columna de ofertas -->
                   <td class="supply-cell">
                     <mat-form-field appearance="outline">
-                      <input
-                        matInput
-                        type="number"
-                        [(ngModel)]="supply[i]"
-                        placeholder="Oferta"
-                      />
+                      <input matInput type="number" [(ngModel)]="supply[i]" />
+                      <mat-hint>Oferta</mat-hint>
                     </mat-form-field>
                   </td>
                 </tr>
                 <!-- Fila de demandas -->
                 <tr class="demand-row">
+                  <th>
+                    <div class="header-label">
+                      <i class="material-icons">shopping_cart</i>
+                      <span>Demanda</span>
+                    </div>
+                  </th>
                   <td
                     *ngFor="
                       let d of demand;
                       let j = index;
                       trackBy: trackByIndex
                     "
+                    class="demand-cell"
                   >
                     <mat-form-field appearance="outline">
-                      <input
-                        matInput
-                        type="number"
-                        [(ngModel)]="demand[j]"
-                        placeholder="Demanda"
-                      />
+                      <input matInput type="number" [(ngModel)]="demand[j]" />
+                      <mat-hint>Demanda</mat-hint>
                     </mat-form-field>
                   </td>
-                  <!-- Celda vacía en la esquina -->
-                  <td></td>
+                  <td class="total-cell">
+                    <strong>Total: {{ getTotalDemand() }}</strong>
+                  </td>
+                </tr>
+                <!-- Fila de totales -->
+                <tr class="total-row">
+                  <th>Total Oferta:</th>
+                  <td [attr.colspan]="cols">
+                    <strong>{{ getTotalSupply() }}</strong>
+                  </td>
+                  <td>
+                    <strong>Total: {{ getTotalSupply() }}</strong>
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -113,12 +157,29 @@
           </mat-card-header>
           <mat-card-content>
             <table class="result-table">
-              <tr *ngFor="let row of solutionNW; let i = index">
-                <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
-              </tr>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th *ngFor="let name of destinationNames">{{ name }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of solutionNW; let i = index">
+                  <th>{{ providerNames[i] }}</th>
+                  <td *ngFor="let cell of row">{{ cell }}</td>
+                </tr>
+              </tbody>
             </table>
           </mat-card-content>
         </mat-card>
+
+        <div class="results-info">
+          <mat-card class="info-card">
+            <mat-card-content>
+              <p>Costo NorthWest: {{ costoSolutionNW }}</p>
+            </mat-card-content>
+          </mat-card>
+        </div>
 
         <mat-card class="result-card">
           <mat-card-header>
@@ -126,9 +187,18 @@
           </mat-card-header>
           <mat-card-content>
             <table class="result-table">
-              <tr *ngFor="let row of solution; let i = index">
-                <td *ngFor="let cell of row; let j = index">{{ cell }}</td>
-              </tr>
+              <thead>
+                <tr>
+                  <th></th>
+                  <th *ngFor="let name of destinationNames">{{ name }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let row of solution; let i = index">
+                  <th>{{ providerNames[i] }}</th>
+                  <td *ngFor="let cell of row">{{ cell }}</td>
+                </tr>
+              </tbody>
             </table>
           </mat-card-content>
         </mat-card>
