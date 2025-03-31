@@ -6,6 +6,7 @@ export class Nodo {
   private _selected: boolean;
   private _nombre: string;
   private _color: string;
+  esOrigen?: boolean = false;
 
   constructor(
     x: number,

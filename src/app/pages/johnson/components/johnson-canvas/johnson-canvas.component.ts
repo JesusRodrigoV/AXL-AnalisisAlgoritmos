@@ -355,21 +355,71 @@ export class JohnsonCanvasComponent implements OnInit {
   // Ajusta las coordenadas de los nodos para que no se superpongan
   private ajustarCoordenadas(): void {
     const niveles = new Map<number, Nodo[]>();
+    const nodosEntrada = this.obtenerNodosEntrada();
 
-    this.nodos.forEach((nodo) => {
-      const nivel = this.calcularNivel(nodo);
-      niveles.set(nivel, [...(niveles.get(nivel) || []), nodo]);
-    });
+    // Calcular niveles usando BFS
+    const cola: [Nodo, number][] = nodosEntrada.map((nodo) => [nodo, 0]);
+    const nodosVisitados = new Set<string>();
 
+    while (cola.length > 0) {
+      const [nodoActual, nivelActual] = cola.shift()!;
+
+      if (!nodosVisitados.has(nodoActual.id)) {
+        nodosVisitados.add(nodoActual.id);
+
+        // Agregar nodo al nivel correspondiente
+        if (!niveles.has(nivelActual)) {
+          niveles.set(nivelActual, []);
+        }
+        niveles.get(nivelActual)!.push(nodoActual);
+
+        // Encolar nodos sucesores
+        const sucesores = this.obtenerSucesores(nodoActual);
+        sucesores.forEach((sucesor) => {
+          if (!nodosVisitados.has(sucesor.id)) {
+            cola.push([sucesor, nivelActual + 1]);
+          }
+        });
+      }
+    }
+
+    // Calcular dimensiones del layout
+    const maxNodosporNivel = Math.max(
+      ...Array.from(niveles.values()).map((n) => n.length),
+    );
+    const espacioHorizontal = 200;
+    const espacioVertical = 120;
+    const margenSuperior = 100;
+
+    // Distribuir nodos en una cuadrícula más compacta
     niveles.forEach((nodosNivel, nivel) => {
-      const espacioVertical = 120;
-      const startY = (600 - (nodosNivel.length - 1) * espacioVertical) / 2;
+      const nodosEnNivel = nodosNivel.length;
+      const startY =
+        margenSuperior +
+        ((maxNodosporNivel - nodosEnNivel) * espacioVertical) / 2;
 
       nodosNivel.forEach((nodo, index) => {
-        nodo.x = 150 + nivel * 200;
+        // Alternar posición X para crear patrón zigzag
+        const offsetX = (index % 2) * (espacioHorizontal / 3);
+        nodo.x = 150 + nivel * espacioHorizontal + offsetX;
         nodo.y = startY + index * espacioVertical;
       });
     });
+  }
+
+  // Método auxiliar para obtener nodos sin conexiones entrantes
+  private obtenerNodosEntrada(): Nodo[] {
+    const nodosConEntradas = new Set(
+      this.conexiones.map((conexion) => conexion.destino.id),
+    );
+    return this.nodos.filter((nodo) => !nodosConEntradas.has(nodo.id));
+  }
+
+  // Método auxiliar para obtener los sucesores de un nodo
+  private obtenerSucesores(nodo: Nodo): Nodo[] {
+    return this.conexiones
+      .filter((conexion) => conexion.origen.id === nodo.id)
+      .map((conexion) => conexion.destino);
   }
   private calcularNivel(nodo: Nodo): number {
     return this.conexiones

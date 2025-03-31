@@ -20,9 +20,9 @@
         {{ getMensajeError() }}
       </mat-error>
     </mat-form-field>
-    <mat-checkbox *ngIf="data.showDirectedOption" formControlName="dirigido">
-      Dirigido
-    </mat-checkbox>
+    @if (data.showDirectedOption) {
+      <mat-checkbox formControlName="dirigido"> Dirigido </mat-checkbox>
+    }
   </form>
 </div>
 <div mat-dialog-actions>

@@ -1,31 +1,24 @@
 <app-button-bar
   (modeToggled)="onModeToggled($event)"
-  (exportar)="exportarJSON()"
+  (exportar)="exportar()"
   (importar)="seleccionarArchivo()"
   (limpiar)="limpiarCanvas()"
 >
 </app-button-bar>
 
 <div class="container">
-  <div class="canvas-container">
+  <div class="canvas-container" #canvasContainer>
     <canvas
       #myCanvas
       class="myCanvas"
       id="myCanvas"
-      width="1200px"
-      height="400px"
+      [width]="canvasWidth"
+      [height]="canvasHeight"
       (dblclick)="dobleClickCanvas($event)"
       (click)="clickCanvas($event)"
       (contextmenu)="menuContexto($event)"
     >
     </canvas>
-  </div>
-  <div class="matrix-container">
-    <app-adjacency-matrix
-      [nodos]="nodos"
-      [conexiones]="conexiones"
-      [actualizarMatriz$]="actualizarMatriz"
-    ></app-adjacency-matrix>
   </div>
 </div>
 

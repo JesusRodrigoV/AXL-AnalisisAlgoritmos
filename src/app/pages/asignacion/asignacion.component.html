@@ -1,10 +1,16 @@
 <div class="container">
   <div class="left-section">
-    <mat-card class="control-card">
+    <mat-card class="control-card" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title>
+          <i class="bx bx-cog"></i>
+          Configuración
+        </mat-card-title>
+      </mat-card-header>
       <mat-card-content>
-        <div class="control-header">
-          <h2 class="section-title">Configuración</h2>
-          <div class="optimization-toggle">
+        <div class="control-content">
+          <div class="optimization-section">
+            <span class="optimization-label">Modo de Optimización:</span>
             <mat-button-toggle-group
               [(ngModel)]="isMaximization"
               class="toggle-group"
@@ -17,11 +23,12 @@
               </mat-button-toggle>
             </mat-button-toggle-group>
           </div>
+
           <button
             mat-raised-button
             color="primary"
             class="solve-button"
-            (click)="solveAssignment(isMaximization)"
+            (click)="solveAssignment()"
           >
             <i class="bx bx-calculator"></i>
             Resolver Asignación
@@ -30,88 +37,121 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Estadísticas de la matriz -->
-    <mat-card *ngIf="matrixStats" class="stats-card" [@fadeInOut]>
+    <!-- Resultados -->
+    <mat-card *ngIf="result" class="result-card" appearance="outlined">
       <mat-card-header>
-        <mat-card-title>Estadísticas de la Matriz</mat-card-title>
+        <mat-card-title>
+          <i class="bx bx-trophy"></i>
+          Solución Óptima
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ isMaximization ? "Maximización" : "Minimización" }} de Costos
+        </mat-card-subtitle>
       </mat-card-header>
       <mat-card-content>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <i class="bx bx-up-arrow" color="primary"></i>
-            <span class="stat-label">Valor Máximo:</span>
-            <span class="stat-value">{{ matrixStats.maxValue }}</span>
+        <div class="result-content">
+          <div class="total-cost-section">
+            <div class="cost-card">
+              <div class="cost-icon">
+                <i class="bx bx-dollar-circle"></i>
+              </div>
+              <div class="cost-details">
+                <span class="cost-label">Costo Total</span>
+                <span class="cost-value">{{ result.cost }}</span>
+              </div>
+            </div>
           </div>
-          <div class="stat-item">
-            <i class="bx bx-down-arrow" color="warn"></i>
-            <span class="stat-label">Valor Mínimo:</span>
-            <span class="stat-value">{{ matrixStats.minValue }}</span>
-          </div>
-          <div class="stat-item">
-            <i class="bx bx-bar-chart-alt-2" color="accent"></i>
-            <span class="stat-label">Promedio:</span>
-            <span class="stat-value">{{
-              matrixStats.average | number: "1.2-2"
-            }}</span>
+
+          <div class="assignment-details">
+            <h3 class="assignments-title">Asignaciones Óptimas</h3>
+            <div class="assignments-list">
+              <div
+                *ngFor="
+                  let assignment of result.assignment;
+                  let i = index;
+                  trackBy: trackByAssignment
+                "
+                class="assignment-card"
+                [style.borderLeft]="
+                  '4px solid ' + assignmentColors[i % assignmentColors.length]
+                "
+              >
+                <div class="assignment-content">
+                  <div class="assignment-nodes">
+                    <span class="node-origin">{{ getNodeName(i, true) }}</span>
+                    <i class="bx bx-right-arrow-alt"></i>
+                    <span class="node-dest">{{ getNodeName(i, false) }}</span>
+                  </div>
+                  <div class="assignment-cost" *ngIf="canvas?.nodos">
+                    <i class="bx bx-coin"></i>
+                    {{ getAssignmentCost(i, assignment) }}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </mat-card-content>
     </mat-card>
-
-    <!-- Resultados -->
-    <mat-card *ngIf="result" class="result-card" [@fadeInOut]>
+    <!-- Estadísticas de la matriz -->
+    <mat-card *ngIf="matrixStats" class="stats-card" appearance="outlined">
       <mat-card-header>
-        <mat-card-title>
-          Resultado {{ isMaximization ? "Maximización" : "Minimización" }}
-        </mat-card-title>
+        <mat-card-title> Estadísticas de la Matriz </mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="total-cost">
-          <i class="bx bx-dollar-circle"></i>
-          <span>Costo total: </span>
-          <span class="cost-value">{{ result.cost }}</span>
-        </div>
-
-        <div class="assignment-details">
-          <h3 class="assignments-title">Asignaciones Óptimas</h3>
-          <mat-list>
-            <mat-list-item
-              *ngFor="
-                let assignment of getFormattedAssignments();
-                let i = index
-              "
-              class="assignment-item"
-            >
-              <div
-                mat-line
-                class="assignment-line"
-                [style.backgroundColor]="assignmentColors[i]"
-                [style.padding]="'8px'"
-                [style.borderRadius]="'4px'"
-                [style.margin]="'4px 0'"
-              >
-                <i class="bx bx-link"></i>
-                <strong class="from-to">
-                  {{ assignment.from }} ➜ {{ assignment.to }}
-                </strong>
-                <span class="assignment-cost">
-                  (Costo: {{ assignment.cost }})
-                </span>
-              </div>
-            </mat-list-item>
-          </mat-list>
+        <div class="stats-grid">
+          <div class="stat-card max-value">
+            <div class="stat-icon">
+              <i class="bx bx-up-arrow"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Valor Máximo</span>
+              <span class="stat-value">{{ matrixStats.maxValue }}</span>
+            </div>
+          </div>
+          <div class="stat-card min-value">
+            <div class="stat-icon">
+              <i class="bx bx-down-arrow"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Valor Mínimo</span>
+              <span class="stat-value">{{ matrixStats.minValue }}</span>
+            </div>
+          </div>
+          <div class="stat-card average">
+            <div class="stat-icon">
+              <i class="bx bx-bar-chart-alt-2"></i>
+            </div>
+            <div class="stat-info">
+              <span class="stat-label">Promedio</span>
+              <span class="stat-value">{{
+                matrixStats.average | number: "1.2-2"
+              }}</span>
+            </div>
+          </div>
         </div>
       </mat-card-content>
     </mat-card>
   </div>
+
   <div class="right-section">
     <div class="canvas-section">
       <mat-card class="canvas-card">
         <mat-card-content>
-          <app-my-canvas [forceDirected]="true" />
+          <app-my-canvas
+            [forceDirected]="true"
+            (nodosActualizados)="onNodosActual($event)"
+            (conexionActualizada)="onConectionActual($event)"
+          ></app-my-canvas>
         </mat-card-content>
       </mat-card>
     </div>
+
+    <app-asignacion-matrix
+      [nodos]="currentNodes"
+      [conexiones]="currentConections"
+    ></app-asignacion-matrix>
   </div>
-  <app-help-button [helpContent]="helpContent" />
+
+  <app-help-button [helpContent]="helpContent"></app-help-button>
 </div>
