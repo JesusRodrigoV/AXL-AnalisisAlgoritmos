@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import {
   MatDialogActions,
   MatDialogClose,
@@ -11,7 +12,13 @@ export type ExportType = 'json' | 'png';
 
 @Component({
   selector: 'app-export-modal',
-  imports: [MatDialogTitle, MatDialogContent, MatDialogActions, MatDialogClose],
+  imports: [
+    MatDialogTitle,
+    MatDialogContent,
+    MatDialogActions,
+    MatDialogClose,
+    MatButtonModule,
+  ],
   templateUrl: './export-modal.component.html',
   styleUrl: './export-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
