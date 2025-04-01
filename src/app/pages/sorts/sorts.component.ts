@@ -65,7 +65,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
   arraySize: number = 20;
   minValue: number = 1;
   maxValue: number = 100;
-  hValue: number = 10; 
+  hValue: number = 10;
   sortOrder: 'asc' | 'desc' = 'asc';
 
   sortOptions = [
@@ -79,8 +79,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
     private cdr: ChangeDetectorRef,
   ) {}
 
-  ngOnInit() {
-  }
+  ngOnInit() {}
 
   ngAfterViewInit() {
     this.initChart();
@@ -149,8 +148,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private initialArray: number[] = [];
-
   generateNewArray() {
     if (this.inputMode === 'auto' && !this.validateInputs()) return;
 
@@ -170,7 +167,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
       if (!this.validateManualInput()) return;
       this.arrayData = [...this.manualValues];
     }
-    this.initialArray = [...this.arrayData];
 
     this.executionTime = 0;
     this.updateChart(this.arrayData);
@@ -329,15 +325,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     return new Promise<void>((resolve) => setTimeout(resolve, 50));
   }
 
-  resetArray() {
-    if (this.initialArray.length > 0) {
-      this.arrayData = [...this.initialArray];
-      this.executionTime = 0;
-      this.updateChart(this.arrayData);
-      this.cdr.detectChanges();
-    }
-  }
-
   async handleFileInput(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
@@ -368,7 +355,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
 
       this.arraySize = numbers.length;
       this.arrayData = numbers;
-      this.initialArray = [...numbers];
+
       this.inputMode = 'manual';
       this.manualInput = numbers.join(', ');
       this.manualValues = [...numbers];
