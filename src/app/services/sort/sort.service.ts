@@ -155,8 +155,15 @@ export class SortService {
           right++;
         }
 
+        // Visualizar la comparación actual
         if (onCompare) {
-          onCompare(copiedArray, left - 1, right - 1);
+          onCompare(copiedArray, left, right);
+          await this.sleep(100);
+        }
+
+        // Visualizar el cambio después de la comparación
+        if (onCompare) {
+          onCompare(copiedArray, tempIndex, compareCondition ? left : right);
           await this.sleep(100);
         }
 
