@@ -1,0 +1,43 @@
+.matrix-card {
+  margin: 16px;
+}
+
+.matrix-container {
+  margin: 16px 0;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.mat-mdc-table {
+  width: 100%;
+  background: white;
+}
+
+.mat-mdc-row,
+.mat-mdc-header-row {
+  min-height: 48px;
+}
+
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  text-align: center;
+  min-width: 80px;
+  padding: 0 16px;
+}
+
+.infinity {
+  color: rgba(0, 0, 0, 0.54);
+  font-style: italic;
+}
+
+// Estilo para la primera columna (nombres de origen)
+.mat-mdc-cell:first-child,
+.mat-mdc-header-cell:first-child {
+  font-weight: 500;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+// Hover effect en las filas
+.mat-mdc-row:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}

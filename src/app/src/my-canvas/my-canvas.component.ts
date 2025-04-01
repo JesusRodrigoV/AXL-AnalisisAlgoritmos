@@ -4,7 +4,9 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  HostListener,
   inject,
+  Input,
   Output,
   ViewChild,
 } from '@angular/core';
@@ -19,6 +21,7 @@ import { AdjacencyMatrixComponent } from '../adjacency-matrix';
 import { ColorService } from '@app/services/color';
 import { ExportImportService } from '@app/services/export-import';
 import { UndoRedoService } from '@app/services/undo-redo';
+import { ExportModalComponent } from '../export-modal';
 
 @Component({
   selector: 'app-my-canvas',
@@ -40,6 +43,12 @@ export class MyCanvasComponent {
     inject(ExportImportService);
   private undoRedoService: UndoRedoService = inject(UndoRedoService);
 
+  canvasWidth: number = 0;
+  canvasHeight: number = 0;
+  private resizeObserver: ResizeObserver;
+
+  @Input() forceDirected: boolean = false; // Para forzar conexiones dirigidas
+
   @ViewChild('canvasMenu') canvasMenu!: MatMenu;
   @ViewChild('nodeMenu') nodeMenu!: MatMenu;
   @ViewChild('connectionMenu') connectionMenu!: MatMenu;
@@ -52,6 +61,9 @@ export class MyCanvasComponent {
 
   @ViewChild('myCanvas', { static: true })
   canvas!: ElementRef<HTMLCanvasElement>;
+
+  @ViewChild('canvasContainer', { static: true })
+  canvasContainer!: ElementRef;
   @ViewChild('fileInput', { static: false })
   fileInput!: ElementRef<HTMLInputElement>;
   readonly dialog = inject(MatDialog);
@@ -72,9 +84,12 @@ export class MyCanvasComponent {
   private segundoNodoSeleccionado: number | null = null;
   mostrarModal = false;
   colorFondo: string = '#ffffff';
-  private radio: number = 30;
+  private readonly NODO_RADIO_BASE: number = 30; // Radio base fijo para los nodos
+  private radio: number = this.NODO_RADIO_BASE; // Radio actual que se usará para dibujar
 
   @Output() actualizarMatriz = new EventEmitter<void>();
+  @Output() nodosActualizados = new EventEmitter<Nodo[]>();
+  @Output() conexionActualizada = new EventEmitter<Conexion[]>();
 
   // Maneja el cambio de modo de la herramienta seleccionada
   onModeToggled(event: { id: string; active: boolean }) {
@@ -196,13 +211,36 @@ export class MyCanvasComponent {
     if (nodoIndex !== -1) {
       const nodoEliminado = this.nodos[nodoIndex];
 
+      // Eliminar las conexiones relacionadas con el nodo
       this.conexiones = this.conexiones.filter(
         (conexion) =>
           conexion.desde !== nodoEliminado.contador &&
           conexion.hasta !== nodoEliminado.contador,
       );
 
+      // Eliminar el nodo
       this.nodos.splice(nodoIndex, 1);
+
+      // Reordenar los contadores de los nodos restantes
+      this.nodos.forEach((nodo, index) => {
+        const nuevoContador = index + 1;
+
+        // Actualizar las conexiones que referencian a este nodo
+        this.conexiones.forEach((conexion) => {
+          if (conexion.desde > nodoEliminado.contador) {
+            conexion.desde--;
+          }
+          if (conexion.hasta > nodoEliminado.contador) {
+            conexion.hasta--;
+          }
+        });
+
+        nodo.contador = nuevoContador;
+        nodo.nombre = `Nodo ${nuevoContador}`;
+      });
+
+      // Actualizar el contador general
+      this.contador = this.nodos.length;
     } else {
       const conexionIndex = this.conexiones.findIndex((conexion) => {
         const desde = this.nodos.find((c) => c.contador === conexion.desde);
@@ -317,20 +355,26 @@ export class MyCanvasComponent {
       this.primerNodoSeleccionado !== null &&
       this.segundoNodoSeleccionado !== null
     ) {
-      this.conexiones.push(
-        new Conexion(
-          this.primerNodoSeleccionado,
-          this.segundoNodoSeleccionado,
-          datos.peso,
-          datos.dirigido,
-        ),
+      const nuevaConexion = new Conexion(
+        this.primerNodoSeleccionado,
+        this.segundoNodoSeleccionado,
+        datos.peso,
+        this.forceDirected ? true : datos.dirigido,
       );
+      nuevaConexion.dirigido = this.forceDirected ? true : datos.dirigido;
+      this.conexiones.push(nuevaConexion);
+
+      const nodoOrigen = this.nodos.find(
+        (n) => n.contador === this.primerNodoSeleccionado,
+      );
+      if (nodoOrigen) {
+        nodoOrigen.esOrigen = true;
+      }
     }
     this.limpiarSeleccion();
     this.actualizarMatriz.emit();
   }
 
-  //Cancela la conexión en proceso y limpia la selección
   cancelarConexion() {
     this.limpiarSeleccion();
   }
@@ -355,8 +399,19 @@ export class MyCanvasComponent {
   dibujarNodo(ctx: CanvasRenderingContext2D): void {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
+    // Ajustar el radio basado en el tamaño del canvas manteniendo proporciones razonables
+    const minDimension = Math.min(ctx.canvas.width, ctx.canvas.height);
+    this.radio = Math.min(this.NODO_RADIO_BASE, minDimension / 20); // Limitar el tamaño máximo
+    this.radio = Math.max(this.radio, 20); // Establecer un tamaño mínimo
+
     ctx.fillStyle = this.colorFondo;
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // Asegurar que los arrays están sincronizados antes de dibujar
+    console.log('Estado antes de dibujar:', {
+      nodos: this.nodos.length,
+      conexiones: this.conexiones.length,
+    });
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
@@ -403,14 +458,14 @@ export class MyCanvasComponent {
             ctx.fillStyle = 'black';
             ctx.fillText(peso.toString(), midX, midY);
           }
-          ctx.stroke(); // Asegura que la arista se dibuje
-
-          // Dibujar flecha en el punto final
-          this.dibujarFlecha(ctx, endX, endY, dx, dy);
-
           ctx.strokeStyle = conexion.color || '#666';
           ctx.lineWidth = 2;
-          ctx.stroke();
+          ctx.stroke(); // Asegura que la arista se dibuje
+
+          // Solo dibujar flecha si la conexión es dirigida
+          if (conexion.dirigido) {
+            this.dibujarFlecha(ctx, endX, endY, dx, dy);
+          }
 
           // Dibuja la flecha de Andres
           //if (conexion.dirigido) {
@@ -424,7 +479,6 @@ export class MyCanvasComponent {
           //    controlY,
           //  );
           //}
-
           // Dibujar el peso
           ctx.fillStyle = this.colorFondo;
           ctx.fillRect(midX - 10, midY - 10, 20, 20);
@@ -455,6 +509,27 @@ export class MyCanvasComponent {
         circulo.y,
       );
     });
+
+    // Emitir actualizaciones solo si hay cambios
+    if (this.nodos && this.nodos.length > 0) {
+      console.log('Emitiendo nodos desde canvas:', {
+        total: this.nodos.length,
+        detalles: this.nodos.map((n) => ({ id: n.contador, nombre: n.nombre })),
+      });
+      this.nodosActualizados.emit([...this.nodos]);
+    }
+
+    if (this.conexiones && this.conexiones.length > 0) {
+      console.log('Emitiendo conexiones desde canvas:', {
+        total: this.conexiones.length,
+        detalles: this.conexiones.map((c) => ({
+          desde: c.desde,
+          hasta: c.hasta,
+          peso: c.peso,
+        })),
+      });
+      this.conexionActualizada.emit([...this.conexiones]);
+    }
 
     this.actualizarMatriz.emit();
   }
@@ -610,7 +685,11 @@ export class MyCanvasComponent {
     const dialogRef = this.dialog.open(ModalContentComponent, {
       height: '265px',
       width: '200px',
-      data: { peso: this.peso, dirigido: this.arcoDirigido },
+      data: {
+        peso: this.peso,
+        dirigido: this.forceDirected ? true : this.arcoDirigido,
+        showDirectedOption: !this.forceDirected, // Ocultar opción si está forzado
+      },
     });
 
     dialogRef.afterClosed().subscribe((result) => {
@@ -626,8 +705,21 @@ export class MyCanvasComponent {
   }
 
   // Exporta el grafo actual a un archivo JSON
-  async exportarJSON(): Promise<void> {
-    await this.exportImportService.exportToJSON(this.nodos, this.conexiones);
+  async exportar(): Promise<void> {
+    const dialogRef = this.dialog.open(ExportModalComponent, {
+      width: '300px',
+    });
+
+    dialogRef.afterClosed().subscribe(async (result: 'json' | 'png') => {
+      if (result === 'json') {
+        await this.exportImportService.exportToJSON(
+          this.nodos,
+          this.conexiones,
+        );
+      } else if (result === 'png') {
+        await this.exportImportService.exportToPNG(this.canvas.nativeElement);
+      }
+    });
   }
 
   // Activa el selector de archivos para importar un grafo
@@ -652,11 +744,17 @@ export class MyCanvasComponent {
         );
 
         this.nodos = result.nodos;
-        this.conexiones = result.conexiones;
+        this.conexiones = result.conexiones.map((c: any) => {
+          const conexion = Conexion.fromJSON(c);
+          if (this.forceDirected) {
+            conexion.dirigido = true;
+          }
+          return conexion;
+        });
         this.contador = this.nodos.length;
 
         this.actualizarMatriz.emit();
-
+        console.log('nodo', this.nodos);
         setTimeout(() => {
           this.dibujar();
           this.actualizarMatriz.emit();
@@ -819,16 +917,27 @@ export class MyCanvasComponent {
 
   // Limpia completamente el canvas y reinicia el estado del grafo
   limpiarCanvas() {
-    const ctx = this.canvas.nativeElement.getContext('2d');
+    // Reiniciamos todos los datos
     this.nodos = [];
     this.conexiones = [];
     this.contador = 0;
-    //this.colorFondo = '#fff';
+
+    const ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
-      this.dibujarNodo(ctx);
+      // Limpiamos el canvas completamente
+      ctx.fillStyle = this.colorFondo;
+      ctx.fillRect(
+        0,
+        0,
+        this.canvas.nativeElement.width,
+        this.canvas.nativeElement.height,
+      );
     }
+
+    // Notificamos que los datos han sido limpiados
+    this.nodosActualizados.emit([]);
+    this.conexionActualizada.emit([]);
     this.actualizarMatriz.emit();
-    this.guardarEstado();
   }
 
   undo(): void {
@@ -871,5 +980,37 @@ export class MyCanvasComponent {
       this.conexiones,
       this.contador,
     );
+  }
+
+  // Actualiza el tamaño del canvas cuando el contenedor cambia de tamaño
+  private updateCanvasSize(): void {
+    if (!this.canvasContainer) return;
+
+    const container = this.canvasContainer.nativeElement;
+    const rect = container.getBoundingClientRect();
+
+    this.canvasWidth = rect.width;
+    this.canvasHeight = rect.height;
+
+    const canvas = this.canvas.nativeElement;
+    canvas.width = this.canvasWidth;
+    canvas.height = this.canvasHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = this.colorFondo;
+      ctx.fillRect(0, 0, this.canvasWidth, this.canvasHeight);
+      this.dibujarNodo(ctx);
+    }
+  }
+
+  // Añadir método para actualizar el tamaño cuando la ventana cambia
+  @HostListener('window:resize')
+  onResize(): void {
+    this.updateCanvasSize();
+  }
+
+  ngAfterViewInit() {
+    this.updateCanvasSize();
   }
 }

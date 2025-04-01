@@ -23,6 +23,8 @@ export class ThemeService {
     this.setTheme(this.getThemeFromLocalStorage());
   }
 
+
+
   toggleTheme() {
     if (this.currentTheme() === 'light') {
       this.setTheme('dark');

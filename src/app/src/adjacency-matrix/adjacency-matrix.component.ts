@@ -11,11 +11,12 @@ import {
   ViewChild,
   EventEmitter,
 } from '@angular/core';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Nodo, Conexion } from '@app/models';
 
 @Component({
   selector: 'app-adjacency-matrix',
-  imports: [CommonModule],
+  imports: [CommonModule, MatProgressSpinnerModule],
   templateUrl: './adjacency-matrix.component.html',
   styleUrl: './adjacency-matrix.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

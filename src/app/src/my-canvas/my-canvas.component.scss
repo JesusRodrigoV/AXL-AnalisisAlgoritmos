@@ -7,23 +7,32 @@
   pointer-events: none;
 }
 
-.canvas-container {
-  margin: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.container {
   width: 100%;
-  height: 100vh;
+  height: 100%;
   position: relative;
 }
 
-canvas {
+.canvas-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
   border: 1px solid #ccc;
   background-color: white;
+  overflow: hidden;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  touch-action: none;
+  width: 100%;
+  height: 100%;
 }
 
 #myCanvas {
-  margin: 20px;
+  margin: 0;
 }
 
 #modal {
