@@ -113,15 +113,6 @@
       {{ isPaused ? "Continuar" : "Pausar" }}
     </button>
 
-    <button
-      mat-raised-button
-      color="accent"
-      (click)="resetArray()"
-      [disabled]="isSorting || arrayData.length === 0"
-    >
-      Reiniciar
-    </button>
-
     <div class="import-export-buttons">
       <input
         #fileInput
