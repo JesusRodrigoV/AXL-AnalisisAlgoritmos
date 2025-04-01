@@ -148,8 +148,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  private initialArray: number[] = [];
-
   generateNewArray() {
     if (this.inputMode === 'auto' && !this.validateInputs()) return;
 
@@ -169,7 +167,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
       if (!this.validateManualInput()) return;
       this.arrayData = [...this.manualValues];
     }
-    this.initialArray = [...this.arrayData];
 
     this.executionTime = 0;
     this.updateChart(this.arrayData);
@@ -342,49 +339,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     return new Promise<void>((resolve) => setTimeout(resolve, 50));
   }
 
-  resetArray() {
-    if (this.initialArray.length > 0) {
-      // Reset all sorting states
-      this.sortCancelled = true;
-      this.isSorting = false;
-      this.isPaused = false;
-
-      // Reset array data
-      this.arrayData = [...this.initialArray];
-
-      // Reset all timing variables
-      this.executionTime = 0;
-      this.startTime = 0;
-      this.pauseStartTime = 0;
-      this.totalPausedTime = 0;
-
-      // Reset chart with clean state
-      if (this.chart) {
-        const option = {
-          animation: false,
-          series: [
-            {
-              data: this.arrayData.map((value) => ({
-                value: value,
-                itemStyle: {
-                  color: '#3398db', // Reset to default color
-                },
-              })),
-              type: 'bar',
-            },
-          ],
-        };
-
-        // Force complete chart reset
-        this.chart.setOption(option, { notMerge: true });
-      }
-
-      // Reset sortCancelled after reset is complete
-      this.sortCancelled = false;
-      this.cdr.detectChanges();
-    }
-  }
-
   async handleFileInput(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
@@ -415,7 +369,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
 
       this.arraySize = numbers.length;
       this.arrayData = numbers;
-      this.initialArray = [...numbers];
       this.inputMode = 'manual';
       this.manualInput = numbers.join(', ');
       this.manualValues = [...numbers];
