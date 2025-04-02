@@ -17,25 +17,23 @@ export class SortService {
     onCompare?: (arr: number[], index1: number, index2: number) => void,
   ): Promise<number[]> {
     const copiedArray = [...arr];
+    const delay = this.getDelay(copiedArray.length);
 
-    for (let i = 0; i < copiedArray.length - 1; i++) {
-      let extremeIndex = i;
-      for (let j = i + 1; j < copiedArray.length; j++) {
+    for (let i = 0; i < copiedArray.length; i++) {
+      let min = i;
+      for (let j = i; j < copiedArray.length; j++) {
         if (
-          (order === 'asc' && copiedArray[j] < copiedArray[extremeIndex]) ||
-          (order === 'desc' && copiedArray[j] > copiedArray[extremeIndex])
+          (order === 'asc' && copiedArray[j] < copiedArray[min]) ||
+          (order === 'desc' && copiedArray[j] > copiedArray[min])
         ) {
-          extremeIndex = j;
+          min = j;
         }
-        onCompare?.(copiedArray, i, j);
-        await this.sleep(100);
       }
-      [copiedArray[i], copiedArray[extremeIndex]] = [
-        copiedArray[extremeIndex],
-        copiedArray[i],
-      ];
-      onCompare?.(copiedArray, i, extremeIndex);
-      await this.sleep(100);
+      if (min !== i) {
+        [copiedArray[i], copiedArray[min]] = [copiedArray[min], copiedArray[i]];
+        onCompare?.(copiedArray, i, min);
+        await this.sleep(delay);
+      }
     }
 
     return copiedArray;
@@ -47,25 +45,23 @@ export class SortService {
     onCompare?: (arr: number[], index1: number, index2: number) => void,
   ): Promise<number[]> {
     const copiedArray = [...arr];
+    const delay = this.getDelay(copiedArray.length);
 
     for (let i = 1; i < copiedArray.length; i++) {
-      const current = copiedArray[i];
-      let j = i - 1;
-
+      let j = i;
       while (
-        j >= 0 &&
-        ((order === 'asc' && copiedArray[j] > current) ||
-          (order === 'desc' && copiedArray[j] < current))
+        j > 0 &&
+        ((order === 'asc' && copiedArray[j] < copiedArray[j - 1]) ||
+          (order === 'desc' && copiedArray[j] > copiedArray[j - 1]))
       ) {
-        copiedArray[j + 1] = copiedArray[j];
-        onCompare?.(copiedArray, j, i);
-        await this.sleep(100);
+        [copiedArray[j], copiedArray[j - 1]] = [
+          copiedArray[j - 1],
+          copiedArray[j],
+        ];
+        onCompare?.(copiedArray, j, j - 1);
+        await this.sleep(delay);
         j--;
       }
-
-      copiedArray[j + 1] = current;
-      onCompare?.(copiedArray, j + 1, i);
-      await this.sleep(100);
     }
 
     return copiedArray;
@@ -73,11 +69,12 @@ export class SortService {
 
   async shellSort(
     arr: number[],
-    h: number, // Se ingresa manualmente
+    h: number,
     order: 'asc' | 'desc' = 'asc',
     onCompare?: (arr: number[], index1: number, index2: number) => void,
   ): Promise<number[]> {
     const copiedArray = [...arr];
+    const delay = this.getDelay(copiedArray.length);
 
     while (h > 0) {
       for (let i = h; i < copiedArray.length; i++) {
@@ -91,13 +88,15 @@ export class SortService {
         ) {
           copiedArray[j] = copiedArray[j - h];
           onCompare?.(copiedArray, j, j - h);
-          await this.sleep(100);
+          await this.sleep(delay);
           j -= h;
         }
 
-        copiedArray[j] = temp;
-        onCompare?.(copiedArray, i, j);
-        await this.sleep(100);
+        if (j !== i) {
+          copiedArray[j] = temp;
+          onCompare?.(copiedArray, j, i);
+          await this.sleep(delay);
+        }
       }
 
       h = Math.floor(h / 2);
@@ -112,81 +111,54 @@ export class SortService {
     onCompare?: (arr: number[], index1: number, index2: number) => void,
   ): Promise<number[]> {
     const copiedArray = [...arr];
-    const tempArray = new Array(copiedArray.length);
+    const delay = this.getDelay(copiedArray.length);
 
     const mergeSortRecursive = async (
       start: number,
       end: number,
     ): Promise<void> => {
-      if (start >= end) return;
+      if (start >= end - 1) return;
 
-      const mid = Math.floor((start + end) / 2);
-
+      const mid = start + Math.floor((end - start) / 2);
       await mergeSortRecursive(start, mid);
-      await mergeSortRecursive(mid + 1, end);
-      await merge(start, mid, end);
-    };
+      await mergeSortRecursive(mid, end);
 
-    const merge = async (
-      start: number,
-      mid: number,
-      end: number,
-    ): Promise<void> => {
-      let left = start;
-      let right = mid + 1;
-      let tempIndex = start;
+      const cache = Array(end - start).fill(0);
+      let k = mid;
+      let r = 0;
 
-      // Copiar al array temporal para preservar los elementos originales
-      for (let i = start; i <= end; i++) {
-        tempArray[i] = copiedArray[i];
+      for (let i = start; i < mid; r++, i++) {
+        while (
+          k < end &&
+          ((order === 'asc' && copiedArray[k] < copiedArray[i]) ||
+            (order === 'desc' && copiedArray[k] > copiedArray[i]))
+        ) {
+          cache[r] = copiedArray[k];
+          r++;
+          k++;
+        }
+        cache[r] = copiedArray[i];
       }
 
-      while (left <= mid && right <= end) {
-        const compareCondition =
-          order === 'asc'
-            ? tempArray[left] <= tempArray[right]
-            : tempArray[left] >= tempArray[right];
-
-        if (compareCondition) {
-          copiedArray[tempIndex] = tempArray[left];
-          left++;
-        } else {
-          copiedArray[tempIndex] = tempArray[right];
-          right++;
-        }
-
-        // Visualizar la comparación actual
+      for (let i = 0; i < k - start; i++) {
+        copiedArray[i + start] = cache[i];
         if (onCompare) {
-          onCompare(copiedArray, left, right);
-          await this.sleep(100);
+          onCompare(copiedArray, i + start, i + start);
+          await this.sleep(delay);
         }
-
-        // Visualizar el cambio después de la comparación
-        if (onCompare) {
-          onCompare(copiedArray, tempIndex, compareCondition ? left : right);
-          await this.sleep(100);
-        }
-
-        tempIndex++;
-      }
-
-      // Copiar los elementos restantes del lado izquierdo
-      while (left <= mid) {
-        copiedArray[tempIndex] = tempArray[left];
-        if (onCompare) {
-          onCompare(copiedArray, left, tempIndex);
-          await this.sleep(100);
-        }
-        left++;
-        tempIndex++;
       }
     };
 
-    await mergeSortRecursive(0, copiedArray.length - 1);
+    await mergeSortRecursive(0, copiedArray.length);
     return copiedArray;
   }
 
   private sleep(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  private getDelay(arrayLength: number): number {
+    const BASE_DELAY = 5000;
+    return BASE_DELAY / arrayLength;
   }
 }
