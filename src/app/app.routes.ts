@@ -23,41 +23,12 @@ export const routes: Routes = [
   },
   {
     path: 'sorts',
-    children: [
-      {
-        path: 'selection',
-        loadComponent: () =>
-          import(
-            './pages/sorts/components/selection-sort/selection-sort.component'
-          ).then((m) => m.SelectionSortComponent),
-      },
-      {
-        path: 'insertion',
-        loadComponent: () =>
-          import(
-            './pages/sorts/components/insertion-sort/insertion-sort.component'
-          ).then((m) => m.InsertionSortComponent),
-      },
-      {
-        path: 'shell',
-        loadComponent: () =>
-          import(
-            './pages/sorts/components/shell-sort/shell-sort.component'
-          ).then((m) => m.ShellSortComponent),
-      },
-      {
-        path: 'merge',
-        loadComponent: () =>
-          import(
-            './pages/sorts/components/merge-sort/merge-sort.component'
-          ).then((m) => m.MergeSortComponent),
-      },
-      {
-        path: '',
-        loadComponent: () =>
-          import('./pages/sorts/sorts.component').then((m) => m.SortsComponent),
-      },
-    ],
+    loadComponent: () =>
+      import('./pages/sorts/sorts.component'),
+  },
+  {
+    path: 'arboles',
+    loadComponent: () => import('./pages/arboles/arboles.component'),
   },
   {
     path: '',

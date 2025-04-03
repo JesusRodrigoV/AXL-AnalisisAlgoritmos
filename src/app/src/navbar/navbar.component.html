@@ -6,30 +6,6 @@
 
   <nav class="nav-links">
     @for (ruta of rutas; track ruta.path) {
-      @if (ruta.submenu) {
-        <button
-          mat-button
-          [matMenuTriggerFor]="submenu"
-          [matTooltip]="ruta.description"
-          class="nav-link"
-        >
-          <i class="bx {{ ruta.icon }}"></i>
-          <span>{{ ruta.label }}</span>
-        </button>
-        <mat-menu #submenu="matMenu">
-          @for (subItem of ruta.submenu; track subItem.path) {
-            <a
-              mat-menu-item
-              [routerLink]="subItem.path"
-              [class.active-link]="isRouteActive(subItem.path)"
-            >
-              <i class="bx {{ subItem.icon }}"></i>
-              <span>{{ subItem.label }}</span>
-              <small class="route-description">{{ subItem.description }}</small>
-            </a>
-          }
-        </mat-menu>
-      } @else {
         <a
           mat-button
           [routerLink]="ruta.path"
@@ -40,8 +16,8 @@
           <i class="bx {{ ruta.icon }}"></i>
           <span>{{ ruta.label }}</span>
         </a>
-      }
     }
+
   </nav>
   <button mat-button (click)="themeService.toggleTheme()">
     <i
@@ -56,26 +32,6 @@
 
   <mat-menu #menu="matMenu">
     @for (ruta of rutas; track ruta.path) {
-      @if (ruta.submenu) {
-        <button mat-menu-item [matMenuTriggerFor]="mobileSubmenu">
-          <i class="bx {{ ruta.icon }}"></i>
-          <span>{{ ruta.label }}</span>
-          <small class="route-description">{{ ruta.description }}</small>
-        </button>
-        <mat-menu #mobileSubmenu="matMenu">
-          @for (subItem of ruta.submenu; track subItem.path) {
-            <a
-              mat-menu-item
-              [routerLink]="subItem.path"
-              [class.active-link]="isRouteActive(subItem.path)"
-            >
-              <i class="bx {{ subItem.icon }}"></i>
-              <span>{{ subItem.label }}</span>
-              <small class="route-description">{{ subItem.description }}</small>
-            </a>
-          }
-        </mat-menu>
-      } @else {
         <a
           mat-menu-item
           [routerLink]="ruta.path"
@@ -85,7 +41,6 @@
           <span>{{ ruta.label }}</span>
           <small class="route-description">{{ ruta.description }}</small>
         </a>
-      }
     }
   </mat-menu>
 </mat-toolbar>

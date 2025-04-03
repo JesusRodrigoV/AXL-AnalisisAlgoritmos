@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "public": "dist/analisis-algoritmos/browser",
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

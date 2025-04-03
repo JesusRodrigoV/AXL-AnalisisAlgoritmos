@@ -57,34 +57,15 @@ export class NavbarComponent {
     },
     {
       label: 'Sorts',
+      path: '/sorts',
       icon: 'bx-sort-alt-2',
       description: 'Algoritmos de ordenamiento',
-      submenu: [
-        {
-          label: 'Selection Sort',
-          path: '/sorts/selection',
-          icon: 'bx-sort',
-          description: 'Ordenamiento por selección',
-        },
-        {
-          label: 'Insertion Sort',
-          path: '/sorts/insertion',
-          icon: 'bx-sort',
-          description: 'Ordenamiento por inserción',
-        },
-        {
-          label: 'Shell Sort',
-          path: '/sorts/shell',
-          icon: 'bx-sort',
-          description: 'Ordenamiento Shell',
-        },
-        {
-          label: 'Merge Sort',
-          path: '/sorts/merge',
-          icon: 'bx-sort',
-          description: 'Ordenamiento por mezcla',
-        },
-      ],
+    },
+    {
+      label: 'Árboles',
+      path: '/arboles',
+      icon: 'bx bxs-tree',
+      description: 'Simulador de árboles binarios',
     },
   ];
   private router: Router = inject(Router);

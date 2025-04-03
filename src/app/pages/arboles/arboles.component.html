@@ -1,0 +1,53 @@
+<div class="container">
+  <h2>Árboles Binarios</h2>
+  
+  <div class="canvas-container">
+    <canvas #canvas width="800" height="600"></canvas>
+  </div>
+  
+  <div class="controls-container">
+    <!-- Mensajes de feedback usando sintaxis nueva de Angular -->
+    @if (mensajeError) {
+      <div class="error-message">
+        {{ mensajeError }}
+      </div>
+    }
+    
+    @if (mensajeExito) {
+      <div class="success-message">
+        {{ mensajeExito }}
+      </div>
+    }
+    
+    <!-- Controles para preorden -->
+    <div class="input-group">
+      <label for="preorden">Preorden (valores separados por comas):</label>
+      <div class="input-with-button">
+        <input type="text" id="preorden" [(ngModel)]="preOrderInput" placeholder="Ej: 10, 5, 3, 7, 15, 12, 18">
+        <button (click)="guardarPreOrder()">Construir con Preorden</button>
+      </div>
+    </div>
+    
+    <!-- Controles para inorden -->
+    <div class="input-group">
+      <label for="inorden">Inorden (valores separados por comas):</label>
+      <div class="input-with-button">
+        <input type="text" id="inorden" [(ngModel)]="inOrderInput" placeholder="Ej: 3, 5, 7, 10, 12, 15, 18">
+        <button (click)="guardarInOrder()">Construir con Inorden</button>
+      </div>
+    </div>
+    
+    <!-- Controles para postorden -->
+    <div class="input-group">
+      <label for="postorden">Postorden (valores separados por comas):</label>
+      <div class="input-with-button">
+        <input type="text" id="postorden" [(ngModel)]="postOrderInput" placeholder="Ej: 3, 7, 5, 12, 18, 15, 10">
+        <button (click)="guardarPostOrder()">Construir con Postorden</button>
+      </div>
+    </div>
+    
+    <div class="button-group">
+      <button (click)="generarRandom()">Generar Árbol Aleatorio</button>
+    </div>
+  </div>
+</div>
