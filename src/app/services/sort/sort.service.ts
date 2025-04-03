@@ -158,7 +158,7 @@ export class SortService {
   }
 
   private getDelay(arrayLength: number): number {
-    const BASE_DELAY = 5000;
+    const BASE_DELAY = 3000;
     return BASE_DELAY / arrayLength;
   }
 }
