@@ -337,6 +337,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
     this.cdr.detectChanges();
 
     return new Promise<void>((resolve) => setTimeout(resolve, 50));
+
+    const BASE_DELAY = 5000;
+    const delay = BASE_DELAY / this.arrayData.length;
+    return new Promise<void>((resolve) => setTimeout(resolve, delay));
+
   }
 
   async handleFileInput(event: Event) {
