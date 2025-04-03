@@ -369,7 +369,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
       performance.now() - this.startTime - this.totalPausedTime;
     this.cdr.detectChanges();
 
-    const BASE_DELAY = 5000;
+    const BASE_DELAY = 3000;
     const delay = BASE_DELAY / this.arrayData.length;
     return new Promise<void>((resolve) => setTimeout(resolve, delay));
   }
