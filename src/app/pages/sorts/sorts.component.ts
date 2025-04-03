@@ -261,21 +261,68 @@ export default class SortsComponent implements OnInit, OnDestroy {
             this.sortOrder === 'asc' ? 'Menor a Mayor' : 'Mayor a Menor'
           }`,
           left: 'center',
+          top: 10,
+          textStyle: {
+            fontSize: 16,
+            fontWeight: 'bold',
+          },
         },
         tooltip: {
-          trigger: 'item',
-          formatter: '{c}',
+          trigger: 'axis',
+          formatter: (params: any) => {
+            const dataIndex = params[0].dataIndex;
+            return `Posición: ${dataIndex + 1}<br/>Valor: ${params[0].value}`;
+          },
+          axisPointer: {
+            type: 'shadow',
+          },
         },
+        grid: {
+          left: '3%',
+          right: '4%',
+          bottom: '8%',
+          top: '15%',
+          containLabel: true,
+        },
+        dataZoom: [
+          {
+            type: 'slider',
+            show: this.arrayData.length > 50,
+            xAxisIndex: 0,
+            start: 0,
+            end: 100,
+            height: 20,
+            bottom: 0,
+            borderColor: 'transparent',
+          },
+          {
+            type: 'inside',
+            xAxisIndex: 0,
+            start: 0,
+            end: 100,
+          },
+        ],
         xAxis: {
           type: 'category',
           data: data.map((_, index) => (index + 1).toString()),
           axisLabel: {
-            interval: 0,
+            interval: Math.floor(data.length / 50), // Mostrar menos etiquetas si hay muchos elementos
+            rotate: data.length > 30 ? 45 : 0, // Rotar etiquetas si hay muchos elementos
+            hideOverlap: true,
+            fontSize: 10,
+          },
+          axisTick: {
+            alignWithLabel: true,
           },
         },
         yAxis: {
           type: 'value',
           max: Math.max(...data) + 10,
+          splitLine: {
+            lineStyle: {
+              type: 'dashed',
+            },
+          },
         },
         series: [
           {
