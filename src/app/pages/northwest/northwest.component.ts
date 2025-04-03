@@ -68,6 +68,7 @@ export default class NorthwestComponent {
   iterationModi: number = 1; //Numero de iteraciones( asumimos que northwest siempre es 1 solucion minimo)
   costoSolution: number = 0; //Costo final de la solucion
   costoSolutionNW: number = 0;
+  costCopyMatrix: number[][] = [];
 
   showResults: boolean = false; //Variable de visualizacion
 
@@ -78,10 +79,10 @@ export default class NorthwestComponent {
   getTotalDemand(): number {
     return this.demand.reduce((acc, curr) => acc + (curr || 0), 0);
   }
-
+  /*
   ngOnInit(): void {
     this.initializeMatrix();
-  }
+  }*/
 
   initializeMatrix() {
     this.matrix = Array.from({ length: this.rows }, () =>
@@ -128,10 +129,56 @@ export default class NorthwestComponent {
     return index;
   }
 
+  /*
+  solveAlternativeMin(){
+    this.setCostMatrix(this.matrix);
+    this.supplyN = [...this.supply];
+    this.demandN = [...this.demand];
+    this._costos = this.costMatrix.map(row => [...row]);
+    this.costCopyMatrix = [...this.costMatrix];
+    this._oferta =  [...this.supply];
+    this._demanda =  [...this.demand];
+    this._asignacion = Array.from({ length: this.supply.length }, () =>
+      Array(this.demand.length).fill(0),
+    );
+    this.ubicaciones = [];
+    this.pv = false;
+    let tipo = this.resolver(false);
+    this.ajustarResultados(tipo);
+    this.showResults = true;
+    this.costMatrix = [...this.costCopyMatrix];
+    console.log(this.calculateTotalCost());
+    this.costoSolution = this.calculateTotalCost();
+    console.log("Solucion min: " + JSON.stringify(this.solution));
+    //this.calculateTotalCost()
+  }
+
+  solveAlternativeMax(){
+    this.setCostMatrix(this.matrix);
+    this.supplyN = [...this.supply];
+    this.demandN = [...this.demand];
+    this._costos = this.costMatrix.map(row => [...row]);
+    this.costCopyMatrix = [...this.costMatrix];
+    this._oferta =  [...this.supply];
+    this._demanda =  [...this.demand];
+    this._asignacion = Array.from({ length: this.rows }, () => Array(this.rows).fill(0));
+    this.ubicaciones = [];
+    this.pv = false;
+    let tipo = this.resolver(true);
+    this.ajustarResultados(tipo);
+    this.showResults = true;
+    this.costMatrix = [...this.costCopyMatrix];
+    console.log(this.calculateTotalCost());
+    this.costoSolution = this.calculateTotalCost();
+    console.log("Solucion max: " + JSON.stringify(this.solution));
+    //this.calculateTotalCost()
+  }*/
+
   solveMin() {
     this.setCostMatrix(this.matrix);
     this.supplyN = [...this.supply];
     this.demandN = [...this.demand];
+    this.costCopyMatrix = [...this.costMatrix];
     console.log('Aplicando método Northwest Corner...');
     this.northwestCornerMin();
     this.solutionNW = this.solution.map((row) => [...row]);
@@ -153,6 +200,7 @@ export default class NorthwestComponent {
     this.setCostMatrix(this.matrix);
     this.supplyN = [...this.supply];
     this.demandN = [...this.demand];
+    this.costCopyMatrix = [...this.costMatrix];
     console.log('Aplicando método Northwest Corner...');
     this.northwestCornerMax();
     this.solutionNW = this.solution.map((row) => [...row]);
@@ -165,8 +213,8 @@ export default class NorthwestComponent {
     console.log('Matriz optimizada:', this.solution);
     console.log(`Matriz de solucion:  ${this.solution}`);
     console.log('Costo mínimo obtenido:', this.calculateTotalCost());
-    this.costoSolution = this.calculateTotalCost() * -1;
-    this.costoSolutionNW = this.calculateTotalCostNW() * -1;
+    this.costoSolution = this.calculateTotalCost();
+    this.costoSolutionNW = this.calculateTotalCostNW();
     this.showResults = true;
   }
 
@@ -174,6 +222,7 @@ export default class NorthwestComponent {
     this.setCostMatrix(this.matrix);
     this.supplyN = [...this.supply];
     this.demandN = [...this.demand];
+    this.costCopyMatrix = [...this.costMatrix];
     console.log('Aplicando método Northwest Corner...');
     this.prepareCostMatrixForMODI();
     this.northwestCornerMin();
@@ -186,8 +235,8 @@ export default class NorthwestComponent {
     console.log('Matriz optimizada:', this.solution);
     console.log(`Matriz de solucion:  ${this.solution}`);
     console.log('Costo mínimo obtenido:', this.calculateTotalCost());
-    this.costoSolution = this.calculateTotalCost() * -1;
-    this.costoSolutionNW = this.calculateTotalCostNW() * -1;
+    this.costoSolution = this.calculateTotalCost();
+    this.costoSolutionNW = this.calculateTotalCostNW();
     this.showResults = true;
   }
 
@@ -260,21 +309,23 @@ export default class NorthwestComponent {
     console.log('Numero de iteraciones de NorthWest: ' + iteration);
   }
 
-  // Calcular costo total de la asignación
   calculateTotalCost(): number {
     let totalCost = 0;
+    let filasCostMatrix = this.costCopyMatrix.length;    // Filas de costCopyMatrix
+    let columnasCostMatrix = this.costCopyMatrix[0].length; // Columnas de costCopyMatrix
+
     for (let i = 0; i < this.solution.length; i++) {
       for (let j = 0; j < this.solution[i].length; j++) {
-        if (
-          this.solution[i][j] !== undefined &&
-          this.costMatrix[i][j] !== undefined
-        ) {
-          totalCost += this.solution[i][j] * this.costMatrix[i][j];
-        }
+        let costo = (i < filasCostMatrix && j < columnasCostMatrix)
+          ? this.costCopyMatrix[i][j]
+          : 0; // Si la fila o columna están fuera de costCopyMatrix, usa 0
+        totalCost += (this.solution[i][j] || 0) * costo;
       }
     }
+
     return totalCost;
   }
+
   calculateTotalCostNW(): number {
     let totalCost = 0;
     for (let i = 0; i < this.solutionNW.length; i++) {
@@ -341,8 +392,6 @@ export default class NorthwestComponent {
       if (pending.size > 0) {
         //console.warn("¡Advertencia! No se pudieron calcular algunos valores de U o V.");
       }
-      //console.log(`U value: ${u}`)
-      //console.log(`V value: ${v}`)
 
       // 2.1 Llenar la matriz de costos minimo
       for (let i = 0; i < rows; i++) {
@@ -398,6 +447,8 @@ export default class NorthwestComponent {
         break;
       }
     }
+
+    this.checkAndBalance();
     console.log('Numero de iteraciones de MODI: ' + iteration);
     this.iterationModi = iteration + 1;
   }
@@ -483,6 +534,25 @@ export default class NorthwestComponent {
     return null;
   }
 
+  checkAndBalance() {
+    let totalSupply = this.supply.reduce((a, b) => a + b, 0);
+    let totalDemand = this.demand.reduce((a, b) => a + b, 0);
+
+    if (totalSupply > totalDemand) {
+      let diff = totalSupply - totalDemand;
+      this.demand.push(diff);
+      this.costMatrix.forEach(row => row.push(0));
+      this.solution.forEach(row => row.push(diff));
+    } else if (totalDemand > totalSupply) {
+      let diff = totalDemand - totalSupply;
+      this.supply.push(diff);
+      let newRow = new Array(this.demand.length).fill(0);
+      newRow[newRow.length - 1] = diff;
+      this.costMatrix.push(newRow);
+      this.solution.push(newRow);
+    }
+  }
+
   applyCycle(cycle: [number, number][]): void {
     if (!cycle || cycle.length < 4) {
       //console.log("No se encontró un ciclo válido.");
@@ -511,4 +581,244 @@ export default class NorthwestComponent {
 
     //console.log("Nueva solución después de aplicar el ciclo:", this.solution);
   }
+
+/*
+  // Define a Zero Position class
+
+
+  // Global variables
+  _costos: number[][] = [...this.costMatrix];
+  _oferta: number[] =  [...this.supply];
+  _demanda: number[] =  [...this.demand];
+  _asignacion: number[][] = Array.from({ length: this.supply.length }, () =>
+    Array(this.demand.length).fill(0),
+  );
+  ubicaciones: Ceros[] = [];
+  pv: boolean = false;
+  tipo: boolean = true;
+
+  // Step 1: Column Reduction
+  pasoUno(): void {
+    for (let j = 0; j < this._costos[0].length; j++) {
+        let minVal = Math.min(...this._costos.map(row => row[j]));
+
+        for (let i = 0; i < this._costos.length; i++) {
+            this._costos[i][j] -= minVal;
+        }
+    }
+  }
+
+  // Step 2: Row Reduction
+  pasoDos(): void {
+    for (let i = 0; i < this._costos.length; i++) {
+        let minVal = Math.min(...this._costos[i]);
+
+        for (let j = 0; j < this._costos[i].length; j++) {
+            this._costos[i][j] -= minVal;
+        }
+    }
+  }
+
+  // Step 3: Identify Zero Positions
+  pasoTres(): void {
+    this.ubicaciones = []; // Reset zero positions
+    for (let i = 0; i < this._costos.length; i++) {
+        for (let j = 0; j < this._costos[i].length; j++) {
+            if (this._costos[i][j] === 0) {
+                if (!this.estaEnLista(i, j)) {
+                    this.ubicaciones.push(new Ceros(i, j));
+                } else {
+                    this.tacharCero(i, j);
+                }
+            }
+        }
+    }
+  }
+
+  // Step 4: Assign Values Based on Supply and Demand
+  pasoCuatro(): void {
+    for (let i = 0; i < this.ubicaciones.length; i++) {
+        let temp = this.ubicaciones[i];
+        if (!temp.tachado) {
+            let menor = Math.min(this._oferta[temp.x], this._demanda[temp.y]);
+            if (menor !== 0) {
+                this._asignacion[temp.x][temp.y] = menor;
+                this._oferta[temp.x] -= menor;
+                this._demanda[temp.y] -= menor;
+            }
+        }
+    }
+  }
+
+  // Utility Functions
+  estaEnLista(x: number, y: number): boolean {
+    return this.ubicaciones.some(temp => temp.x === x && temp.y === y);
+  }
+
+  tacharCero(x: number, y: number): void {
+    let cero = this.ubicaciones.find(temp => temp.x === x && temp.y === y);
+    if (cero) cero.tachado = true;
+  }
+
+  // Find Minimum Non-Zero Value and Subtract from All Non-Zero Values
+  restarMinimo(): void {
+    let min = Infinity;
+    for (let row of this._costos) {
+        for (let val of row) {
+            if (val !== 0 && val < min) {
+                min = val;
+            }
+        }
+    }
+
+    for (let i = 0; i < this._costos.length; i++) {
+        for (let j = 0; j < this._costos[i].length; j++) {
+            if (this._costos[i][j] !== 0) {
+                this._costos[i][j] -= min;
+            }
+        }
+    }
+  }
+
+  // Main Algorithm Resolver
+  resolver(tipo: boolean): number {
+    let b = true;
+    let opcion = 0;
+    if (!tipo) {
+        // In case of minimization
+        console.log("Adjusting parameters for minimization...");
+    }
+
+    this.pasoUno();
+    this.pasoDos();
+
+    while (b) {
+        opcion = this.pasoIteracion();
+        if (opcion === 4) {
+            this.pasoTres();
+            this.pasoCuatro();
+        } else {
+            b = false;
+        }
+    }
+
+    console.log("Final Cost Matrix: " + JSON.stringify(this._costos));
+    return opcion;
+  }
+
+  // Iteration Step
+  pasoIteracion(): number {
+    let fOferta = this._oferta.reduce((a, b) => a + b, 0);
+    let fDemanda = this._demanda.reduce((a, b) => a + b, 0);
+    if (!this.tipo) {
+      //cuando sea false será maximización
+      this.ajustarParametros();
+    }
+    if (fOferta === 0 && fDemanda === 0) return 1;
+    if (fOferta === 0 && fDemanda > 0) return 2;
+    if (fDemanda === 0 && fOferta > 0) return 3;
+    if (fDemanda > 0 && fOferta > 0) {
+        if (!this.pv) {
+            this.restarMinimo();
+        } else {
+            this.pv = false;
+        }
+        return 4;
+    }
+    return -1;
+  }
+
+  ajustarParametros() {
+    //necesario para maximizar
+    this._costos = [...this.costMatrix];
+    for (let i = 0; i < this._costos.length; i++) {
+      for (let j = 0; j < this._costos[i].length; j++) {
+        this._costos[i][j] *= -1;
+      }
+    }
+  }
+
+  // Function to adjust results based on the given option
+  ajustarResultados(opcion: number) {
+    let asigMostrar: number[][] = [];
+    let etFilas: string[] = [];
+    let etColumnas: string[] = [];
+    let etOfertas: number[] = [];
+    let etDemandas: number[] = [];
+
+
+    if (opcion === 2) {
+        // 2 -> terminamos, pero la demanda está insatisfecha
+        for (let lista of this._asignacion) {
+            let nuevaLista = [...lista]; // Copiamos la lista
+            asigMostrar.push(nuevaLista);
+        }
+
+        let nl: number[] = [];
+        // Agregamos una fila de 0s por la demanda insatisfecha
+        for (let i = 0; i < this._demanda.length; i++) {
+            nl.push(this._demanda[i] !== 0 ? this._demanda[i] : 0);
+        }
+        asigMostrar.push(nl); // Matriz de asignación ajustada
+
+        etFilas = [...this.providerNames, 'Fic']; // Etiquetas de oferta ajustada
+        etOfertas = [...this._oferta, 0]; // Valor de oferta ajustado
+        etColumnas = [...this.destinationNames];
+        etDemandas = [...this._demanda];
+        //this.rows++;
+
+    } else if (opcion === 3) {
+        // 3 -> terminamos, pero la oferta está insatisfecha
+        let indices: number[] = [];
+
+        for (let i = 0; i < this._oferta.length; i++) {
+            if (this._oferta[i] !== 0) {
+                indices.push(i);
+            }
+        }
+
+        for (let lista of this._asignacion) {
+            let nuevaLista = [...lista];
+            asigMostrar.push(nuevaLista);
+        }
+
+        for (let i = 0; i < indices.length; i++) {
+            for (let k = 0; k < asigMostrar.length; k++) {
+                asigMostrar[k].push(k === indices[i] ? this._oferta[indices[i]] : 0);
+            }
+        } // Ajustamos para los insatisfechos
+
+        etFilas = [...this.providerNames]; // Etiquetas de filas iguales
+        etOfertas = [...this._oferta]; // Valores de oferta iguales
+        etColumnas = [...this.destinationNames];
+        etDemandas = [...this._demanda];
+
+        for (let i = 0; i < indices.length; i++) {
+            etColumnas.push('Fic');
+            etDemandas.push(0);
+        } // Etiquetas de columnas y valores de demanda ajustados
+        //this.cols++;
+
+    } else if (opcion === 1) {
+        // Todo ajustado correctamente
+        for (let lista of this._asignacion) {
+            let nuevaLista = [...lista];
+            asigMostrar.push(nuevaLista);
+        }
+        etFilas = [...this.providerNames];
+        etColumnas = [...this.destinationNames];
+        etOfertas = [...this._oferta];
+        etDemandas = [...this._demanda];
+    }
+
+    this.solution = [...asigMostrar];
+    this.demand = [...etDemandas];
+    this.supply = [...etOfertas];
+    this.providerNames = [...etFilas];
+    this.destinationNames = [...etColumnas];
+  }*/
+}
+
+class Ceros {
+  constructor(public x: number, public y: number, public tachado: boolean = false) {}
 }
