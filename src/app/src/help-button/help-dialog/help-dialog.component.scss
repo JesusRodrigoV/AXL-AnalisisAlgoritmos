@@ -10,6 +10,7 @@
 
   p {
     text-align: justify;
+    white-space: pre-line;
   }
 }
 
@@ -63,5 +64,6 @@
   mat-list-item {
     height: auto;
     margin-bottom: 8px;
+    white-space: pre-line;
   }
 }

@@ -30,6 +30,7 @@ import { HelpButtonComponent } from '@app/src/help-button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class NorthwestComponent {
+  private readonly ASSETS_PATH = 'assets/help/northwest/';
   helpContent: HelpContent = {
     title: 'Método de la Esquina Noroeste',
     description:
@@ -40,13 +41,14 @@ export default class NorthwestComponent {
         title: 'Configuración Inicial',
         description:
           'Ingresa el número de proveedores (filas) y destinos (columnas) para crear la matriz de costos. Puedes personalizar los nombres de proveedores y destinos.',
-        image: 'assets/help/northwest-step1.png',
+        image: `${this.ASSETS_PATH}northwest-step1.png`,
       },
       {
         number: 2,
         title: 'Matriz de Costos',
         description:
           'Completa la matriz con los costos de transporte entre cada proveedor y destino. Ingresa las ofertas (capacidades de los proveedores) y demandas (necesidades de los destinos).',
+        image: `${this.ASSETS_PATH}northwest-step2.png`,
       },
       {
         number: 3,
@@ -62,30 +64,29 @@ export default class NorthwestComponent {
       },
     ],
     tips: [
-      'Verifica que la suma total de ofertas sea igual a la suma total de demandas para un problema balanceado',
-      'Los costos deben ser números positivos para minimización y representar ganancias para maximización',
-      'La solución optimizada siempre será igual o mejor que la solución inicial Northwest',
-      'Puedes nombrar tus proveedores y destinos para una mejor identificación',
+      'Los costos deben ser números positivos para\nminimización y representar ganancias para maximización',
+      'La solución optimizada siempre será igual o mejor\nque la solución inicial Northwest',
+      'Puedes nombrar tus proveedores y destinos\npara una mejor identificación',
     ],
     images: [
       {
-        url: 'assets/help/northwest-matrix.png',
+        url: `${this.ASSETS_PATH}northwest-matrix.png`,
         caption: 'Ejemplo de matriz de costos completada',
         alt: 'Matriz de costos del método Northwest',
       },
       {
-        url: 'assets/help/northwest-solution.png',
+        url: `${this.ASSETS_PATH}northwest-solution.png`,
         caption: 'Visualización de la solución optimizada',
         alt: 'Solución optimizada del método Northwest',
       },
-    ],
+    ] /*
     videos: [
       {
         url: 'https://www.youtube.com/watch?v=northwest-tutorial',
         title: 'Tutorial: Método de la Esquina Noroeste',
         thumbnail: 'assets/help/tutorial-thumb.png',
       },
-    ],
+    ],*/,
   };
   private _rows: number = 0;
   private _cols: number = 0;

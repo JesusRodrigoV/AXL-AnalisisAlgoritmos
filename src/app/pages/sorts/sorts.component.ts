@@ -20,6 +20,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule } from '@angular/forms';
 import * as echarts from 'echarts';
 import { SortService } from '@app/services/sort/sort.service';
+import { HelpButtonComponent } from '@app/src/help-button';
+import { HelpContent } from '@app/models/Help.model';
 
 type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
 
@@ -36,6 +38,7 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
     MatSelectModule,
     MatMenuModule,
     FormsModule,
+    HelpButtonComponent,
   ],
   templateUrl: './sorts.component.html',
   styleUrl: './sorts.component.scss',
@@ -43,7 +46,67 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
 })
 export default class SortsComponent implements OnInit, OnDestroy {
   @ViewChild('chartContainer') chartContainer!: ElementRef;
-
+  helpContent: HelpContent = {
+    title: 'Algoritmos de Ordenamiento',
+    description:
+      'Esta herramienta te permite visualizar y comparar diferentes algoritmos de ordenamiento. Puedes ver paso a paso cómo funcionan los algoritmos Selection Sort, Insertion Sort, Shell Sort y Merge Sort con una representación gráfica en tiempo real.',
+    steps: [
+      {
+        number: 1,
+        title: 'Configuración del Array',
+        description:
+          'Elige entre generación automática o manual del array:\n- Automático: Define tamaño, valores mínimos y máximos\n- Manual: Ingresa los valores separados por comas\n- También puedes importar datos desde archivos JSON o TXT',
+        image: 'assets/help/sort-config.png',
+      },
+      {
+        number: 2,
+        title: 'Selección del Algoritmo',
+        description:
+          'Elige entre cuatro algoritmos de ordenamiento:\n- Selection Sort: Ideal para arrays pequeños\n- Insertion Sort: Eficiente para arrays casi ordenados\n- Shell Sort: Mejora del Insertion Sort\n- Merge Sort: Eficiente para grandes conjuntos de datos',
+        image: 'assets/help/sort-algorithms.png',
+      },
+      {
+        number: 3,
+        title: 'Controles de Ordenamiento',
+        description:
+          'Utiliza los controles para:\n- Iniciar el ordenamiento\n- Pausar/Reanudar la visualización\n- Cambiar la dirección (ascendente/descendente)\n- Ajustar la velocidad de visualización',
+        image: 'assets/help/sort-controls.png',
+      },
+      {
+        number: 4,
+        title: 'Visualización y Análisis',
+        description:
+          'Observa en tiempo real:\n- Comparaciones entre elementos\n- Intercambios realizados\n- Tiempo de ejecución\n- Estado actual del array',
+      },
+    ],
+    tips: [
+      'Para arrays grandes (>50 elementos), usa el zoom para ver mejor los detalles',
+      'El color rojo indica el elemento que se está comparando actualmente',
+      'El color amarillo muestra el elemento con el que se está comparando',
+      'Para un mejor análisis, prueba el mismo array con diferentes algoritmos',
+      "Shell Sort requiere un valor 'h' - prueba diferentes valores para ver su impacto",
+      'Puedes exportar los arrays para comparar resultados posteriormente',
+    ],
+    images: [
+      {
+        url: 'assets/help/sort-visualization.png',
+        caption: 'Visualización del proceso de ordenamiento',
+        alt: 'Gráfico de barras mostrando el proceso de ordenamiento',
+      },
+      {
+        url: 'assets/help/sort-comparison.png',
+        caption: 'Comparación de algoritmos',
+        alt: 'Diferentes algoritmos de ordenamiento en acción',
+      },
+    ],
+    videos: [
+      {
+        url: 'https://www.youtube.com/watch?v=sorting-algorithms',
+        title: 'Tutorial: Entendiendo los Algoritmos de Ordenamiento',
+        thumbnail: 'assets/help/sorting-tutorial-thumb.png',
+      },
+    ],
+  };
   private chart: echarts.ECharts | null = null;
   private sortCancelled = false;
 
@@ -388,7 +451,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     const BASE_DELAY = 3000;
     const delay = BASE_DELAY / this.arrayData.length;
     return new Promise<void>((resolve) => setTimeout(resolve, delay));
-
   }
 
   async handleFileInput(event: Event) {

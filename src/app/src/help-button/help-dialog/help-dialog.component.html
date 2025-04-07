@@ -15,7 +15,7 @@
           <mat-step>
             <ng-template matStepLabel>{{ step.title }}</ng-template>
             <div class="step-content">
-              <p>{{ step.description }}</p>
+              <p [style.white-space]="'pre-line'">{{ step.description }}</p>
               @if (step.image) {
                 <img [src]="step.image" [alt]="step.title" />
               }
@@ -49,7 +49,9 @@
         @for (tip of data.tips; track $index) {
           <mat-list-item>
             <mat-icon matListItemIcon>lightbulb</mat-icon>
-            <span matListItemTitle>{{ tip }}</span>
+            <div matListItemTitle [style.white-space]="'pre-line'">
+              {{ tip }}
+            </div>
           </mat-list-item>
         }
       </mat-list>

@@ -213,20 +213,25 @@
         }
       }
     }
+  }
+  .results-info {
+    .info-card {
+      .tips-section {
+        margin-top: 16px;
 
-    .results-info {
-      .info-card {
-        background-color: var(--mdc-theme-surface);
-
+        h3 {
+          color: var(--mdc-theme-primary);
+          margin-bottom: 8px;
+        }
         p {
-          margin: 8px 0;
-          font-size: 16px;
-          color: var(--mdc-theme-on-surface);
+          margin-bottom: 8px;
+          line-height: 1.5;
+          white-space: pre-line;
         }
       }
     }
   }
-}
+} // Cierre de .container
 
 // Soporte para modo oscuro
 :host-context(.dark-mode) {
