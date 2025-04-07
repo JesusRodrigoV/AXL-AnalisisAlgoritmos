@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "algorithm-axl"
-  }
+    "default": "analisis-algoritmos-5d6ed",
+    "analisis-axl": "analisis-algoritmos-5d6ed"
+  },
+  "targets": {},
+  "etags": {}
 }

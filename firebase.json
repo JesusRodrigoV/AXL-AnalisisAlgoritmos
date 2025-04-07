@@ -1,6 +1,7 @@
 {
   "hosting": {
     "public": "dist/analisis-algoritmos/browser",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
