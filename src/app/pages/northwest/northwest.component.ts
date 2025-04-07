@@ -10,6 +10,8 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTableModule } from '@angular/material/table';
+import { HelpContent } from '@app/models/Help.model';
+import { HelpButtonComponent } from '@app/src/help-button';
 
 @Component({
   selector: 'app-northwest',
@@ -21,12 +23,70 @@ import { MatTableModule } from '@angular/material/table';
     MatFormFieldModule,
     MatInputModule,
     MatTableModule,
+    HelpButtonComponent,
   ],
   templateUrl: './northwest.component.html',
   styleUrls: ['./northwest.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class NorthwestComponent {
+  helpContent: HelpContent = {
+    title: 'Método de la Esquina Noroeste',
+    description:
+      'El método de la esquina noroeste es una técnica utilizada para encontrar una solución inicial factible en problemas de transporte. Este método asigna valores comenzando desde la esquina superior izquierda (noroeste) de la matriz de costos.',
+    steps: [
+      {
+        number: 1,
+        title: 'Configuración Inicial',
+        description:
+          'Ingresa el número de proveedores (filas) y destinos (columnas) para crear la matriz de costos. Puedes personalizar los nombres de proveedores y destinos.',
+        image: 'assets/help/northwest-step1.png',
+      },
+      {
+        number: 2,
+        title: 'Matriz de Costos',
+        description:
+          'Completa la matriz con los costos de transporte entre cada proveedor y destino. Ingresa las ofertas (capacidades de los proveedores) y demandas (necesidades de los destinos).',
+      },
+      {
+        number: 3,
+        title: 'Selección del Modo',
+        description:
+          'Elige entre minimizar costos o maximizar ganancias según tu objetivo:\n- Minimizar Costos: Para encontrar la solución más económica\n- Maximizar Ganancias: Para obtener el mayor beneficio posible',
+      },
+      {
+        number: 4,
+        title: 'Interpretación de Resultados',
+        description:
+          'El sistema mostrará dos soluciones:\n1. Solución inicial por el método Northwest\n2. Solución optimizada utilizando el método MODI',
+      },
+    ],
+    tips: [
+      'Verifica que la suma total de ofertas sea igual a la suma total de demandas para un problema balanceado',
+      'Los costos deben ser números positivos para minimización y representar ganancias para maximización',
+      'La solución optimizada siempre será igual o mejor que la solución inicial Northwest',
+      'Puedes nombrar tus proveedores y destinos para una mejor identificación',
+    ],
+    images: [
+      {
+        url: 'assets/help/northwest-matrix.png',
+        caption: 'Ejemplo de matriz de costos completada',
+        alt: 'Matriz de costos del método Northwest',
+      },
+      {
+        url: 'assets/help/northwest-solution.png',
+        caption: 'Visualización de la solución optimizada',
+        alt: 'Solución optimizada del método Northwest',
+      },
+    ],
+    videos: [
+      {
+        url: 'https://www.youtube.com/watch?v=northwest-tutorial',
+        title: 'Tutorial: Método de la Esquina Noroeste',
+        thumbnail: 'assets/help/tutorial-thumb.png',
+      },
+    ],
+  };
   private _rows: number = 0;
   private _cols: number = 0;
   matrix: number[][] = []; //Matriz para interfaz de costos
@@ -311,14 +371,15 @@ export default class NorthwestComponent {
 
   calculateTotalCost(): number {
     let totalCost = 0;
-    let filasCostMatrix = this.costCopyMatrix.length;    // Filas de costCopyMatrix
+    let filasCostMatrix = this.costCopyMatrix.length; // Filas de costCopyMatrix
     let columnasCostMatrix = this.costCopyMatrix[0].length; // Columnas de costCopyMatrix
 
     for (let i = 0; i < this.solution.length; i++) {
       for (let j = 0; j < this.solution[i].length; j++) {
-        let costo = (i < filasCostMatrix && j < columnasCostMatrix)
-          ? this.costCopyMatrix[i][j]
-          : 0; // Si la fila o columna están fuera de costCopyMatrix, usa 0
+        let costo =
+          i < filasCostMatrix && j < columnasCostMatrix
+            ? this.costCopyMatrix[i][j]
+            : 0; // Si la fila o columna están fuera de costCopyMatrix, usa 0
         totalCost += (this.solution[i][j] || 0) * costo;
       }
     }
@@ -541,8 +602,8 @@ export default class NorthwestComponent {
     if (totalSupply > totalDemand) {
       let diff = totalSupply - totalDemand;
       this.demand.push(diff);
-      this.costMatrix.forEach(row => row.push(0));
-      this.solution.forEach(row => row.push(diff));
+      this.costMatrix.forEach((row) => row.push(0));
+      this.solution.forEach((row) => row.push(diff));
     } else if (totalDemand > totalSupply) {
       let diff = totalDemand - totalSupply;
       this.supply.push(diff);
@@ -582,7 +643,7 @@ export default class NorthwestComponent {
     //console.log("Nueva solución después de aplicar el ciclo:", this.solution);
   }
 
-/*
+  /*
   // Define a Zero Position class
 
 
@@ -820,5 +881,9 @@ export default class NorthwestComponent {
 }
 
 class Ceros {
-  constructor(public x: number, public y: number, public tachado: boolean = false) {}
+  constructor(
+    public x: number,
+    public y: number,
+    public tachado: boolean = false,
+  ) {}
 }
