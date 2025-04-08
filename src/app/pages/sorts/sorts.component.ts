@@ -46,6 +46,7 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
 })
 export default class SortsComponent implements OnInit, OnDestroy {
   @ViewChild('chartContainer') chartContainer!: ElementRef;
+  private readonly ASSETS_PATH = 'assets/help/sorts/';
   helpContent: HelpContent = {
     title: 'Algoritmos de Ordenamiento',
     description:
@@ -56,21 +57,21 @@ export default class SortsComponent implements OnInit, OnDestroy {
         title: 'Configuración del Array',
         description:
           'Elige entre generación automática o manual del array:\n- Automático: Define tamaño, valores mínimos y máximos\n- Manual: Ingresa los valores separados por comas\n- También puedes importar datos desde archivos JSON o TXT',
-        image: 'assets/help/sort-config.png',
+        image: `${this.ASSETS_PATH}sort-config.png`,
       },
       {
         number: 2,
         title: 'Selección del Algoritmo',
         description:
           'Elige entre cuatro algoritmos de ordenamiento:\n- Selection Sort: Ideal para arrays pequeños\n- Insertion Sort: Eficiente para arrays casi ordenados\n- Shell Sort: Mejora del Insertion Sort\n- Merge Sort: Eficiente para grandes conjuntos de datos',
-        image: 'assets/help/sort-algorithms.png',
+        image: `${this.ASSETS_PATH}sort-algorithms.png`,
       },
       {
         number: 3,
         title: 'Controles de Ordenamiento',
         description:
           'Utiliza los controles para:\n- Iniciar el ordenamiento\n- Pausar/Reanudar la visualización\n- Cambiar la dirección (ascendente/descendente)\n- Ajustar la velocidad de visualización',
-        image: 'assets/help/sort-controls.png',
+        image: `${this.ASSETS_PATH}sort-controls.png`,
       },
       {
         number: 4,
@@ -89,14 +90,9 @@ export default class SortsComponent implements OnInit, OnDestroy {
     ],
     images: [
       {
-        url: 'assets/help/sort-visualization.png',
+        url: `${this.ASSETS_PATH}sort-visualization.png`,
         caption: 'Visualización del proceso de ordenamiento',
         alt: 'Gráfico de barras mostrando el proceso de ordenamiento',
-      },
-      {
-        url: 'assets/help/sort-comparison.png',
-        caption: 'Comparación de algoritmos',
-        alt: 'Diferentes algoritmos de ordenamiento en acción',
       },
     ],
     videos: [

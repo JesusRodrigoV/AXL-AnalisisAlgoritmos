@@ -40,14 +40,32 @@ import { SafeUrlPipe } from '../Pipes/safe-url.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HelpDialogComponent {
+  showImagePreview = false;
+  selectedImage: string | null = null;
   constructor(
     public dialogRef: MatDialogRef<HelpDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: HelpContent,
-    private sanitizer: DomSanitizer, // Necesario para el pipe safeUrl
-  ) {}
+    private sanitizer: DomSanitizer,
+  ) {
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && this.showImagePreview) {
+        this.closeImagePreview();
+      }
+    });
+  }
 
   closeDialog(): void {
     this.dialogRef.close();
+  }
+
+  openImagePreview(imageUrl: string): void {
+    this.selectedImage = imageUrl;
+    this.showImagePreview = true;
+  }
+
+  closeImagePreview(): void {
+    this.showImagePreview = false;
+    this.selectedImage = null;
   }
 
   sanitizeUrl(url: string) {

@@ -23,8 +23,7 @@ export const routes: Routes = [
   },
   {
     path: 'sorts',
-    loadComponent: () =>
-      import('./pages/sorts/sorts.component'),
+    loadComponent: () => import('./pages/sorts/sorts.component'),
   },
   {
     path: 'arboles',

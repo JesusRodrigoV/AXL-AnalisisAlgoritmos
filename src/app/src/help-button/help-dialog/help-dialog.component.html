@@ -17,7 +17,12 @@
             <div class="step-content">
               <p [style.white-space]="'pre-line'">{{ step.description }}</p>
               @if (step.image) {
-                <img [src]="step.image" [alt]="step.title" />
+                <img
+                  [src]="step.image"
+                  [alt]="step.title"
+                  (click)="openImagePreview(step.image)"
+                  class="clickable-image"
+                />
               }
             </div>
           </mat-step>
@@ -33,7 +38,12 @@
         @for (image of data.images; track image.url) {
           <mat-grid-tile>
             <figure>
-              <img [src]="image.url" [alt]="image.alt" />
+              <img
+                [src]="image.url"
+                [alt]="image.caption"
+                (click)="openImagePreview(image.url)"
+                class="clickable-image"
+              />
               <figcaption>{{ image.caption }}</figcaption>
             </figure>
           </mat-grid-tile>
@@ -81,6 +91,17 @@
     </div>
   }
 </mat-dialog-content>
+
+@if (showImagePreview) {
+  <div class="image-preview-overlay">
+    <div class="preview-container" (click)="$event.stopPropagation()">
+      <button class="close-button" (click)="closeImagePreview()">
+        <i class="bx bx-x"></i>
+      </button>
+      <img [src]="selectedImage" alt="Preview" />
+    </div>
+  </div>
+}
 
 <mat-dialog-actions align="end">
   <button mat-button (click)="closeDialog()">Cerrar</button>
