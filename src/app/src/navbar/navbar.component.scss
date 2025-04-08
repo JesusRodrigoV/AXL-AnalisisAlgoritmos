@@ -7,14 +7,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 clamp(8px, 2vw, 16px);
   background: linear-gradient(135deg, #1976d2 0%, #3f51b5 100%);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  height: 56px;
+
+  @media (min-width: 768px) {
+    height: 64px;
+    padding: 0 24px;
+  }
+
   button[mat-button] {
+    min-width: 40px;
+    padding: 0 8px;
+
+    @media (min-width: 768px) {
+      min-width: 64px;
+      padding: 0 16px;
+    }
+
     .bx-sun,
     .bx-moon {
       color: white !important;
-      font-size: 1.5rem;
+      font-size: clamp(1.25rem, 2vw, 1.5rem);
       transition: opacity 0.3s ease;
 
       &:hover {
@@ -37,18 +52,37 @@
   align-items: center;
   text-decoration: none;
   color: white;
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  white-space: nowrap;
+  overflow: hidden;
 
   i {
-    margin-right: 8px;
-    font-size: 24px;
+    margin-right: clamp(4px, 1vw, 8px);
+    font-size: clamp(20px, 4vw, 24px);
+  }
+
+  span {
+    @media (max-width: 360px) {
+      display: none;
+    }
   }
 }
 
 .nav-links {
-  display: flex;
-  gap: 8px;
+  display: none;
+  gap: 4px;
   margin-left: auto;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    display: flex;
+  }
 
   .nav-link {
     display: flex;
@@ -57,10 +91,17 @@
     opacity: 0.9;
     transition: all 0.3s ease;
     animation: fadeIn 0.3s ease-out;
+    padding: 0 12px;
+    height: 36px;
+    white-space: nowrap;
 
     i {
-      margin-right: 4px;
-      font-size: 20px;
+      margin-right: 6px;
+      font-size: clamp(18px, 2vw, 20px);
+    }
+
+    span {
+      font-size: clamp(14px, 1.5vw, 16px);
     }
 
     &:hover {
@@ -82,28 +123,53 @@ i.bx {
 }
 
 .menu-mobile {
-  display: none;
-  margin-left: auto;
+  display: block;
+  margin-left: 8px;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+
+  i {
+    font-size: clamp(24px, 3vw, 28px);
+  }
 }
 
 .route-description {
   display: block;
-  font-size: 0.8rem;
-  margin-top: 2px;
+  font-size: 0.75rem;
+  margin-top: 4px;
 }
 
-// Responsive design
-@media (max-width: 768px) {
-  .nav-links {
-    display: none;
-  }
+::ng-deep .mat-menu-panel {
+  max-width: 280px !important;
+  border-radius: 8px !important;
 
-  .menu-mobile {
-    display: block;
-  }
+  .mat-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto !important;
+    line-height: 1.2;
+    padding: 12px 16px;
 
-  .brand span {
-    font-size: 1rem;
+    i {
+      margin-right: 8px;
+      font-size: 18px;
+    }
+
+    span {
+      font-size: 14px;
+      margin: 2px 0;
+    }
+  }
+}
+
+.navbar-spacer {
+  height: 56px;
+
+  @media (min-width: 768px) {
+    height: 64px;
   }
 }
 
