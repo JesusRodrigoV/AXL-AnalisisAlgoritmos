@@ -83,10 +83,42 @@
 
   .actions-container {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 12px;
     margin-top: 16px;
+
+    .actions-row {
+      display: flex;
+      gap: 8px;
+
+      button {
+        flex: 1;
+        min-width: 0;
+        padding: 0 12px;
+
+        i {
+          margin-right: 6px;
+          font-size: 18px;
+          vertical-align: text-bottom;
+        }
+      }
+    }
+
+    .primary-actions {
+      justify-content: space-between;
+
+      button {
+        flex: 1;
+      }
+    }
+
+    .secondary-actions {
+      justify-content: space-between;
+
+      button {
+        flex: 1;
+      }
+    }
   }
 }
 
