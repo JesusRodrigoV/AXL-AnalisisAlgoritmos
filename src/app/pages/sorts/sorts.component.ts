@@ -50,6 +50,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
   selectedAlgorithm: SortAlgorithm = 'selection';
 
   arrayData: number[] = [];
+  originalArray: number[] = []; // Guardaremos una copia del array original
   isSorting = false;
   isPaused = false;
 
@@ -57,6 +58,8 @@ export default class SortsComponent implements OnInit, OnDestroy {
   pauseStartTime: number = 0;
   totalPausedTime: number = 0;
   executionTime: number = 0;
+
+  pausePromiseResolve: (() => void) | null = null;
 
   inputMode: 'auto' | 'manual' = 'auto';
   manualInput: string = '';
@@ -154,7 +157,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     if (this.isSorting) {
       this.sortCancelled = true;
       this.isSorting = false;
-      this.isPaused = false;
     }
 
     if (this.inputMode === 'auto') {
@@ -163,9 +165,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
         this.minValue,
         this.maxValue,
       );
+      this.originalArray = [...this.arrayData]; // Guardamos copia del array original
     } else {
       if (!this.validateManualInput()) return;
       this.arrayData = [...this.manualValues];
+      this.originalArray = [...this.manualValues]; // Guardamos copia del array original
     }
 
     this.executionTime = 0;
@@ -178,30 +182,14 @@ export default class SortsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Si estaba en pausa, solo reanudar
-    if (this.isSorting && this.isPaused) {
-      this.isPaused = false;
-      this.totalPausedTime += performance.now() - this.pauseStartTime;
-      this.cdr.detectChanges();
-      return;
-    }
-
-    // Si ya está ordenando y no está pausado, no hacer nada
-    if (this.isSorting && !this.isPaused) return;
+    // Si ya está ordenando, no hacer nada
+    if (this.isSorting) return;
 
     // Limpiar estados antes de comenzar nuevo ordenamiento
     this.sortCancelled = false;
     this.isSorting = true;
-    this.isPaused = false;
     this.startTime = performance.now();
-    this.totalPausedTime = 0;
     this.executionTime = 0;
-
-    this.isSorting = true;
-    this.isPaused = false;
-    this.sortCancelled = false;
-    this.startTime = performance.now();
-    this.totalPausedTime = 0;
 
     try {
       switch (this.selectedAlgorithm) {
@@ -239,27 +227,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
       console.error('Error durante el ordenamiento:', error);
     } finally {
       this.isSorting = false;
-      this.isPaused = false;
       if (this.startTime) {
-        this.executionTime =
-          performance.now() - this.startTime - this.totalPausedTime;
+        this.executionTime = performance.now() - this.startTime;
       }
       this.cdr.detectChanges();
     }
-  }
-
-  togglePause() {
-    if (!this.isSorting) return;
-
-    this.isPaused = !this.isPaused;
-    if (this.isPaused) {
-      this.pauseStartTime = performance.now();
-    } else {
-      if (this.pauseStartTime > 0) {
-        this.totalPausedTime += performance.now() - this.pauseStartTime;
-      }
-    }
-    this.cdr.detectChanges();
   }
 
   updateChart(
@@ -364,31 +336,45 @@ export default class SortsComponent implements OnInit, OnDestroy {
   }
 
   async onCompare(arr: number[], index1: number, index2: number) {
-    if (this.isPaused) {
-      return new Promise<void>((resolve) => {
-        const checkPause = () => {
-          if (!this.isPaused) {
-            resolve();
-          } else {
-            setTimeout(checkPause, 100);
-          }
-        };
-        checkPause();
-      });
+    // Si se canceló el ordenamiento, detener la ejecución
+    if (this.sortCancelled) {
+      throw new Error('Sort cancelled');
     }
 
+    // Actualizar el array y la visualización
     this.arrayData = [...arr];
     this.updateChart(this.arrayData, index1, index2);
-    this.executionTime =
-      performance.now() - this.startTime - this.totalPausedTime;
+
+    // Calcular y actualizar el tiempo de ejecución
+    if (this.startTime > 0) {
+      this.executionTime = performance.now() - this.startTime;
+    }
     this.cdr.detectChanges();
 
-    return new Promise<void>((resolve) => setTimeout(resolve, 50));
-
+    // Esperar antes de continuar
     const BASE_DELAY = 3000;
-    const delay = BASE_DELAY / this.arrayData.length;
-    return new Promise<void>((resolve) => setTimeout(resolve, delay));
+    const delay = Math.max(50, BASE_DELAY / this.arrayData.length);
+    await new Promise<void>((resolve) => setTimeout(resolve, delay));
+  }
 
+  clearSort() {
+    // Si hay un ordenamiento en progreso, lo cancelamos
+    if (this.isSorting) {
+      this.sortCancelled = true;
+      this.isSorting = false;
+    }
+
+    // Reseteamos el tiempo de ejecución
+    this.executionTime = 0;
+
+    // Restauramos el array a su estado original
+    if (this.originalArray.length > 0) {
+      this.arrayData = [...this.originalArray];
+    }
+
+    // Actualizamos el gráfico
+    this.updateChart(this.arrayData);
+    this.cdr.detectChanges();
   }
 
   async handleFileInput(event: Event) {

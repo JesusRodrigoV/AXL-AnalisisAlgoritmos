@@ -99,7 +99,7 @@
       mat-raised-button
       color="primary"
       (click)="startSort()"
-      [disabled]="isSorting && !isPaused"
+      [disabled]="isSorting"
     >
       {{ !isSorting ? "Ordenar" : "Ordenando..." }}
     </button>
@@ -107,10 +107,10 @@
     <button
       mat-raised-button
       color="warn"
-      (click)="togglePause()"
-      [disabled]="!isSorting"
+      (click)="clearSort()"
+      [disabled]="arrayData.length === 0"
     >
-      {{ isPaused ? "Continuar" : "Pausar" }}
+      Limpiar
     </button>
 
     <div class="import-export-buttons">
