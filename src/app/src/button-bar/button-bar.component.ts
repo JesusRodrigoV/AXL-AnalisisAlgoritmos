@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { ButtonComponent } from './button';
 import { MatDialog } from '@angular/material/dialog';
+import { CdkDrag } from '@angular/cdk/drag-drop';
 import { ModalMatrixComponent } from '../my-canvas/modal-matrix';
 
 interface Button {
@@ -20,13 +21,13 @@ interface Button {
 
 @Component({
   selector: 'app-button-bar',
-  standalone: true,
-  imports: [ButtonComponent],
+  imports: [ButtonComponent, CdkDrag],
   templateUrl: './button-bar.component.html',
   styleUrl: './button-bar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ButtonBarComponent {
+  protected isCompressed = false;
   @Output() modeToggled = new EventEmitter<{ id: string; active: boolean }>();
   @Output() exportar = new EventEmitter<void>();
   @Output() importar = new EventEmitter<void>();
@@ -83,6 +84,10 @@ export class ButtonBarComponent {
     },
   ];
 
+  toggleCompression(): void {
+    this.isCompressed = !this.isCompressed;
+  }
+
   openDialog(): void {
     this.dialog.open(ModalMatrixComponent, {
       maxHeight: '90vh',
@@ -92,6 +97,7 @@ export class ButtonBarComponent {
       height: 'auto',
     });
   }
+
   toggleMode(button: Button) {
     if (button.toggeable) {
       button.active = !button.active;

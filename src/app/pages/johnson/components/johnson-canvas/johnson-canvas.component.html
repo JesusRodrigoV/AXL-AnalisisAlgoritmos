@@ -74,37 +74,45 @@
       </div>
 
       <div class="actions-container">
-        <button mat-raised-button color="primary" (click)="agregarActividad()">
-          <i class="bx bx-plus"></i>
-          Agregar Actividad
-        </button>
-        <button
-          mat-raised-button
-          color="accent"
-          (click)="generarGrafo()"
-          [disabled]="!actividadesValidas()"
-        >
-          <i class="bx bx-git-branch"></i>
-          Generar Grafo
-        </button>
-        <button mat-raised-button (click)="limpiarTodo()">
-          <i class="bx bx-trash"></i>
-          Limpiar Todo
-        </button>
-        <button
-          mat-raised-button
-          (click)="exportarGrafo()"
-          matTooltip="Exportar grafo"
-        >
-          <i class="bx bx-download"></i>
-        </button>
-        <button
-          mat-raised-button
-          (click)="triggerFileInput()"
-          matTooltip="Importar grafo"
-        >
-          <i class="bx bx-upload"></i>
-        </button>
+        <div class="actions-row primary-actions">
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="agregarActividad()"
+          >
+            <i class="bx bx-plus"></i>
+            Agregar Actividad
+          </button>
+          <button
+            mat-raised-button
+            color="accent"
+            (click)="generarGrafo()"
+            [disabled]="!actividadesValidas()"
+          >
+            <i class="bx bx-git-branch"></i>
+            Generar Grafo
+          </button>
+        </div>
+        <div class="actions-row secondary-actions">
+          <button mat-raised-button (click)="limpiarTodo()">
+            <i class="bx bx-trash"></i>
+            Limpiar
+          </button>
+          <button
+            mat-raised-button
+            (click)="exportarGrafo()"
+            matTooltip="Exportar grafo"
+          >
+            <i class="bx bx-download"></i>
+          </button>
+          <button
+            mat-raised-button
+            (click)="triggerFileInput()"
+            matTooltip="Importar grafo"
+          >
+            <i class="bx bx-upload"></i>
+          </button>
+        </div>
       </div>
     </mat-card-content>
   </mat-card>

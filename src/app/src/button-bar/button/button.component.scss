@@ -1,9 +1,29 @@
 i {
   font-size: 20px;
   color: var(--mat-sys-on-surface);
+
+  @media (max-width: 600px) {
+    font-size: 18px;
+  }
 }
 
 button {
-  margin: 0 10px 0 0;
+  margin: 2px;
   padding: 5px 10px;
+  min-width: unset;
+  line-height: 24px;
+
+  @media (max-width: 600px) {
+    padding: 4px 8px;
+
+    ::ng-deep .mat-button-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    span:not(i) {
+      display: none;
+    }
+  }
 }

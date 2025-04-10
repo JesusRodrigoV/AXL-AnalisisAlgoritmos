@@ -1,16 +1,40 @@
 .container {
   display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .button-bar {
   position: fixed;
-  top: 70px;
-  left: 47%;
-  transform: translate(-40%);
-  padding: 10px;
+  bottom: 20px;
+  padding: 8px;
   background-color: var(--mat-sys-surface);
   border: 1px solid var(--mat-sys-primary);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border-radius: 50px;
-  z-index: 1000;
+  z-index: 99999;
+  cursor: move;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: 95vw;
+
+  // Centrado horizontal
+  left: 50%;
+  transform: translateX(-50%);
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  &:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  @media (max-width: 600px) {
+    padding: 6px;
+    bottom: 10px;
+    border-radius: 25px;
+  }
 }
