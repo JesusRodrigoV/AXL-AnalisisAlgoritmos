@@ -48,6 +48,11 @@
     
     <div class="button-group">
       <button (click)="generarRandom()">Generar Árbol Aleatorio</button>
+      <button (click)="limpiarEntradas()">Limpiar Campos</button>
+      <button (click)="exportarArbol()">Exportar Árbol</button>
+      <button (click)="importarArbol()">Importar Árbol</button>
+      <!-- Input oculto para importar archivo -->
+      <input type="file" #fileInput style="display: none;" accept=".json" (change)="onFileSelected($event)">
     </div>
   </div>
 </div>

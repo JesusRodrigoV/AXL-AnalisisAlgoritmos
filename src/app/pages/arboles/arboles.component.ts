@@ -24,6 +24,7 @@ class Nodo {
 })
 export default class ArbolesComponent implements AfterViewInit {
   @ViewChild('canvas', { static: true }) canvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
   preOrderInput = '';
   inOrderInput = '';
@@ -780,5 +781,136 @@ private calcularAltura(nodo: Nodo | null): number {
     } else {
       this.mensajeError = 'Necesitas ingresar también preorden o inorden para construir el árbol';
     }
+  }
+  limpiarEntradas() {
+    // Limpiar los campos de entrada
+    this.preOrderInput = '';
+    this.inOrderInput = '';
+    this.postOrderInput = '';
+    
+    // Limpiar mensajes
+    this.mensajeError = '';
+    this.mensajeExito = '';
+    
+    // Opcionalmente, restablecer el árbol y el canvas
+    this.raiz = null;
+    this.drawInitialCanvas();
+    
+    // Mensaje de confirmación
+    this.mensajeExito = 'Se han limpiado todos los campos correctamente';
+  }
+  
+  exportarArbol() {
+    if (!this.raiz) {
+      this.mensajeError = "No hay ningún árbol para exportar";
+      return;
+    }
+    
+    try {
+      // Recopilar los datos del árbol
+      const arbolData = {
+        preorden: this.obtenerPreorden(),
+        inorden: this.obtenerInorden(),
+        postorden: this.obtenerPostorden()
+      };
+      
+      // Convertir a JSON
+      const jsonString = JSON.stringify(arbolData, null, 2);
+      
+      // Crear un nombre de archivo por defecto
+      let nombreArchivo = prompt('Nombre del archivo (sin extensión):', 'arbol');
+      
+      // Si el usuario cancela el prompt o ingresa un nombre vacío
+      if (!nombreArchivo) {
+        nombreArchivo = 'arbol';
+      }
+      
+      // Añadir la extensión .json
+      nombreArchivo += '.json';
+      
+      // Crear un objeto Blob para el archivo
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      
+      // Crear una URL para el Blob
+      const url = URL.createObjectURL(blob);
+      
+      // Crear un elemento a (enlace) para la descarga
+      const linkDescarga = document.createElement('a');
+      linkDescarga.href = url;
+      linkDescarga.download = nombreArchivo;
+      
+      // Añadir el enlace al DOM, hacer clic y luego eliminarlo
+      document.body.appendChild(linkDescarga);
+      linkDescarga.click();
+      document.body.removeChild(linkDescarga);
+      
+      // Liberar la URL
+      URL.revokeObjectURL(url);
+      
+      this.mensajeExito = `Árbol exportado correctamente como "${nombreArchivo}"`;
+      this.mensajeError = '';
+    } catch (error) {
+      this.mensajeError = 'Error al exportar el árbol: ' + (error instanceof Error ? error.message : String(error));
+      this.mensajeExito = '';
+    }
+  }
+  
+  // Método para abrir el diálogo de selección de archivo
+  importarArbol() {
+    this.fileInput.nativeElement.click();
+  }
+  
+  // Método que se ejecuta cuando se selecciona un archivo
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return; // No se seleccionó ningún archivo
+    }
+    
+    const file = input.files[0];
+    if (!file.name.endsWith('.json')) {
+      this.mensajeError = 'Por favor, selecciona un archivo JSON válido';
+      return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = (e: ProgressEvent<FileReader>) => {
+      try {
+        const content = e.target?.result as string;
+        const arbolData = JSON.parse(content);
+        
+        // Verificar que el archivo contiene los datos necesarios
+        if (!arbolData.preorden || !arbolData.inorden || !arbolData.postorden) {
+          throw new Error('El archivo JSON no contiene los datos necesarios del árbol');
+        }
+        
+        // Actualizar los inputs
+        this.preOrderInput = arbolData.preorden.join(', ');
+        this.inOrderInput = arbolData.inorden.join(', ');
+        this.postOrderInput = arbolData.postorden.join(', ');
+        
+        // Construir el árbol (usando preorden e inorden)
+        if (this.validarPreInOrden(arbolData.preorden, arbolData.inorden)) {
+          this.raiz = this.construirDesdePreInOrden(arbolData.preorden, arbolData.inorden);
+          this.dibujarArbol();
+          this.mensajeExito = `Árbol importado correctamente desde "${file.name}"`;
+          this.mensajeError = '';
+        }
+      } catch (error) {
+        this.mensajeError = 'Error al importar el árbol: ' + (error instanceof Error ? error.message : String(error));
+        this.mensajeExito = '';
+      }
+      
+      // Limpiar el campo de archivo para permitir seleccionar el mismo archivo nuevamente
+      this.fileInput.nativeElement.value = '';
+    };
+    
+    reader.onerror = () => {
+      this.mensajeError = 'Error al leer el archivo';
+      this.mensajeExito = '';
+    };
+    
+    reader.readAsText(file);
   }
 }

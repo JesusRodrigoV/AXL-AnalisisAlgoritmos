@@ -2,9 +2,30 @@
   <mat-card class="main-card">
     <mat-card-header>
       <mat-card-title>Método de la Esquina Noroeste</mat-card-title>
+
     </mat-card-header>
 
     <mat-card-content>
+      <div class="input-section">
+        <button mat-raised-button color="primary" (click)="triggerFileInput()">
+          Importar
+        </button>
+
+        <button
+          mat-raised-button
+          color="warn"
+          (click)="promptExportFileName()"
+        >
+          Exportar
+        </button>
+        <input
+          type="file"
+          #fileInput
+          style="display: none"
+          (change)="importDataFromJson($event)"
+          accept=".json"
+        />
+      </div>
       <div class="input-section">
         <mat-form-field appearance="outline">
           <mat-label>Filas (Proveedores)</mat-label>
