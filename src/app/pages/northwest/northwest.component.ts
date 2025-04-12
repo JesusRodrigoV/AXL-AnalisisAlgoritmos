@@ -181,9 +181,14 @@ export default class NorthwestComponent {
   }
 
   promptExportFileName() {
-    const filename = prompt('¿Con qué nombre deseas guardar el archivo?', 'mi-matriz.json');
+    const filename = prompt(
+      '¿Con qué nombre deseas guardar el archivo?',
+      'mi-matriz.json',
+    );
     if (filename) {
-      this.exportDataToJson(filename.endsWith('.json') ? filename : `${filename}.json`);
+      this.exportDataToJson(
+        filename.endsWith('.json') ? filename : `${filename}.json`,
+      );
     }
   }
 
@@ -210,7 +215,6 @@ export default class NorthwestComponent {
     a.click();
     URL.revokeObjectURL(url);
   }
-
 
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef;
 
@@ -661,4 +665,3 @@ export default class NorthwestComponent {
     }
   }
 }
-
