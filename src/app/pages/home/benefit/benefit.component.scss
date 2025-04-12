@@ -10,22 +10,26 @@
     transform: translateY(-5px);
   }
 
-  mat-icon {
-    font-size: 3rem;
-    height: 3rem;
-    width: 3rem;
+  i.bx {
     color: #1976d2;
-    margin-bottom: 1rem;
+    font-size: clamp(28px, 3vw, 32px);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+
+    @media (min-width: 768px) {
+      width: 48px;
+      height: 48px;
+    }
   }
 
   h3 {
     font-size: 1.5rem;
     margin-bottom: 1rem;
-    //color: #333;
   }
 
   p {
-    //color: #666;
     line-height: 1.6;
   }
 }

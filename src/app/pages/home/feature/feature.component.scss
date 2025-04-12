@@ -11,6 +11,23 @@
 
 mat-card-header {
   margin-bottom: 1rem;
+
+  i.bx {
+    color: #1976d2;
+    font-size: clamp(28px, 3vw, 32px);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+
+    @media (min-width: 768px) {
+      width: 48px;
+      height: 48px;
+    }
+  }
 }
 
 mat-card-title {
@@ -18,18 +35,23 @@ mat-card-title {
   margin-bottom: 0.5rem;
 }
 
-mat-icon {
-  color: #1976d2;
-}
-
 mat-card-content {
   padding: 0 1rem;
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
 }
 
 mat-card-actions {
   padding: 1rem;
   display: flex;
   justify-content: flex-end;
+
+  button {
+    margin: 0;
+  }
 }
 
 // Responsive Design
