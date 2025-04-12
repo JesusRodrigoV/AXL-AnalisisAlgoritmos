@@ -34,7 +34,6 @@
     color: white;
   }
 }
-
 .brand {
   display: flex;
   align-items: center;
@@ -153,6 +152,9 @@ i.bx {
   }
 }
 
+.navbar-spacer {
+  height: 30px;
+}
 @keyframes fadeIn {
   from {
     opacity: 0;
