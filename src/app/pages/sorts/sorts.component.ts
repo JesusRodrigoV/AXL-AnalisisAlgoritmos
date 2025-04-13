@@ -49,6 +49,26 @@ export default class SortsComponent implements OnInit, OnDestroy {
 
   selectedAlgorithm: SortAlgorithm = 'selection';
 
+  // Agregar watcher para cambios en el algoritmo
+  onAlgorithmChange() {
+    // Si hay un ordenamiento en proceso, lo cancelamos y reseteamos
+    if (this.isSorting) {
+      this.sortCancelled = true;
+      this.isSorting = false;
+      // Restaurar el array al estado actual antes del ordenamiento
+      if (this.originalArray.length > 0) {
+        this.arrayData = [...this.originalArray];
+      }
+    }
+
+    // Resetear tiempo de ejecución
+    this.executionTime = 0;
+
+    // Actualizar el gráfico con el array actual
+    this.updateChart(this.arrayData);
+    this.cdr.detectChanges();
+  }
+
   arrayData: number[] = [];
   originalArray: number[] = []; // Guardaremos una copia del array original
   isSorting = false;
@@ -241,7 +261,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
   ) {
     if (this.chart) {
       const option = {
-        animation: true,
+        animation: false, // Desactivamos la animación por defecto
         title: {
           text: `${this.selectedAlgorithm.charAt(0).toUpperCase() + this.selectedAlgorithm.slice(1)} Sort - ${
             this.sortOrder === 'asc' ? 'Menor a Mayor' : 'Mayor a Menor'
@@ -341,19 +361,47 @@ export default class SortsComponent implements OnInit, OnDestroy {
       throw new Error('Sort cancelled');
     }
 
+    // Calcular el delay base según el algoritmo y tamaño del array
+    const BASE_DELAY = 3000;
+    let delay = BASE_DELAY / this.arrayData.length;
+
+    // Ajustar el delay según el algoritmo
+    switch (this.selectedAlgorithm) {
+      case 'shell':
+        // Para Shell Sort, hacemos el delay un poco más largo para visualizar mejor los saltos
+        delay = Math.max(100, delay * 1.5);
+        break;
+      case 'merge':
+        // Para Merge Sort, mantenemos un delay mínimo para ver las comparaciones
+        delay = Math.max(80, delay);
+        break;
+      default:
+        delay = Math.max(50, delay);
+    }
+
     // Actualizar el array y la visualización
     this.arrayData = [...arr];
+
+    // Para Merge Sort y Shell Sort, aseguramos que las barras se actualicen correctamente
+    if (
+      this.selectedAlgorithm === 'merge' ||
+      this.selectedAlgorithm === 'shell'
+    ) {
+      // Forzar un reflow antes de actualizar el gráfico
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+
     this.updateChart(this.arrayData, index1, index2);
 
     // Calcular y actualizar el tiempo de ejecución
     if (this.startTime > 0) {
       this.executionTime = performance.now() - this.startTime;
     }
+
+    // Asegurar que la UI se actualice
     this.cdr.detectChanges();
 
     // Esperar antes de continuar
-    const BASE_DELAY = 3000;
-    const delay = Math.max(50, BASE_DELAY / this.arrayData.length);
     await new Promise<void>((resolve) => setTimeout(resolve, delay));
   }
 

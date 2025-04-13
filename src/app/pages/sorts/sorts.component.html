@@ -2,6 +2,7 @@
   <mat-card-header>
     <mat-button-toggle-group
       [(ngModel)]="selectedAlgorithm"
+      (ngModelChange)="onAlgorithmChange()"
       aria-label="Algoritmos de ordenamiento"
     >
       <mat-button-toggle value="selection">Selection Sort</mat-button-toggle>
