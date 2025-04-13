@@ -212,6 +212,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
     this.startTime = performance.now();
     this.executionTime = 0;
 
+    // Restaurar el array a su estado original antes de comenzar
+    this.arrayData = [...this.originalArray];
+    // Actualizar el chart con el estado inicial
+    this.updateChart(this.arrayData);
+
     try {
       switch (this.selectedAlgorithm) {
         case 'selection':
@@ -369,7 +374,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
       throw new Error('Sort cancelled');
     }
 
-    // Actualizar el array
+    // Actualizar el array con una nueva copia
     this.arrayData = [...arr];
 
     // Configurar delays específicos para cada algoritmo
