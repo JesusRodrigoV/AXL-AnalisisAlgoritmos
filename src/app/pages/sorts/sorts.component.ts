@@ -492,8 +492,14 @@ export default class SortsComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
-  exportArray(format: 'json' | 'txt') {
+  async exportArray(format: 'json' | 'txt') {
     if (!this.arrayData.length) return;
+
+    // Usar prompt nativo por ahora (podríamos usar un MatDialog en el futuro para mejor UI)
+    const customName = prompt(
+      'Ingrese el nombre para el archivo (sin extensión):',
+    );
+    if (!customName) return; // Si el usuario cancela o no ingresa nombre
 
     let content: string;
     let filename: string;
@@ -501,11 +507,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
 
     if (format === 'json') {
       content = JSON.stringify(this.arrayData, null, 2);
-      filename = 'array.json';
+      filename = `${customName}.json`;
       type = 'application/json';
     } else {
       content = this.arrayData.join(',');
-      filename = 'array.txt';
+      filename = `${customName}.txt`;
       type = 'text/plain';
     }
 
