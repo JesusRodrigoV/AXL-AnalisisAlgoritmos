@@ -471,11 +471,17 @@ export default class SortsComponent implements OnInit, OnDestroy {
       }
 
       this.arraySize = numbers.length;
-      this.arrayData = numbers;
+      this.arrayData = [...numbers]; // Crear una copia del array
+      this.originalArray = [...numbers]; // Guardar una copia en originalArray
       this.inputMode = 'manual';
       this.manualInput = numbers.join(', ');
       this.manualValues = [...numbers];
 
+      // Asegurarnos de que el chart se actualice correctamente
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = echarts.init(this.chartContainer.nativeElement);
+      }
       this.updateChart(this.arrayData);
       this.executionTime = 0;
       this.cdr.detectChanges();
