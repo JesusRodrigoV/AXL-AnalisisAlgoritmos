@@ -46,6 +46,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
 
   private chart: echarts.ECharts | null = null;
   private sortCancelled = false;
+  private lastAlgorithm: SortAlgorithm | null = null;
 
   selectedAlgorithm: SortAlgorithm = 'selection';
 
@@ -260,8 +261,15 @@ export default class SortsComponent implements OnInit, OnDestroy {
     highlightIndex2?: number,
   ) {
     if (this.chart) {
+      // Destruir y reinicializar el chart para limpiar el estado
+      if (this.lastAlgorithm !== this.selectedAlgorithm) {
+        this.chart.dispose();
+        this.chart = echarts.init(this.chartContainer.nativeElement);
+        this.lastAlgorithm = this.selectedAlgorithm;
+      }
+
       const option = {
-        animation: false, // Desactivamos la animación por defecto
+        animation: false,
         title: {
           text: `${this.selectedAlgorithm.charAt(0).toUpperCase() + this.selectedAlgorithm.slice(1)} Sort - ${
             this.sortOrder === 'asc' ? 'Menor a Mayor' : 'Mayor a Menor'
@@ -361,37 +369,41 @@ export default class SortsComponent implements OnInit, OnDestroy {
       throw new Error('Sort cancelled');
     }
 
-    // Calcular el delay base según el algoritmo y tamaño del array
-    const BASE_DELAY = 3000;
-    let delay = BASE_DELAY / this.arrayData.length;
-
-    // Ajustar el delay según el algoritmo
-    switch (this.selectedAlgorithm) {
-      case 'shell':
-        // Para Shell Sort, hacemos el delay un poco más largo para visualizar mejor los saltos
-        delay = Math.max(100, delay * 1.5);
-        break;
-      case 'merge':
-        // Para Merge Sort, mantenemos un delay mínimo para ver las comparaciones
-        delay = Math.max(80, delay);
-        break;
-      default:
-        delay = Math.max(50, delay);
-    }
-
-    // Actualizar el array y la visualización
+    // Actualizar el array
     this.arrayData = [...arr];
 
-    // Para Merge Sort y Shell Sort, aseguramos que las barras se actualicen correctamente
-    if (
-      this.selectedAlgorithm === 'merge' ||
-      this.selectedAlgorithm === 'shell'
-    ) {
-      // Forzar un reflow antes de actualizar el gráfico
-      await new Promise((resolve) => setTimeout(resolve, 0));
+    // Configurar delays específicos para cada algoritmo
+    const BASE_DELAY = 3000;
+    const arrayLength = this.arrayData.length;
+    let delay: number;
+
+    switch (this.selectedAlgorithm) {
+      case 'shell':
+        delay = Math.max(100, (BASE_DELAY / arrayLength) * 2);
+        break;
+      case 'merge':
+        delay = Math.max(80, (BASE_DELAY / arrayLength) * 1.5);
+        break;
+      case 'insertion':
+        delay = Math.max(60, BASE_DELAY / arrayLength);
+        break;
+      case 'selection':
+        delay = Math.max(50, BASE_DELAY / arrayLength);
+        break;
+      default:
+        delay = Math.max(50, BASE_DELAY / arrayLength);
     }
 
-    this.updateChart(this.arrayData, index1, index2);
+    // Crear una promesa para esperar la actualización del DOM
+    const updatePromise = new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        this.updateChart(this.arrayData, index1, index2);
+        resolve();
+      });
+    });
+
+    // Esperar a que se complete la actualización del DOM
+    await updatePromise;
 
     // Calcular y actualizar el tiempo de ejecución
     if (this.startTime > 0) {
@@ -401,7 +413,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
     // Asegurar que la UI se actualice
     this.cdr.detectChanges();
 
-    // Esperar antes de continuar
+    // Esperar el delay configurado
     await new Promise<void>((resolve) => setTimeout(resolve, delay));
   }
 
