@@ -481,7 +481,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     await new Promise<void>((resolve) => setTimeout(resolve, delay));
   }
 
-
   clearSort() {
     // Si hay un ordenamiento en progreso, lo cancelamos
     if (this.isSorting) {
