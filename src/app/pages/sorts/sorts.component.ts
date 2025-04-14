@@ -105,10 +105,32 @@ export default class SortsComponent implements OnInit, OnDestroy {
   };
   private chart: echarts.ECharts | null = null;
   private sortCancelled = false;
+  private lastAlgorithm: SortAlgorithm | null = null;
 
   selectedAlgorithm: SortAlgorithm = 'selection';
 
+  // Agregar watcher para cambios en el algoritmo
+  onAlgorithmChange() {
+    // Si hay un ordenamiento en proceso, lo cancelamos y reseteamos
+    if (this.isSorting) {
+      this.sortCancelled = true;
+      this.isSorting = false;
+      // Restaurar el array al estado actual antes del ordenamiento
+      if (this.originalArray.length > 0) {
+        this.arrayData = [...this.originalArray];
+      }
+    }
+
+    // Resetear tiempo de ejecución
+    this.executionTime = 0;
+
+    // Actualizar el gráfico con el array actual
+    this.updateChart(this.arrayData);
+    this.cdr.detectChanges();
+  }
+
   arrayData: number[] = [];
+  originalArray: number[] = []; // Guardaremos una copia del array original
   isSorting = false;
   isPaused = false;
 
@@ -116,6 +138,8 @@ export default class SortsComponent implements OnInit, OnDestroy {
   pauseStartTime: number = 0;
   totalPausedTime: number = 0;
   executionTime: number = 0;
+
+  pausePromiseResolve: (() => void) | null = null;
 
   inputMode: 'auto' | 'manual' = 'auto';
   manualInput: string = '';
@@ -213,7 +237,6 @@ export default class SortsComponent implements OnInit, OnDestroy {
     if (this.isSorting) {
       this.sortCancelled = true;
       this.isSorting = false;
-      this.isPaused = false;
     }
 
     if (this.inputMode === 'auto') {
@@ -222,9 +245,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
         this.minValue,
         this.maxValue,
       );
+      this.originalArray = [...this.arrayData]; // Guardamos copia del array original
     } else {
       if (!this.validateManualInput()) return;
       this.arrayData = [...this.manualValues];
+      this.originalArray = [...this.manualValues]; // Guardamos copia del array original
     }
 
     this.executionTime = 0;
@@ -237,30 +262,19 @@ export default class SortsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Si estaba en pausa, solo reanudar
-    if (this.isSorting && this.isPaused) {
-      this.isPaused = false;
-      this.totalPausedTime += performance.now() - this.pauseStartTime;
-      this.cdr.detectChanges();
-      return;
-    }
-
-    // Si ya está ordenando y no está pausado, no hacer nada
-    if (this.isSorting && !this.isPaused) return;
+    // Si ya está ordenando, no hacer nada
+    if (this.isSorting) return;
 
     // Limpiar estados antes de comenzar nuevo ordenamiento
     this.sortCancelled = false;
     this.isSorting = true;
-    this.isPaused = false;
     this.startTime = performance.now();
-    this.totalPausedTime = 0;
     this.executionTime = 0;
 
-    this.isSorting = true;
-    this.isPaused = false;
-    this.sortCancelled = false;
-    this.startTime = performance.now();
-    this.totalPausedTime = 0;
+    // Restaurar el array a su estado original antes de comenzar
+    this.arrayData = [...this.originalArray];
+    // Actualizar el chart con el estado inicial
+    this.updateChart(this.arrayData);
 
     try {
       switch (this.selectedAlgorithm) {
@@ -298,27 +312,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
       console.error('Error durante el ordenamiento:', error);
     } finally {
       this.isSorting = false;
-      this.isPaused = false;
       if (this.startTime) {
-        this.executionTime =
-          performance.now() - this.startTime - this.totalPausedTime;
+        this.executionTime = performance.now() - this.startTime;
       }
       this.cdr.detectChanges();
     }
-  }
-
-  togglePause() {
-    if (!this.isSorting) return;
-
-    this.isPaused = !this.isPaused;
-    if (this.isPaused) {
-      this.pauseStartTime = performance.now();
-    } else {
-      if (this.pauseStartTime > 0) {
-        this.totalPausedTime += performance.now() - this.pauseStartTime;
-      }
-    }
-    this.cdr.detectChanges();
   }
 
   updateChart(
@@ -327,8 +325,15 @@ export default class SortsComponent implements OnInit, OnDestroy {
     highlightIndex2?: number,
   ) {
     if (this.chart) {
+      // Destruir y reinicializar el chart para limpiar el estado
+      if (this.lastAlgorithm !== this.selectedAlgorithm) {
+        this.chart.dispose();
+        this.chart = echarts.init(this.chartContainer.nativeElement);
+        this.lastAlgorithm = this.selectedAlgorithm;
+      }
+
       const option = {
-        animation: true,
+        animation: false,
         title: {
           text: `${this.selectedAlgorithm.charAt(0).toUpperCase() + this.selectedAlgorithm.slice(1)} Sort - ${
             this.sortOrder === 'asc' ? 'Menor a Mayor' : 'Mayor a Menor'
@@ -423,30 +428,77 @@ export default class SortsComponent implements OnInit, OnDestroy {
   }
 
   async onCompare(arr: number[], index1: number, index2: number) {
-    if (this.isPaused) {
-      return new Promise<void>((resolve) => {
-        const checkPause = () => {
-          if (!this.isPaused) {
-            resolve();
-          } else {
-            setTimeout(checkPause, 100);
-          }
-        };
-        checkPause();
-      });
+    // Si se canceló el ordenamiento, detener la ejecución
+    if (this.sortCancelled) {
+      throw new Error('Sort cancelled');
     }
 
+    // Actualizar el array con una nueva copia
     this.arrayData = [...arr];
-    this.updateChart(this.arrayData, index1, index2);
-    this.executionTime =
-      performance.now() - this.startTime - this.totalPausedTime;
+
+    // Configurar delays específicos para cada algoritmo
+    const BASE_DELAY = 3000;
+    const arrayLength = this.arrayData.length;
+    let delay: number;
+
+    switch (this.selectedAlgorithm) {
+      case 'shell':
+        delay = Math.max(100, (BASE_DELAY / arrayLength) * 2);
+        break;
+      case 'merge':
+        delay = Math.max(80, (BASE_DELAY / arrayLength) * 1.5);
+        break;
+      case 'insertion':
+        delay = Math.max(60, BASE_DELAY / arrayLength);
+        break;
+      case 'selection':
+        delay = Math.max(50, BASE_DELAY / arrayLength);
+        break;
+      default:
+        delay = Math.max(50, BASE_DELAY / arrayLength);
+    }
+
+    // Crear una promesa para esperar la actualización del DOM
+    const updatePromise = new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        this.updateChart(this.arrayData, index1, index2);
+        resolve();
+      });
+    });
+
+    // Esperar a que se complete la actualización del DOM
+    await updatePromise;
+
+    // Calcular y actualizar el tiempo de ejecución
+    if (this.startTime > 0) {
+      this.executionTime = performance.now() - this.startTime;
+    }
+
+    // Asegurar que la UI se actualice
     this.cdr.detectChanges();
 
-    return new Promise<void>((resolve) => setTimeout(resolve, 50));
+    // Esperar el delay configurado
+    await new Promise<void>((resolve) => setTimeout(resolve, delay));
+  }
 
-    const BASE_DELAY = 3000;
-    const delay = BASE_DELAY / this.arrayData.length;
-    return new Promise<void>((resolve) => setTimeout(resolve, delay));
+  clearSort() {
+    // Si hay un ordenamiento en progreso, lo cancelamos
+    if (this.isSorting) {
+      this.sortCancelled = true;
+      this.isSorting = false;
+    }
+
+    // Reseteamos el tiempo de ejecución
+    this.executionTime = 0;
+
+    // Restauramos el array a su estado original
+    if (this.originalArray.length > 0) {
+      this.arrayData = [...this.originalArray];
+    }
+
+    // Actualizamos el gráfico
+    this.updateChart(this.arrayData);
+    this.cdr.detectChanges();
   }
 
   async handleFileInput(event: Event) {
@@ -478,11 +530,17 @@ export default class SortsComponent implements OnInit, OnDestroy {
       }
 
       this.arraySize = numbers.length;
-      this.arrayData = numbers;
+      this.arrayData = [...numbers]; // Crear una copia del array
+      this.originalArray = [...numbers]; // Guardar una copia en originalArray
       this.inputMode = 'manual';
       this.manualInput = numbers.join(', ');
       this.manualValues = [...numbers];
 
+      // Asegurarnos de que el chart se actualice correctamente
+      if (this.chart) {
+        this.chart.dispose();
+        this.chart = echarts.init(this.chartContainer.nativeElement);
+      }
       this.updateChart(this.arrayData);
       this.executionTime = 0;
       this.cdr.detectChanges();
@@ -493,8 +551,14 @@ export default class SortsComponent implements OnInit, OnDestroy {
     input.value = '';
   }
 
-  exportArray(format: 'json' | 'txt') {
+  async exportArray(format: 'json' | 'txt') {
     if (!this.arrayData.length) return;
+
+    // Usar prompt nativo por ahora (podríamos usar un MatDialog en el futuro para mejor UI)
+    const customName = prompt(
+      'Ingrese el nombre para el archivo (sin extensión):',
+    );
+    if (!customName) return; // Si el usuario cancela o no ingresa nombre
 
     let content: string;
     let filename: string;
@@ -502,11 +566,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
 
     if (format === 'json') {
       content = JSON.stringify(this.arrayData, null, 2);
-      filename = 'array.json';
+      filename = `${customName}.json`;
       type = 'application/json';
     } else {
       content = this.arrayData.join(',');
-      filename = 'array.txt';
+      filename = `${customName}.txt`;
       type = 'text/plain';
     }
 
