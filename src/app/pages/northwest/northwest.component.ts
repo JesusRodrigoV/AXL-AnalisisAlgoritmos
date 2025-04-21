@@ -664,4 +664,28 @@ export default class NorthwestComponent {
       }
     }
   }
+
+  clearAll() {
+    // Resetear todas las propiedades a sus valores iniciales
+    this._rows = 0;
+    this._cols = 0;
+    this.matrix = [];
+    this.supply = [];
+    this.supplyN = [];
+    this.demand = [];
+    this.demandN = [];
+    this.providerNames = [];
+    this.destinationNames = [];
+    this.solutionNW = [];
+    this.solution = [];
+    this.costMatrix = [];
+    this.iterationModi = 1;
+    this.costoSolution = 0;
+    this.costoSolutionNW = 0;
+    this.costCopyMatrix = [];
+    this.showResults = false;
+    
+    // Forzar la actualización de la vista
+    this.cdr.detectChanges();
+  }
 }

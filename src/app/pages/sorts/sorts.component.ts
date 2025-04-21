@@ -332,6 +332,56 @@ export default class SortsComponent implements OnInit, OnDestroy {
         this.lastAlgorithm = this.selectedAlgorithm;
       }
 
+      // Si no hay datos, configurar el gráfico para que no muestre nada
+      if (data.length === 0) {
+        const emptyOption = {
+          animation: false,
+          title: {
+            text: 'Algoritmos de Ordenamiento',
+            left: 'center',
+            top: 10,
+            textStyle: {
+              fontSize: 16,
+              fontWeight: 'bold',
+            },
+          },
+          grid: {
+            left: '3%',
+            right: '4%',
+            bottom: '8%',
+            top: '15%',
+            containLabel: true,
+          },
+          xAxis: {
+            type: 'category',
+            data: [],
+            show: false,
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { show: false },
+          },
+          yAxis: {
+            type: 'value',
+            show: false,
+            axisLine: { show: false },
+            axisTick: { show: false },
+            axisLabel: { show: false },
+            splitLine: { show: false },
+          },
+          dataZoom: [],
+          tooltip: { show: false },
+          series: [
+            {
+              data: [],
+              type: 'bar',
+              animation: false,
+            },
+          ],
+        };
+        this.chart.setOption(emptyOption, true);
+        return;
+      }
+
       const option = {
         animation: false,
         title: {
@@ -488,16 +538,27 @@ export default class SortsComponent implements OnInit, OnDestroy {
       this.isSorting = false;
     }
 
-    // Reseteamos el tiempo de ejecución
+    // Reseteamos todas las propiedades a sus valores iniciales
+    this.arrayData = [];
+    this.originalArray = [];
+    this.isSorting = false;
+    this.isPaused = false;
+    this.startTime = 0;
+    this.pauseStartTime = 0;
+    this.totalPausedTime = 0;
     this.executionTime = 0;
+    this.pausePromiseResolve = null;
+    this.manualInput = '';
+    this.manualValues = [];
+    this.arraySize = 20;
+    this.minValue = 1;
+    this.maxValue = 100;
+    this.hValue = 10;
+    this.sortOrder = 'asc';
+    this.inputMode = 'auto';
 
-    // Restauramos el array a su estado original
-    if (this.originalArray.length > 0) {
-      this.arrayData = [...this.originalArray];
-    }
-
-    // Actualizamos el gráfico
-    this.updateChart(this.arrayData);
+    // Actualizamos el gráfico con un array vacío
+    this.updateChart([]);
     this.cdr.detectChanges();
   }
 
