@@ -194,6 +194,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
     this.arrayData = [];
     this.manualInput = '';
     this.manualValues = [];
+
+    // Resetear el tamaño del array solo si cambiamos a modo automático
+    if (this.inputMode === 'auto') {
+      this.arraySize = 20; // Valor por defecto para modo automático
+    }
   }
 
   onArraySizeChange() {
@@ -214,10 +219,8 @@ export default class SortsComponent implements OnInit, OnDestroy {
       .map((val) => val.trim())
       .filter((val) => val !== '');
 
-    if (values.length !== this.arraySize) {
-      alert(
-        `Por favor ingrese exactamente ${this.arraySize} valores separados por comas`,
-      );
+    if (values.length === 0) {
+      alert('Por favor ingrese al menos un valor');
       return false;
     }
 
@@ -228,7 +231,22 @@ export default class SortsComponent implements OnInit, OnDestroy {
     }
 
     this.manualValues = numbers;
+    this.arraySize = numbers.length; // Actualizar el tamaño del array automáticamente
     return true;
+  }
+
+  onManualInputChange() {
+    if (this.manualInput.trim()) {
+      const values = this.manualInput
+        .split(',')
+        .map((val) => val.trim())
+        .filter((val) => val !== '')
+        .map(Number)
+        .filter((n) => !isNaN(n));
+
+      this.arraySize = values.length;
+      this.cdr.detectChanges();
+    }
   }
 
   generateNewArray() {

@@ -25,17 +25,18 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field>
-        <mat-label>Tamaño del Array</mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="arraySize"
-          (ngModelChange)="onArraySizeChange()"
-        />
-      </mat-form-field>
-
       <ng-container *ngIf="inputMode === 'auto'">
+        <mat-form-field>
+          <mat-label>Tamaño del Array</mat-label>
+          <input
+            matInput
+            type="number"
+            [(ngModel)]="arraySize"
+            min="1"
+            max="1000"
+          />
+        </mat-form-field>
+
         <mat-form-field>
           <mat-label>Valor Mínimo</mat-label>
           <input matInput type="number" [(ngModel)]="minValue" />
@@ -54,9 +55,8 @@
             matInput
             type="text"
             [(ngModel)]="manualInput"
-            [placeholder]="
-              'Ingrese ' + arraySize + ' valores separados por comas'
-            "
+            (ngModelChange)="onManualInputChange()"
+            placeholder="Ingrese números separados por comas"
           />
           <mat-hint>Ejemplo: 5, 2, 8, 1, 9, ...</mat-hint>
         </mat-form-field>
