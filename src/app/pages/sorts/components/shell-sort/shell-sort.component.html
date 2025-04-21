@@ -10,7 +10,10 @@
     <div class="input-container">
       <mat-form-field>
         <mat-label>Modo de ingreso</mat-label>
-        <mat-select [(ngModel)]="inputMode" (selectionChange)="onInputModeChange()">
+        <mat-select
+          [(ngModel)]="inputMode"
+          (selectionChange)="onInputModeChange()"
+        >
           <mat-option value="auto">Automático</mat-option>
           <mat-option value="manual">Manual</mat-option>
         </mat-select>
@@ -18,11 +21,7 @@
 
       <mat-form-field>
         <mat-label>Tamaño del Array</mat-label>
-        <input
-          matInput
-          type="number"
-          [(ngModel)]="arraySize"
-        />
+        <input matInput type="number" [(ngModel)]="arraySize" />
       </mat-form-field>
 
       <ng-container *ngIf="inputMode === 'auto'">
@@ -44,7 +43,9 @@
             matInput
             type="text"
             [(ngModel)]="manualInput"
-            [placeholder]="'Ingrese ' + arraySize + ' valores separados por comas'"
+            [placeholder]="
+              'Ingrese ' + arraySize + ' valores separados por comas'
+            "
           />
           <mat-hint>Ejemplo: 5, 2, 8, 1, 9, ...</mat-hint>
         </mat-form-field>
