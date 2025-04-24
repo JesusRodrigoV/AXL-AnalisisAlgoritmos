@@ -20,7 +20,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule } from '@angular/forms';
 import * as echarts from 'echarts';
 import { SortService } from '@app/services/sort/sort.service';
-import { HelpButtonComponent } from '@app/src/help-button';
+import { HelpButtonComponent } from '../../src/help-button/help-button.component';
 import { HelpContent } from '@app/models/Help.model';
 
 type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
@@ -45,630 +45,341 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class SortsComponent implements OnInit, OnDestroy {
-  @ViewChild('chartContainer') chartContainer!: ElementRef;
-  private readonly ASSETS_PATH = 'assets/help/sorts/';
-  helpContent: HelpContent = {
+  isPaused: boolean = false;
+  @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
+
+  private chart: echarts.ECharts | null = null;
+  sorting = false;
+  private currentAnimation: Promise<number[]> | null = null;
+  executionTime: number = 0;
+  private startTime: number = 0;
+
+  array: number[] = [];
+  selectedAlgorithm: SortAlgorithm = 'selection';
+  arraySize = 50;
+  minValue = 1;
+  maxValue = 100;
+  sortOrder: 'asc' | 'desc' = 'asc';
+  hValue: number = 25; // Inicialmente será N/2
+  arrayInputMode: 'random' | 'manual' = 'random';
+  manualArrayInput: string = '';
+
+  getPreviewArray(): number[] {
+    if (!this.manualArrayInput) return [];
+    return this.manualArrayInput
+      .split(',')
+      .map((str) => parseInt(str.trim()))
+      .filter((num) => !isNaN(num))
+      .slice(0, 100); // Limitamos a 100 elementos para la vista previa
+  }
+
+  readonly helpContent: HelpContent = {
     title: 'Algoritmos de Ordenamiento',
     description:
-      'Esta herramienta te permite visualizar y comparar diferentes algoritmos de ordenamiento. Puedes ver paso a paso cómo funcionan los algoritmos Selection Sort, Insertion Sort, Shell Sort y Merge Sort con una representación gráfica en tiempo real.',
+      'Visualización de diferentes algoritmos de ordenamiento y sus características.',
     steps: [
       {
         number: 1,
-        title: 'Configuración del Array',
+        title: 'Selection Sort',
         description:
-          'Elige entre generación automática o manual del array:\n- Automático: Define tamaño, valores mínimos y máximos\n- Manual: Ingresa los valores separados por comas\n- También puedes importar datos desde archivos JSON o TXT',
-        image: `${this.ASSETS_PATH}sort-config.png`,
+          'Busca el elemento más pequeño y lo coloca al principio. Complejidad: O(n²)',
       },
       {
         number: 2,
-        title: 'Selección del Algoritmo',
+        title: 'Insertion Sort',
         description:
-          'Elige entre cuatro algoritmos de ordenamiento:\n- Selection Sort: Ideal para arrays pequeños\n- Insertion Sort: Eficiente para arrays casi ordenados\n- Shell Sort: Mejora del Insertion Sort\n- Merge Sort: Eficiente para grandes conjuntos de datos',
-        image: `${this.ASSETS_PATH}sort-algorithms.png`,
+          'Construye la lista final insertando un elemento a la vez. Complejidad: O(n²)',
       },
       {
         number: 3,
-        title: 'Controles de Ordenamiento',
+        title: 'Shell Sort',
         description:
-          'Utiliza los controles para:\n- Iniciar el ordenamiento\n- Pausar/Reanudar la visualización\n- Cambiar la dirección (ascendente/descendente)\n- Ajustar la velocidad de visualización',
-        image: `${this.ASSETS_PATH}sort-controls.png`,
+          'Mejora del Insertion Sort que permite el intercambio de elementos distantes. Complejidad: O(n log n)',
       },
       {
         number: 4,
-        title: 'Visualización y Análisis',
+        title: 'Merge Sort',
         description:
-          'Observa en tiempo real:\n- Comparaciones entre elementos\n- Intercambios realizados\n- Tiempo de ejecución\n- Estado actual del array',
+          'Divide la lista en mitades, ordena y combina. Complejidad: O(n log n)',
       },
     ],
     tips: [
-      'Para arrays grandes (>50 elementos), usa el zoom para ver mejor los detalles',
-      'El color rojo indica el elemento que se está comparando actualmente',
-      'El color amarillo muestra el elemento con el que se está comparando',
-      'Para un mejor análisis, prueba el mismo array con diferentes algoritmos',
-      "Shell Sort requiere un valor 'h' - prueba diferentes valores para ver su impacto",
-      'Puedes exportar los arrays para comparar resultados posteriormente',
-    ],
-    images: [
-      {
-        url: `${this.ASSETS_PATH}sort-visualization.png`,
-        caption: 'Visualización del proceso de ordenamiento',
-        alt: 'Gráfico de barras mostrando el proceso de ordenamiento',
-      },
-    ],
-    videos: [
-      {
-        url: 'https://www.youtube.com/watch?v=sorting-algorithms',
-        title: 'Tutorial: Entendiendo los Algoritmos de Ordenamiento',
-        thumbnail: 'assets/help/sorting-tutorial-thumb.png',
-      },
+      'Usa arrays pequeños para ver mejor la animación',
+      'El botón de reinicio funciona incluso durante el ordenamiento',
+      'Puedes cambiar entre orden ascendente y descendente',
     ],
   };
-  private chart: echarts.ECharts | null = null;
-  private sortCancelled = false;
-  private lastAlgorithm: SortAlgorithm | null = null;
-
-  selectedAlgorithm: SortAlgorithm = 'selection';
-
-  // Agregar watcher para cambios en el algoritmo
-  onAlgorithmChange() {
-    // Si hay un ordenamiento en proceso, lo cancelamos y reseteamos
-    if (this.isSorting) {
-      this.sortCancelled = true;
-      this.isSorting = false;
-      // Restaurar el array al estado actual antes del ordenamiento
-      if (this.originalArray.length > 0) {
-        this.arrayData = [...this.originalArray];
-      }
-    }
-
-    // Resetear tiempo de ejecución
-    this.executionTime = 0;
-
-    // Actualizar el gráfico con el array actual
-    this.updateChart(this.arrayData);
-    this.cdr.detectChanges();
-  }
-
-  arrayData: number[] = [];
-  originalArray: number[] = []; // Guardaremos una copia del array original
-  isSorting = false;
-  isPaused = false;
-
-  startTime: number = 0;
-  pauseStartTime: number = 0;
-  totalPausedTime: number = 0;
-  executionTime: number = 0;
-
-  pausePromiseResolve: (() => void) | null = null;
-
-  inputMode: 'auto' | 'manual' = 'auto';
-  manualInput: string = '';
-  manualValues: number[] = [];
-
-  arraySize: number = 20;
-  minValue: number = 1;
-  maxValue: number = 100;
-  hValue: number = 10;
-  sortOrder: 'asc' | 'desc' = 'asc';
-
-  sortOptions = [
-    { value: 'asc', label: 'Menor a Mayor' },
-    { value: 'desc', label: 'Mayor a Menor' },
-  ];
 
   constructor(
     private sortService: SortService,
-    @Inject(PLATFORM_ID) private platformId: Object,
     private cdr: ChangeDetectorRef,
+    @Inject(PLATFORM_ID) private platformId: object,
   ) {}
 
-  ngOnInit() {}
-
-  ngAfterViewInit() {
-    this.initChart();
-  }
-
-  private initChart() {
+  ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.chart = echarts.init(this.chartContainer.nativeElement);
+      this.initializeChart();
+      this.generateNewArray();
     }
   }
 
-  validateInputs(): boolean {
-    if (this.minValue >= this.maxValue) {
-      alert('El valor mínimo debe ser menor que el valor máximo');
-      return false;
-    }
-    if (this.selectedAlgorithm === 'shell') {
-      if (this.hValue <= 0 || this.hValue > this.arraySize) {
-        alert(
-          'El valor de h debe ser mayor a 0 y menor o igual al tamaño del array',
-        );
-        return false;
-      }
-    }
-    return true;
-  }
-
-  onInputModeChange() {
-    this.arrayData = [];
-    this.manualInput = '';
-    this.manualValues = [];
-
-    // Resetear el tamaño del array solo si cambiamos a modo automático
-    if (this.inputMode === 'auto') {
-      this.arraySize = 20; // Valor por defecto para modo automático
+  ngOnDestroy(): void {
+    if (this.chart) {
+      this.chart.dispose();
     }
   }
 
-  onArraySizeChange() {
-    if (this.inputMode === 'manual') {
-      this.manualInput = '';
-      this.manualValues = [];
-    }
+  private initializeChart(): void {
+    this.chart = echarts.init(this.chartContainer.nativeElement);
+    this.updateChartOptions();
   }
 
-  validateManualInput(): boolean {
-    if (!this.manualInput.trim()) {
-      alert('Por favor ingrese valores');
-      return false;
-    }
+  private updateChartOptions(): void {
+    if (!this.chart) return;
 
-    const values = this.manualInput
-      .split(',')
-      .map((val) => val.trim())
-      .filter((val) => val !== '');
+    const options: echarts.EChartsOption = {
+      animation: false,
+      grid: {
+        left: '5%',
+        right: '5%',
+        bottom: '10%',
+        top: '5%',
+        containLabel: true,
+      },
+      xAxis: {
+        type: 'category',
+        data: this.array.map((_, index) => index.toString()),
+        show: true,
+        axisTick: {
+          alignWithLabel: true,
+        },
+        axisLabel: {
+          color: '#2c3e50',
+          interval: Math.ceil(this.array.length / 10), // Mostrar cada N etiquetas para no sobrecargar
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#2c3e50',
+          },
+        },
+      },
+      yAxis: {
+        type: 'value',
+        show: true,
+        axisLabel: {
+          color: '#2c3e50',
+        },
+        axisLine: {
+          lineStyle: {
+            color: '#2c3e50',
+          },
+        },
+        splitLine: {
+          lineStyle: {
+            color: 'rgba(0,0,0,0.05)',
+          },
+        },
+      },
+      series: [
+        {
+          type: 'bar',
+          data: this.array,
+          itemStyle: {
+            color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+              { offset: 0, color: '#63b3ed' },
+              { offset: 0.5, color: '#4299e1' },
+              { offset: 1, color: '#3182ce' },
+            ]),
+            borderRadius: [12, 12, 0, 0],
+            shadowColor: 'rgba(0, 0, 0, 0.2)',
+            shadowBlur: 10,
+            shadowOffsetY: 5,
+          },
+          emphasis: {
+            itemStyle: {
+              color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: '#FF6B6B' },
+                { offset: 0.5, color: '#e74c3c' },
+                { offset: 1, color: '#c0392b' },
+              ]),
+              shadowColor: 'rgba(231, 76, 60, 0.4)',
+              shadowBlur: 15,
+              shadowOffsetY: 5,
+            },
+          },
+        },
+      ],
+    };
 
-    if (values.length === 0) {
-      alert('Por favor ingrese al menos un valor');
-      return false;
-    }
-
-    const numbers = values.map((v) => Number(v));
-    if (numbers.some(isNaN)) {
-      alert('Todos los valores deben ser números válidos');
-      return false;
-    }
-
-    this.manualValues = numbers;
-    this.arraySize = numbers.length; // Actualizar el tamaño del array automáticamente
-    return true;
+    this.chart.setOption(options);
   }
 
-  onManualInputChange() {
-    if (this.manualInput.trim()) {
-      const values = this.manualInput
-        .split(',')
-        .map((val) => val.trim())
-        .filter((val) => val !== '')
-        .map(Number)
-        .filter((n) => !isNaN(n));
-
-      this.arraySize = values.length;
-      this.cdr.detectChanges();
-    }
-  }
-
-  generateNewArray() {
-    if (this.inputMode === 'auto' && !this.validateInputs()) return;
-
-    if (this.isSorting) {
-      this.sortCancelled = true;
-      this.isSorting = false;
-    }
-
-    if (this.inputMode === 'auto') {
-      this.arrayData = this.sortService.generarArray(
+  generateNewArray(): void {
+    if (this.arrayInputMode === 'random') {
+      this.array = this.sortService.generarArray(
         this.arraySize,
         this.minValue,
         this.maxValue,
       );
-      this.originalArray = [...this.arrayData]; // Guardamos copia del array original
     } else {
-      if (!this.validateManualInput()) return;
-      this.arrayData = [...this.manualValues];
-      this.originalArray = [...this.manualValues]; // Guardamos copia del array original
+      // Convertir el string de entrada en un array de números
+      const values = this.manualArrayInput
+        .split(',')
+        .map((str) => parseInt(str.trim()))
+        .filter((num) => !isNaN(num));
+
+      if (values.length === 0) {
+        // Si no hay valores válidos, generar array aleatorio
+        this.array = this.sortService.generarArray(
+          this.arraySize,
+          this.minValue,
+          this.maxValue,
+        );
+      } else {
+        this.array = values;
+        this.arraySize = values.length; // Actualizar el tamaño del array
+      }
     }
 
-    this.executionTime = 0;
-    this.updateChart(this.arrayData);
+    // Actualizar el valor de h cuando cambia el tamaño del array
+    this.hValue = Math.floor(this.arraySize / 2);
+    this.updateChartOptions();
   }
 
-  async startSort() {
-    if (this.arrayData.length === 0) {
-      alert('Primero genera un array');
-      return;
-    }
+  togglePause(): void {
+    this.isPaused = !this.isPaused;
+    this.sortService.togglePause();
+    this.cdr.detectChanges();
+  }
 
-    // Si ya está ordenando, no hacer nada
-    if (this.isSorting) return;
+  async startSort(): Promise<void> {
+    if (this.sorting) return;
 
-    // Limpiar estados antes de comenzar nuevo ordenamiento
-    this.sortCancelled = false;
-    this.isSorting = true;
+    this.sorting = true;
     this.startTime = performance.now();
     this.executionTime = 0;
-
-    // Restaurar el array a su estado original antes de comenzar
-    this.arrayData = [...this.originalArray];
-    // Actualizar el chart con el estado inicial
-    this.updateChart(this.arrayData);
+    const h = Math.floor(this.array.length / 2);
 
     try {
-      switch (this.selectedAlgorithm) {
-        case 'selection':
-          await this.sortService.selectionSort(
-            this.arrayData,
-            this.sortOrder,
-            this.onCompare.bind(this),
-          );
-          break;
-        case 'insertion':
-          await this.sortService.insertionSort(
-            this.arrayData,
-            this.sortOrder,
-            this.onCompare.bind(this),
-          );
-          break;
-        case 'shell':
-          await this.sortService.shellSort(
-            this.arrayData,
-            this.hValue,
-            this.sortOrder,
-            this.onCompare.bind(this),
-          );
-          break;
-        case 'merge':
-          await this.sortService.mergeSort(
-            this.arrayData,
-            this.sortOrder,
-            this.onCompare.bind(this),
-          );
-          break;
-      }
-    } catch (error) {
-      console.error('Error durante el ordenamiento:', error);
+      this.currentAnimation = this.runSortingAlgorithm();
+      await this.currentAnimation;
     } finally {
-      this.isSorting = false;
-      if (this.startTime) {
-        this.executionTime = performance.now() - this.startTime;
-      }
-      this.cdr.detectChanges();
+      this.sorting = false;
+      this.currentAnimation = null;
+      this.executionTime = Number(
+        (performance.now() - this.startTime).toFixed(2),
+      );
+      this.cdr.markForCheck();
     }
   }
 
-  updateChart(
-    data: number[],
-    highlightIndex1?: number,
-    highlightIndex2?: number,
-  ) {
+  private runSortingAlgorithm(): Promise<number[]> {
+    switch (this.selectedAlgorithm) {
+      case 'selection':
+        return this.sortService.selectionSort(
+          this.array,
+          this.sortOrder,
+          this.updateVisualization.bind(this),
+        );
+      case 'insertion':
+        return this.sortService.insertionSort(
+          this.array,
+          this.sortOrder,
+          this.updateVisualization.bind(this),
+        );
+      case 'shell':
+        return this.sortService.shellSort(
+          this.array,
+          this.hValue,
+          this.sortOrder,
+          this.updateVisualization.bind(this),
+        );
+      case 'merge':
+        return this.sortService.mergeSort(
+          this.array,
+          this.sortOrder,
+          this.updateVisualization.bind(this),
+        );
+      default:
+        return Promise.resolve([]);
+    }
+  }
+
+  private updateVisualization(
+    newArray: number[],
+    index1: number,
+    index2: number,
+  ): void {
+    this.array = [...newArray];
+
     if (this.chart) {
-      // Destruir y reinicializar el chart para limpiar el estado
-      if (this.lastAlgorithm !== this.selectedAlgorithm) {
-        this.chart.dispose();
-        this.chart = echarts.init(this.chartContainer.nativeElement);
-        this.lastAlgorithm = this.selectedAlgorithm;
-      }
+      const emphasizedData = this.array.map((value, idx) => ({
+        value,
+        itemStyle: {
+          color:
+            idx === index1 || idx === index2
+              ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#e74c3c' },
+                  { offset: 1, color: '#c0392b' },
+                ])
+              : new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: '#3498db' },
+                  { offset: 1, color: '#2980b9' },
+                ]),
+        },
+      }));
 
-      // Si no hay datos, configurar el gráfico para que no muestre nada
-      if (data.length === 0) {
-        const emptyOption = {
-          animation: false,
-          title: {
-            text: 'Algoritmos de Ordenamiento',
-            left: 'center',
-            top: 10,
-            textStyle: {
-              fontSize: 16,
-              fontWeight: 'bold',
-            },
-          },
-          grid: {
-            left: '3%',
-            right: '4%',
-            bottom: '8%',
-            top: '15%',
-            containLabel: true,
-          },
-          xAxis: {
-            type: 'category',
-            data: [],
-            show: false,
-            axisLine: { show: false },
-            axisTick: { show: false },
-            axisLabel: { show: false },
-          },
-          yAxis: {
-            type: 'value',
-            show: false,
-            axisLine: { show: false },
-            axisTick: { show: false },
-            axisLabel: { show: false },
-            splitLine: { show: false },
-          },
-          dataZoom: [],
-          tooltip: { show: false },
-          series: [
-            {
-              data: [],
-              type: 'bar',
-              animation: false,
-            },
-          ],
-        };
-        this.chart.setOption(emptyOption, true);
-        return;
-      }
-
-      const option = {
-        animation: false,
-        title: {
-          text: `${this.selectedAlgorithm.charAt(0).toUpperCase() + this.selectedAlgorithm.slice(1)} Sort - ${
-            this.sortOrder === 'asc' ? 'Menor a Mayor' : 'Mayor a Menor'
-          }`,
-          left: 'center',
-          top: 10,
-          textStyle: {
-            fontSize: 16,
-            fontWeight: 'bold',
-          },
-        },
-        tooltip: {
-          trigger: 'axis',
-          formatter: (params: any) => {
-            const dataIndex = params[0].dataIndex;
-            return `Posición: ${dataIndex + 1}<br/>Valor: ${params[0].value}`;
-          },
-          axisPointer: {
-            type: 'shadow',
-          },
-        },
-        grid: {
-          left: '3%',
-          right: '4%',
-          bottom: '8%',
-          top: '15%',
-          containLabel: true,
-        },
-        dataZoom: [
+      this.chart.setOption({
+        series: [
           {
-            type: 'slider',
-            show: this.arrayData.length > 50,
-            xAxisIndex: 0,
-            start: 0,
-            end: 100,
-            height: 20,
-            bottom: 0,
-            borderColor: 'transparent',
-          },
-          {
-            type: 'inside',
-            xAxisIndex: 0,
-            start: 0,
-            end: 100,
+            data: emphasizedData,
           },
         ],
+      });
+    }
+  }
+
+  reset(): void {
+    // Detener el ordenamiento si está en proceso
+    this.sorting = false;
+    this.executionTime = 0;
+    this.isPaused = false;
+
+    // Limpiar la animación en curso
+    this.currentAnimation = null;
+
+    // Detener cualquier timeout pendiente
+    if (this.sortService) {
+      this.sortService.clearTimeouts();
+    }
+
+    // Limpiar el array y actualizar el estado
+    this.array = [];
+
+    // Actualizar la visualización con el array vacío
+    if (this.chart) {
+      this.chart.clear();
+      this.chart.setOption({
         xAxis: {
           type: 'category',
-          data: data.map((_, index) => (index + 1).toString()),
-          axisLabel: {
-            interval: Math.floor(data.length / 50), // Mostrar menos etiquetas si hay muchos elementos
-            rotate: data.length > 30 ? 45 : 0, // Rotar etiquetas si hay muchos elementos
-            hideOverlap: true,
-            fontSize: 10,
-          },
-          axisTick: {
-            alignWithLabel: true,
-          },
+          show: false,
         },
         yAxis: {
           type: 'value',
-          max: Math.max(...data) + 10,
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-            },
-          },
+          show: false,
         },
         series: [
           {
-            data: data.map((value, index) => ({
-              value: value,
-              itemStyle: {
-                color:
-                  index === highlightIndex1
-                    ? '#ff4444'
-                    : index === highlightIndex2
-                      ? '#ffbb00'
-                      : '#3398db',
-              },
-            })),
             type: 'bar',
-            animation: false,
-            animationDuration: 0,
-            animationEasing: 'linear',
+            data: [],
+            itemStyle: {
+              color: '#3498db',
+            },
           },
         ],
-      };
-
-      this.chart.setOption(option);
-    }
-  }
-
-  async onCompare(arr: number[], index1: number, index2: number) {
-    // Si se canceló el ordenamiento, detener la ejecución
-    if (this.sortCancelled) {
-      throw new Error('Sort cancelled');
-    }
-
-    // Actualizar el array con una nueva copia
-    this.arrayData = [...arr];
-
-    // Configurar delays específicos para cada algoritmo
-    const BASE_DELAY = 3000;
-    const arrayLength = this.arrayData.length;
-    let delay: number;
-
-    switch (this.selectedAlgorithm) {
-      case 'shell':
-        delay = Math.max(100, (BASE_DELAY / arrayLength) * 2);
-        break;
-      case 'merge':
-        delay = Math.max(80, (BASE_DELAY / arrayLength) * 1.5);
-        break;
-      case 'insertion':
-        delay = Math.max(60, BASE_DELAY / arrayLength);
-        break;
-      case 'selection':
-        delay = Math.max(50, BASE_DELAY / arrayLength);
-        break;
-      default:
-        delay = Math.max(50, BASE_DELAY / arrayLength);
-    }
-
-    // Crear una promesa para esperar la actualización del DOM
-    const updatePromise = new Promise<void>((resolve) => {
-      requestAnimationFrame(() => {
-        this.updateChart(this.arrayData, index1, index2);
-        resolve();
       });
-    });
-
-    // Esperar a que se complete la actualización del DOM
-    await updatePromise;
-
-    // Calcular y actualizar el tiempo de ejecución
-    if (this.startTime > 0) {
-      this.executionTime = performance.now() - this.startTime;
     }
 
-    // Asegurar que la UI se actualice
     this.cdr.detectChanges();
-
-    // Esperar el delay configurado
-    await new Promise<void>((resolve) => setTimeout(resolve, delay));
-  }
-
-  clearSort() {
-    // Si hay un ordenamiento en progreso, lo cancelamos
-    if (this.isSorting) {
-      this.sortCancelled = true;
-      this.isSorting = false;
-    }
-
-    // Reseteamos todas las propiedades a sus valores iniciales
-    this.arrayData = [];
-    this.originalArray = [];
-    this.isSorting = false;
-    this.isPaused = false;
-    this.startTime = 0;
-    this.pauseStartTime = 0;
-    this.totalPausedTime = 0;
-    this.executionTime = 0;
-    this.pausePromiseResolve = null;
-    this.manualInput = '';
-    this.manualValues = [];
-    this.arraySize = 20;
-    this.minValue = 1;
-    this.maxValue = 100;
-    this.hValue = 10;
-    this.sortOrder = 'asc';
-    this.inputMode = 'auto';
-
-    // Actualizamos el gráfico con un array vacío
-    this.updateChart([]);
-    this.cdr.detectChanges();
-  }
-
-  async handleFileInput(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files?.length) return;
-
-    const file = input.files[0];
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-
-    try {
-      const content = await file.text();
-      let numbers: number[] = [];
-
-      if (fileExt === 'json') {
-        const data = JSON.parse(content);
-        if (Array.isArray(data)) {
-          numbers = data.map(Number);
-        }
-      } else if (fileExt === 'txt') {
-        numbers = content
-          .split(/[,\n]/)
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .map(Number);
-      }
-
-      if (numbers.some(isNaN)) {
-        throw new Error('El archivo contiene valores no numéricos');
-      }
-
-      this.arraySize = numbers.length;
-      this.arrayData = [...numbers]; // Crear una copia del array
-      this.originalArray = [...numbers]; // Guardar una copia en originalArray
-      this.inputMode = 'manual';
-      this.manualInput = numbers.join(', ');
-      this.manualValues = [...numbers];
-
-      // Asegurarnos de que el chart se actualice correctamente
-      if (this.chart) {
-        this.chart.dispose();
-        this.chart = echarts.init(this.chartContainer.nativeElement);
-      }
-      this.updateChart(this.arrayData);
-      this.executionTime = 0;
-      this.cdr.detectChanges();
-    } catch (error) {
-      alert('Error al leer el archivo: ' + (error as Error).message);
-    }
-
-    input.value = '';
-  }
-
-  async exportArray(format: 'json' | 'txt') {
-    if (!this.arrayData.length) return;
-
-    // Usar prompt nativo por ahora (podríamos usar un MatDialog en el futuro para mejor UI)
-    const customName = prompt(
-      'Ingrese el nombre para el archivo (sin extensión):',
-    );
-    if (!customName) return; // Si el usuario cancela o no ingresa nombre
-
-    let content: string;
-    let filename: string;
-    let type: string;
-
-    if (format === 'json') {
-      content = JSON.stringify(this.arrayData, null, 2);
-      filename = `${customName}.json`;
-      type = 'application/json';
-    } else {
-      content = this.arrayData.join(',');
-      filename = `${customName}.txt`;
-      type = 'text/plain';
-    }
-
-    const blob = new Blob([content], { type });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  }
-
-  ngOnDestroy() {
-    this.sortCancelled = true;
-    if (this.chart) {
-      this.chart.dispose();
-    }
   }
 }
