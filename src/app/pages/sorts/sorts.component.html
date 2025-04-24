@@ -166,25 +166,32 @@
 
     <!-- Menú de Exportación/Importación -->
     <mat-menu #exportMenu="matMenu">
-      <button mat-menu-item (click)="exportToJSON()">
-        <mat-icon>download</mat-icon>
-        <span>Exportar como JSON</span>
-      </button>
-      <button mat-menu-item (click)="exportToTXT()">
-        <mat-icon>description</mat-icon>
-        <span>Exportar como TXT</span>
-      </button>
-      <button mat-menu-item (click)="fileInput.click()">
-        <mat-icon>upload</mat-icon>
-        <span>Importar array</span>
-      </button>
-      <input
-        #fileInput
-        type="file"
-        (change)="importArray($event)"
-        accept=".json,.txt"
-        style="display: none"
-      />
+      <div class="export-menu-content" (click)="$event.stopPropagation()">
+        <mat-form-field appearance="outline" class="filename-input">
+          <mat-label>Nombre del archivo</mat-label>
+          <input matInput [(ngModel)]="fileName" placeholder="array-data" />
+        </mat-form-field>
+
+        <button mat-menu-item (click)="exportToJSON()">
+          <mat-icon>download</mat-icon>
+          <span>Exportar como JSON</span>
+        </button>
+        <button mat-menu-item (click)="exportToTXT()">
+          <mat-icon>description</mat-icon>
+          <span>Exportar como TXT</span>
+        </button>
+        <button mat-menu-item (click)="fileInput.click()">
+          <mat-icon>upload</mat-icon>
+          <span>Importar array</span>
+        </button>
+        <input
+          #fileInput
+          type="file"
+          (change)="importArray($event)"
+          accept=".json,.txt"
+          style="display: none"
+        />
+      </div>
     </mat-menu>
   </div>
 

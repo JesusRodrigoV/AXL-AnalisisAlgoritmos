@@ -344,6 +344,25 @@
   }
 }
 
+// Estilos para el menú de exportación
+.export-menu-content {
+  padding: 16px;
+  min-width: 200px;
+
+  .filename-input {
+    width: 100%;
+    margin-bottom: 8px;
+
+    ::ng-deep .mat-mdc-form-field-infix {
+      padding: 8px 0;
+    }
+  }
+
+  .mat-mdc-menu-item {
+    height: 40px;
+  }
+}
+
 .bottom-controls {
   display: flex;
   flex-direction: column;

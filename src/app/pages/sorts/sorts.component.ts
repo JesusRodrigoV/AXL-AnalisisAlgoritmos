@@ -49,6 +49,8 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
 export default class SortsComponent implements OnInit, OnDestroy {
   private originalArray: number[] = [];
 
+  fileName: string = 'array-data';
+
   exportToJSON(): void {
     const arrayToExport = this.sorting ? this.originalArray : this.array;
     const data = {
@@ -64,14 +66,14 @@ export default class SortsComponent implements OnInit, OnDestroy {
     const blob = new Blob([JSON.stringify(data, null, 2)], {
       type: 'application/json',
     });
-    this.downloadFile(blob, 'array-data.json');
+    this.downloadFile(blob, `${this.fileName}.json`);
   }
 
   exportToTXT(): void {
     const arrayToExport = this.sorting ? this.originalArray : this.array;
     const content = arrayToExport.join(', ');
     const blob = new Blob([content], { type: 'text/plain' });
-    this.downloadFile(blob, 'array-data.txt');
+    this.downloadFile(blob, `${this.fileName}.txt`);
   }
 
   private downloadFile(blob: Blob, filename: string): void {
