@@ -19,33 +19,51 @@
       </div>
     }
     
-    <!-- Controles para preorden -->
-    <div class="input-group">
-      <label for="preorden">Preorden (valores separados por comas):</label>
-      <div class="input-with-button">
-        <input type="text" id="preorden" [(ngModel)]="preOrderInput" placeholder="Ej: 10, 5, 3, 7, 15, 12, 18">
-        <button (click)="guardarPreOrder()">Construir con Preorden</button>
+    <div class="two-column-layout">
+      <!-- Columna izquierda: Control para árbol ordenado (BST) -->
+      <div class="left-column">
+        <div class="input-group bst-input">
+          <label for="bst">Árbol Ordenado (valores separados por comas):</label>
+          <div class="input-with-button">
+            <input type="text" id="bst" [(ngModel)]="bstInput" placeholder="Ej: 50, 30, 70, 20, 40, 60, 80">
+            <button (click)="crearArbolOrdenado()">Construir Árbol Ordenado</button>
+          </div>
+          <small class="helper-text">Ingresa valores y se crearán en un árbol binario de búsqueda ordenado.</small>
+        </div>
+      </div>
+      
+      <!-- Columna derecha: Controles existentes -->
+      <div class="right-column">
+        <!-- Controles para preorden -->
+        <div class="input-group">
+          <label for="preorden">Preorden (valores separados por comas):</label>
+          <div class="input-with-button">
+            <input type="text" id="preorden" [(ngModel)]="preOrderInput" placeholder="Ej: 10, 5, 3, 7, 15, 12, 18">
+            <button (click)="guardarPreOrder()">Construir con Preorden</button>
+          </div>
+        </div>
+        
+        <!-- Controles para inorden -->
+        <div class="input-group">
+          <label for="inorden">Inorden (valores separados por comas):</label>
+          <div class="input-with-button">
+            <input type="text" id="inorden" [(ngModel)]="inOrderInput" placeholder="Ej: 3, 5, 7, 10, 12, 15, 18">
+            <button (click)="guardarInOrder()">Construir con Inorden</button>
+          </div>
+        </div>
+        
+        <!-- Controles para postorden -->
+        <div class="input-group">
+          <label for="postorden">Postorden (valores separados por comas):</label>
+          <div class="input-with-button">
+            <input type="text" id="postorden" [(ngModel)]="postOrderInput" placeholder="Ej: 3, 7, 5, 12, 18, 15, 10">
+            <button (click)="guardarPostOrder()">Construir con Postorden</button>
+          </div>
+        </div>
       </div>
     </div>
     
-    <!-- Controles para inorden -->
-    <div class="input-group">
-      <label for="inorden">Inorden (valores separados por comas):</label>
-      <div class="input-with-button">
-        <input type="text" id="inorden" [(ngModel)]="inOrderInput" placeholder="Ej: 3, 5, 7, 10, 12, 15, 18">
-        <button (click)="guardarInOrder()">Construir con Inorden</button>
-      </div>
-    </div>
-    
-    <!-- Controles para postorden -->
-    <div class="input-group">
-      <label for="postorden">Postorden (valores separados por comas):</label>
-      <div class="input-with-button">
-        <input type="text" id="postorden" [(ngModel)]="postOrderInput" placeholder="Ej: 3, 7, 5, 12, 18, 15, 10">
-        <button (click)="guardarPostOrder()">Construir con Postorden</button>
-      </div>
-    </div>
-    
+    <!-- Botones generales en la parte inferior -->
     <div class="button-group">
       <button (click)="generarRandom()">Generar Árbol Aleatorio</button>
       <button (click)="limpiarEntradas()">Limpiar Campos</button>

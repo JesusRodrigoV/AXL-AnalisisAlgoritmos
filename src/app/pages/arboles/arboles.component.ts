@@ -32,7 +32,7 @@ export default class ArbolesComponent implements AfterViewInit {
   raiz: Nodo | null = null;
   mensajeError = '';
   mensajeExito = '';
-
+  bstInput = '';
   ngAfterViewInit() {
     this.drawInitialCanvas();
   }
@@ -323,11 +323,13 @@ export default class ArbolesComponent implements AfterViewInit {
 
 // Método principal para dibujar el árbol
 // Método principal para dibujar el árbol con mejor distribución horizontal
+// También, asegúrate de que el método de dibujar árbol identifique correctamente cuando la raíz es null
 dibujarArbol() {
   const canvas = this.canvasRef.nativeElement;
   const ctx = canvas.getContext('2d');
-  if (!ctx || !this.raiz) return;
-
+  
+  if (!ctx) return;
+  
   // Limpiamos el canvas
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   
@@ -337,6 +339,15 @@ dibujarArbol() {
   gradient.addColorStop(1, '#e4e9f0');
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Si no hay raíz, mostrar mensaje y salir
+  if (!this.raiz) {
+    ctx.font = '20px Arial';
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.fillText('Aquí se dibujará el árbol...', canvas.width / 2, canvas.height / 2);
+    return;
+  }
   
   // Calculamos dimensiones reales del árbol
   const alturaArbol = this.calcularAltura(this.raiz);
@@ -787,6 +798,7 @@ private calcularAltura(nodo: Nodo | null): number {
     this.preOrderInput = '';
     this.inOrderInput = '';
     this.postOrderInput = '';
+    this.bstInput = '';
     
     // Limpiar mensajes
     this.mensajeError = '';
@@ -913,4 +925,85 @@ private calcularAltura(nodo: Nodo | null): number {
     
     reader.readAsText(file);
   }
+
+  
+
+
+
+    // Método mejorado para insertar en BST que retorna la raíz actualizada
+  private insertarEnBST(raiz: Nodo | null, valor: number): Nodo {
+    // Si el árbol está vacío, crea un nuevo nodo
+    if (raiz === null) {
+      return new Nodo(valor);
+    }
+    
+    // Si el valor es menor, inserta en el subárbol izquierdo
+    if (valor < raiz.valor) {
+      raiz.izquierda = this.insertarEnBST(raiz.izquierda, valor);
+    } 
+    // Si el valor es mayor, inserta en el subárbol derecho
+    else if (valor > raiz.valor) {
+      raiz.derecha = this.insertarEnBST(raiz.derecha, valor);
+    }
+    // Si el valor ya existe, no hacemos nada (no permitimos duplicados)
+    
+    return raiz;
+  }
+
+    // Método para construir un BST desde cero
+  private construirBST(valores: number[]): Nodo | null {
+    if (valores.length === 0) return null;
+    
+    // Creamos una copia y eliminamos posibles duplicados
+    const valoresUnicos = [...new Set(valores)];
+    
+    let raiz: Nodo | null = null;
+    
+    // Insertar cada valor en el BST
+    for (const valor of valoresUnicos) {
+      if (raiz === null) {
+        raiz = new Nodo(valor);
+      } else {
+        raiz = this.insertarEnBST(raiz, valor);
+      }
+    }
+    
+    return raiz;
+  }
+
+    // Método para crear el árbol ordenado (BST) desde el input
+    crearArbolOrdenado() {
+      this.mensajeError = '';
+      this.mensajeExito = '';
+      
+      // Validar la entrada
+      const valores = this.validarEntrada(this.bstInput);
+      
+      if (valores && valores.length > 0) {
+        try {
+          // Tomar el primer valor como raíz
+          this.raiz = new Nodo(valores[0]);
+          
+          // Insertar el resto de valores uno a uno
+          for (let i = 1; i < valores.length; i++) {
+            this.raiz = this.insertarEnBST(this.raiz, valores[i]);
+          }
+          
+          // Dibujar el árbol
+          this.dibujarArbol();
+          
+          // Actualizar los recorridos
+          this.preOrderInput = this.obtenerPreorden().join(', ');
+          this.inOrderInput = this.obtenerInorden().join(', ');
+          this.postOrderInput = this.obtenerPostorden().join(', ');
+          
+          this.mensajeExito = 'Árbol binario de búsqueda creado correctamente';
+        } catch (e) {
+          this.mensajeError = 'Error al construir el árbol ordenado: ' + (e instanceof Error ? e.message : String(e));
+        }
+      } else {
+        this.mensajeError = 'Ingresa al menos un valor para crear el árbol';
+      }
+    }
+
 }
