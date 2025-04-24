@@ -4,6 +4,9 @@ import { Injectable } from '@angular/core';
   providedIn: 'root',
 })
 export class SortService {
+  private timeouts: number[] = [];
+  private isPaused: boolean = false;
+  private pausePromiseResolve: (() => void) | null = null;
   generarArray(tamanio: number, minValor: number, maxValor: number): number[] {
     return Array.from(
       { length: tamanio },
@@ -153,8 +156,40 @@ export class SortService {
     return copiedArray;
   }
 
-  private sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  private async sleep(ms: number): Promise<void> {
+    while (this.isPaused) {
+      await new Promise<void>((resolve) => {
+        this.pausePromiseResolve = resolve;
+      });
+    }
+
+    return new Promise((resolve) => {
+      const timeoutId = window.setTimeout(() => {
+        const index = this.timeouts.indexOf(timeoutId);
+        if (index > -1) {
+          this.timeouts.splice(index, 1);
+        }
+        resolve();
+      }, ms);
+      this.timeouts.push(timeoutId);
+    });
+  }
+
+  togglePause(): void {
+    this.isPaused = !this.isPaused;
+    if (!this.isPaused && this.pausePromiseResolve) {
+      this.pausePromiseResolve();
+      this.pausePromiseResolve = null;
+    }
+  }
+
+  isPausedState(): boolean {
+    return this.isPaused;
+  }
+
+  clearTimeouts(): void {
+    this.timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    this.timeouts = [];
   }
 
   private getDelay(arrayLength: number): number {
