@@ -45,8 +45,26 @@
     gap: 16px;
     align-items: start;
 
+    .mat-mdc-form-field {
+      ::ng-deep {
+        .mdc-text-field--outlined {
+          border-radius: 16px;
+
+          .mdc-notched-outline {
+            .mdc-notched-outline__leading {
+              border-radius: 16px 0 0 16px;
+            }
+            .mdc-notched-outline__trailing {
+              border-radius: 0 16px 16px 0;
+            }
+          }
+        }
+      }
+    }
+
+    // Mantener el mismo ancho para el input manual que los otros campos
     .manual-input {
-      grid-column: 1 / -1;
+      grid-column: span 1;
     }
   }
 }

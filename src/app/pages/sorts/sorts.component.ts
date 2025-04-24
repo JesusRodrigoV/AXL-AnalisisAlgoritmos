@@ -17,6 +17,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import * as echarts from 'echarts';
 import { SortService } from '@app/services/sort/sort.service';
@@ -37,6 +38,7 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
     MatInputModule,
     MatSelectModule,
     MatMenuModule,
+    MatIconModule,
     FormsModule,
     HelpButtonComponent,
   ],
@@ -45,6 +47,83 @@ type SortAlgorithm = 'selection' | 'insertion' | 'shell' | 'merge';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export default class SortsComponent implements OnInit, OnDestroy {
+  private originalArray: number[] = [];
+
+  exportToJSON(): void {
+    const arrayToExport = this.sorting ? this.originalArray : this.array;
+    const data = {
+      array: arrayToExport,
+      metadata: {
+        timestamp: new Date().toISOString(),
+        arraySize: arrayToExport.length,
+        minValue: Math.min(...arrayToExport),
+        maxValue: Math.max(...arrayToExport),
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
+    });
+    this.downloadFile(blob, 'array-data.json');
+  }
+
+  exportToTXT(): void {
+    const arrayToExport = this.sorting ? this.originalArray : this.array;
+    const content = arrayToExport.join(', ');
+    const blob = new Blob([content], { type: 'text/plain' });
+    this.downloadFile(blob, 'array-data.txt');
+  }
+
+  private downloadFile(blob: Blob, filename: string): void {
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+    window.URL.revokeObjectURL(link.href);
+  }
+
+  importArray(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        let importedArray: number[] = [];
+
+        if (file.name.endsWith('.json')) {
+          const data = JSON.parse(content);
+          importedArray = data.array;
+        } else if (file.name.endsWith('.txt')) {
+          importedArray = content
+            .split(',')
+            .map((num) => parseInt(num.trim()))
+            .filter((num) => !isNaN(num));
+        }
+
+        if (importedArray.length > 0) {
+          this.array = importedArray;
+          this.arraySize = importedArray.length;
+          this.arrayInputMode = 'manual';
+          this.manualArrayInput = importedArray.join(', ');
+          this.minValue = Math.min(...importedArray);
+          this.maxValue = Math.max(...importedArray);
+          this.updateChartOptions();
+        }
+      } catch (error) {
+        console.error('Error al importar el archivo:', error);
+        // Aquí podrías agregar una notificación al usuario
+      }
+    };
+
+    if (file.name.endsWith('.json')) {
+      reader.readAsText(file);
+    } else if (file.name.endsWith('.txt')) {
+      reader.readAsText(file);
+    }
+  }
+  //private originalArray: number[] = [];
   isPaused: boolean = false;
   @ViewChild('chartContainer', { static: true }) chartContainer!: ElementRef;
 
@@ -146,6 +225,22 @@ export default class SortsComponent implements OnInit, OnDestroy {
         top: '5%',
         containLabel: true,
       },
+      tooltip: {
+        trigger: 'item',
+        formatter: (params: any) => {
+          const value = params.value;
+          const index = params.dataIndex;
+          return `Valor: ${value}<br/>Posición: ${index}`;
+        },
+        backgroundColor: 'rgba(50, 50, 50, 0.9)',
+        borderRadius: 8,
+        padding: [8, 12],
+        textStyle: {
+          color: '#fff',
+          fontSize: 14,
+        },
+        extraCssText: 'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);',
+      },
       xAxis: {
         type: 'category',
         data: this.array.map((_, index) => index.toString()),
@@ -215,6 +310,11 @@ export default class SortsComponent implements OnInit, OnDestroy {
   }
 
   generateNewArray(): void {
+    // Si hay un ordenamiento en proceso, primero hacer reset
+    if (this.sorting) {
+      this.reset();
+    }
+
     if (this.arrayInputMode === 'random') {
       this.array = this.sortService.generarArray(
         this.arraySize,
@@ -255,8 +355,13 @@ export default class SortsComponent implements OnInit, OnDestroy {
   async startSort(): Promise<void> {
     if (this.sorting) return;
 
+    // Asegurarnos de que empezamos desde un estado limpio
+    this.isPaused = false;
+    this.sortService.resetPauseState();
+
     this.sorting = true;
     this.startTime = performance.now();
+    this.originalArray = [...this.array]; // Guardamos el array original
     this.executionTime = 0;
     const h = Math.floor(this.array.length / 2);
 
@@ -340,18 +445,19 @@ export default class SortsComponent implements OnInit, OnDestroy {
   }
 
   reset(): void {
-    // Detener el ordenamiento si está en proceso
-    this.sorting = false;
-    this.executionTime = 0;
-    this.isPaused = false;
-
-    // Limpiar la animación en curso
-    this.currentAnimation = null;
-
-    // Detener cualquier timeout pendiente
+    // Detener cualquier timeout pendiente primero
     if (this.sortService) {
       this.sortService.clearTimeouts();
     }
+
+    // Detener el ordenamiento y la animación
+    this.sorting = false;
+    this.currentAnimation = null;
+    this.executionTime = 0;
+
+    // Resetear estados de pausa
+    this.isPaused = false;
+    this.sortService.resetPauseState();
 
     // Limpiar el array y actualizar el estado
     this.array = [];

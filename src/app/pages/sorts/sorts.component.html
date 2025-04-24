@@ -72,6 +72,7 @@
               matInput
               [(ngModel)]="manualArrayInput"
               placeholder="Ej: 5, 2, 8, 1, 9"
+              style="min-height: 20px"
             />
             <mat-hint>Ingresa números separados por comas</mat-hint>
           </mat-form-field>
@@ -157,7 +158,34 @@
       <button mat-raised-button color="warn" (click)="reset()">
         Limpiar Visualización
       </button>
+
+      <button mat-raised-button [matMenuTriggerFor]="exportMenu">
+        <span>Exportar/Importar</span>
+      </button>
     </div>
+
+    <!-- Menú de Exportación/Importación -->
+    <mat-menu #exportMenu="matMenu">
+      <button mat-menu-item (click)="exportToJSON()">
+        <mat-icon>download</mat-icon>
+        <span>Exportar como JSON</span>
+      </button>
+      <button mat-menu-item (click)="exportToTXT()">
+        <mat-icon>description</mat-icon>
+        <span>Exportar como TXT</span>
+      </button>
+      <button mat-menu-item (click)="fileInput.click()">
+        <mat-icon>upload</mat-icon>
+        <span>Importar array</span>
+      </button>
+      <input
+        #fileInput
+        type="file"
+        (change)="importArray($event)"
+        accept=".json,.txt"
+        style="display: none"
+      />
+    </mat-menu>
   </div>
 
   <app-help-button
