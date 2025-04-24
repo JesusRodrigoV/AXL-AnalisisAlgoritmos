@@ -1,5 +1,12 @@
 @use "@angular/material" as mat;
 
+* {
+  font-family:
+    Source Sans Pro,
+    Arial,
+    sans-serif;
+}
+
 html {
   color-scheme: light;
   @include mat.theme(
