@@ -190,6 +190,20 @@ export class SortService {
   clearTimeouts(): void {
     this.timeouts.forEach((timeoutId) => window.clearTimeout(timeoutId));
     this.timeouts = [];
+
+    // Asegurarnos de que cualquier promesa de pausa pendiente se resuelva
+    if (this.pausePromiseResolve) {
+      this.pausePromiseResolve();
+      this.pausePromiseResolve = null;
+    }
+  }
+
+  resetPauseState(): void {
+    this.isPaused = false;
+    if (this.pausePromiseResolve) {
+      this.pausePromiseResolve();
+      this.pausePromiseResolve = null;
+    }
   }
 
   private getDelay(arrayLength: number): number {
