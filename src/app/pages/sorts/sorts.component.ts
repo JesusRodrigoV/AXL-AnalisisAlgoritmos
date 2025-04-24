@@ -155,7 +155,7 @@ export default class SortsComponent implements OnInit, OnDestroy {
   readonly helpContent: HelpContent = {
     title: 'Algoritmos de Ordenamiento',
     description:
-      'Visualización de diferentes algoritmos de ordenamiento y sus características.',
+      'Visualización interactiva de algoritmos de ordenamiento con múltiples opciones de personalización.',
     steps: [
       {
         number: 1,
@@ -184,8 +184,13 @@ export default class SortsComponent implements OnInit, OnDestroy {
     ],
     tips: [
       'Usa arrays pequeños para ver mejor la animación',
-      'El botón de reinicio funciona incluso durante el ordenamiento',
+      'Puedes pausar y reanudar la animación en cualquier momento',
+      'Importa arrays desde archivos JSON o TXT para análisis específicos',
+      'El modo manual permite ingresar tus propios números para ordenar',
+      'Exporta los arrays en formato JSON (con metadata) o TXT',
+      'El botón de reinicio detiene completamente el ordenamiento actual',
       'Puedes cambiar entre orden ascendente y descendente',
+      'La visualización muestra el valor y posición al pasar el mouse',
     ],
   };
 
