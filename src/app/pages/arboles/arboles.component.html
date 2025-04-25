@@ -1,76 +1,135 @@
 <div class="container">
-  <h2>Árboles Binarios</h2>
-  
-  <div class="canvas-container">
-    <canvas #canvas width="800" height="600"></canvas>
+  <div class="layout">
+    <!-- Panel de Control (Izquierda) -->
+    <mat-card class="control-panel">
+      <mat-card-header>
+        <mat-card-title>Árboles Binarios</mat-card-title>
+        <mat-card-subtitle>Visualización y Manipulación</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <mat-tab-group>
+          <mat-tab label="Árbol">
+            <div class="tab-content">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Árbol Binario</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="arbolInput"
+                  placeholder="Ej: 50, 30, 70, 20, 40"
+                  [matTooltip]="'Ingresa números separados por comas'"
+                />
+                <mat-icon
+                  matSuffix
+                  matTooltip="Los valores se ordenarán automáticamente"
+                  >info</mat-icon
+                >
+              </mat-form-field>
+              <button mat-raised-button color="primary" (click)="crearArbol()">
+                <mat-icon>account_tree</mat-icon>
+                Construir Árbol
+              </button>
+            </div>
+          </mat-tab>
+
+          <!-- Tab de Recorridos -->
+          <mat-tab label="Recorridos">
+            <div class="tab-content">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Preorden</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="preOrderInput"
+                  placeholder="Ej: 10, 5, 3, 7, 15"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="guardarPreOrder()"
+                  [matTooltip]="'Construir usando preorden'"
+                >
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Inorden</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="inOrderInput"
+                  placeholder="Ej: 3, 5, 7, 10, 15"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="guardarInOrder()"
+                  [matTooltip]="'Construir usando inorden'"
+                >
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Postorden</mat-label>
+                <input
+                  matInput
+                  [(ngModel)]="postOrderInput"
+                  placeholder="Ej: 3, 7, 5, 15, 10"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  (click)="guardarPostOrder()"
+                  [matTooltip]="'Construir usando postorden'"
+                >
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+
+        <mat-divider class="margin-y"></mat-divider>
+
+        <!-- Acciones Generales -->
+        <div class="actions">
+          <button mat-stroked-button color="primary" (click)="generarRandom()">
+            <mat-icon>casino</mat-icon>
+            Aleatorio
+          </button>
+          <button mat-stroked-button color="warn" (click)="limpiarEntradas()">
+            <mat-icon>clear_all</mat-icon>
+            Limpiar
+          </button>
+          <button
+            mat-stroked-button
+            (click)="exportarArbol()"
+            [disabled]="!raiz"
+          >
+            <mat-icon>file_download</mat-icon>
+            Exportar
+          </button>
+          <button mat-stroked-button (click)="importarArbol()">
+            <mat-icon>file_upload</mat-icon>
+            Importar
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Área del Canvas (Derecha) -->
+    <mat-card class="canvas-card">
+      <canvas #canvas width="800" height="600"></canvas>
+    </mat-card>
   </div>
-  
-  <div class="controls-container">
-    <!-- Mensajes de feedback usando sintaxis nueva de Angular -->
-    @if (mensajeError) {
-      <div class="error-message">
-        {{ mensajeError }}
-      </div>
-    }
-    
-    @if (mensajeExito) {
-      <div class="success-message">
-        {{ mensajeExito }}
-      </div>
-    }
-    
-    <div class="two-column-layout">
-      <!-- Columna izquierda: Control para árbol ordenado (BST) -->
-      <div class="left-column">
-        <div class="input-group bst-input">
-          <label for="bst">Árbol Ordenado (valores separados por comas):</label>
-          <div class="input-with-button">
-            <input type="text" id="bst" [(ngModel)]="bstInput" placeholder="Ej: 50, 30, 70, 20, 40, 60, 80">
-            <button (click)="crearArbolOrdenado()">Construir Árbol Ordenado</button>
-          </div>
-          <small class="helper-text">Ingresa valores y se crearán en un árbol binario de búsqueda ordenado.</small>
-        </div>
-      </div>
-      
-      <!-- Columna derecha: Controles existentes -->
-      <div class="right-column">
-        <!-- Controles para preorden -->
-        <div class="input-group">
-          <label for="preorden">Preorden (valores separados por comas):</label>
-          <div class="input-with-button">
-            <input type="text" id="preorden" [(ngModel)]="preOrderInput" placeholder="Ej: 10, 5, 3, 7, 15, 12, 18">
-            <button (click)="guardarPreOrder()">Construir con Preorden</button>
-          </div>
-        </div>
-        
-        <!-- Controles para inorden -->
-        <div class="input-group">
-          <label for="inorden">Inorden (valores separados por comas):</label>
-          <div class="input-with-button">
-            <input type="text" id="inorden" [(ngModel)]="inOrderInput" placeholder="Ej: 3, 5, 7, 10, 12, 15, 18">
-            <button (click)="guardarInOrder()">Construir con Inorden</button>
-          </div>
-        </div>
-        
-        <!-- Controles para postorden -->
-        <div class="input-group">
-          <label for="postorden">Postorden (valores separados por comas):</label>
-          <div class="input-with-button">
-            <input type="text" id="postorden" [(ngModel)]="postOrderInput" placeholder="Ej: 3, 7, 5, 12, 18, 15, 10">
-            <button (click)="guardarPostOrder()">Construir con Postorden</button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Botones generales en la parte inferior -->
-    <div class="button-group">
-      <button (click)="generarRandom()">Generar Árbol Aleatorio</button>
-      <button (click)="limpiarEntradas()">Limpiar Campos</button>
-      <button (click)="exportarArbol()">Exportar Árbol</button>
-      <button (click)="importarArbol()">Importar Árbol</button>
-      <!-- Input oculto para importar archivo -->
-      <input type="file" #fileInput style="display: none;" accept=".json" (change)="onFileSelected($event)">
-    </div>
-  </div>
+
+  <input
+    type="file"
+    #fileInput
+    style="display: none"
+    accept=".json"
+    (change)="onFileSelected($event)"
+  />
 </div>
+
+<app-help-button [helpContent]="helpContent" />
