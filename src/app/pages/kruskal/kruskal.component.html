@@ -1,0 +1,44 @@
+<h1>Algoritmo de Kruskal</h1>
+
+<div>
+  <label>Número de vértices:</label>
+  <input type="number" [(ngModel)]="vertices">
+</div>
+
+<div>
+  <label>Origen:</label>
+  <input type="number" [(ngModel)]="newSource">
+
+  <label>Destino:</label>
+  <input type="number" [(ngModel)]="newDestination">
+
+  <label>Peso:</label>
+  <input type="number" [(ngModel)]="newWeight">
+
+  <button (click)="addEdge()">Agregar Arista</button>
+</div>
+
+<ul>
+  <li *ngFor="let edge of edges">
+    ({{edge.source}} → {{edge.destination}}) con peso {{edge.weight}}
+  </li>
+</ul>
+
+<h2>Lista de Aristas</h2>
+<ul>
+  <li *ngFor="let edge of edges">
+    ({{ edge.source }} → {{ edge.destination }}) con peso {{ edge.weight }}
+  </li>
+</ul>
+
+
+<button (click)="runKruskal()">Resolver Kruskal</button>
+
+<h2>MST:</h2>
+<ul>
+  <li *ngFor="let edge of mst">
+    ({{edge.source}} → {{edge.destination}}) con peso {{edge.weight}}
+  </li>
+</ul>
+
+<button (click)="clearData()">Limpiar</button>

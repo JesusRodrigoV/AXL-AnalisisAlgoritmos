@@ -30,6 +30,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/arboles/arboles.component'),
   },
   {
+    path: 'kruskal',
+    loadComponent: () => import('./pages/kruskal/kruskal.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',
