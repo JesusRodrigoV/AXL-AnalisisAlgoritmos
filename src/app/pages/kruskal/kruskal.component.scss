@@ -16,61 +16,69 @@
   }
 }
 
-.kruskal-page {
-  padding: 20px;
+.kruskal-container {
+  height: 100vh;
+  width: 100%;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
 
-  h1 {
-    font-size: 2.5rem;
-    margin-bottom: 20px;
+.sidenav-container {
+  height: 100%;
+}
+
+.controls-sidenav {
+  width: 30%;
+  background-color: var(--background-color);
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.controls-card {
+  background-color: var(--background-color);
+  color: var(--text-color);
+
+  mat-card-header {
+    margin-bottom: 16px;
   }
 
-  h2 {
-    margin-top: 20px;
-    margin-bottom: 10px;
+  mat-card-title {
+    color: var(--text-color);
   }
 
-  .form-section {
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
+  mat-card-subtitle {
+    margin-top: 16px;
+    margin-bottom: 8px;
+    color: var(--text-color);
+  }
+}
 
-    label {
-      margin-bottom: 10px;
-      font-weight: bold;
+.canvas-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--background-color);
+}
 
-      input {
-        margin-left: 10px;
-        padding: 5px;
-      }
-    }
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+
+  mat-form-field {
+    width: 100%;
   }
 
-  .buttons {
-    margin-top: 20px;
-    button {
-      margin-right: 10px;
-      padding: 10px 20px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-
-      &:last-child {
-        background-color: #f44336;
-      }
-    }
+  button {
+    align-self: flex-start;
   }
+}
 
-  .result {
-    margin-top: 30px;
-    ul {
-      list-style-type: none;
-      padding: 0;
+mat-list {
+  margin-bottom: 16px;
 
-      li {
-        margin-bottom: 10px;
-      }
-    }
+  mat-list-item {
+    color: var(--text-color);
   }
 }

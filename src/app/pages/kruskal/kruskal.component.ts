@@ -7,8 +7,16 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatOptionModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatSelectModule } from '@angular/material/select';
 import { HelpContent } from '@app/models/Help.model';
 import { HelpButtonComponent } from '@app/src/help-button';
+import { MatSidenavModule } from '@angular/material/sidenav';
 
 interface Edge {
   source: number;
@@ -18,7 +26,20 @@ interface Edge {
 
 @Component({
   selector: 'app-kruskal',
-  imports: [FormsModule, CommonModule, HelpButtonComponent],
+  imports: [
+    FormsModule,
+    CommonModule,
+    HelpButtonComponent,
+    MatListModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatButtonModule,
+    MatInputModule,
+    MatListModule,
+    MatOptionModule,
+    MatSelectModule,
+    MatSidenavModule,
+  ],
   templateUrl: './kruskal.component.html',
   styleUrl: './kruskal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
