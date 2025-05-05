@@ -1,53 +1,82 @@
-<h1>Algoritmo de Kruskal</h1>
+<mat-card class="kruskal-page">
+  <div class="main-container">
+    <!-- Panel izquierdo -->
+    <div class="left-panel">
+      <h1>Algoritmo de Kruskal</h1>
 
-<!-- Entrada de vértices con botón -->
-<div>
-  <label>Número de vértices:</label>
-  <input type="number" [(ngModel)]="vertices">
-  <button (click)="onVertexCountChange()">Actualizar Nodos</button>
-</div>
+      <div class="form-section">
+        <mat-form-field appearance="fill">
+          <mat-label>Número de vértices</mat-label>
+          <input matInput type="number" [(ngModel)]="vertices" />
+        </mat-form-field>
+        <button
+          mat-raised-button
+          color="primary"
+          (click)="onVertexCountChange()"
+        >
+          Actualizar Nodos
+        </button>
+      </div>
 
-<!-- Entrada de aristas -->
-<div>
-  <label>Origen:</label>
-  <input type="number" [(ngModel)]="newSource">
+      <!-- Entrada de aristas -->
+      <div class="form-section">
+        <mat-form-field appearance="fill">
+          <mat-label>Origen</mat-label>
+          <input matInput type="number" [(ngModel)]="newSource" />
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Destino</mat-label>
+          <input matInput type="number" [(ngModel)]="newDestination" />
+        </mat-form-field>
+        <mat-form-field appearance="fill">
+          <mat-label>Peso</mat-label>
+          <input matInput type="number" [(ngModel)]="newWeight" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="addEdge()">
+          Agregar Arista
+        </button>
+      </div>
 
-  <label>Destino:</label>
-  <input type="number" [(ngModel)]="newDestination">
+      <h2>Lista de Aristas</h2>
+      <mat-list class="result">
+        <mat-list-item *ngFor="let edge of edges">
+          ({{ edge.source }} → {{ edge.destination }}) con peso
+          {{ edge.weight }}
+        </mat-list-item>
+      </mat-list>
 
-  <label>Peso:</label>
-  <input type="number" [(ngModel)]="newWeight">
+      <!-- Botones de acción -->
+      <div class="form-section">
+        <mat-form-field appearance="fill">
+          <mat-label>Modo</mat-label>
+          <mat-select [(ngModel)]="mode">
+            <mat-option value="min">Minimizar</mat-option>
+            <mat-option value="max">Maximizar</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="runKruskal()">
+          Resolver Kruskal
+        </button>
+      </div>
 
-  <button (click)="addEdge()">Agregar Arista</button>
-</div>
+      <h2>MST:</h2>
+      <mat-list class="result">
+        <mat-list-item *ngFor="let edge of mst">
+          ({{ edge.source + 1 }} → {{ edge.destination + 1 }}) con peso
+          {{ edge.weight }}
+        </mat-list-item>
+      </mat-list>
 
-<h2>Lista de Aristas</h2>
-<ul>
-  <li *ngFor="let edge of edges">
-    ({{ edge.source }} → {{ edge.destination }}) con peso {{ edge.weight }}
-  </li>
-</ul>
+      <div class="buttons">
+        <button mat-raised-button color="warn" (click)="clearData()">
+          Limpiar
+        </button>
+      </div>
+    </div>
 
-<!-- Canvas para graficar -->
-<canvas #graphCanvas width="600" height="600" style="border:1px solid black;"></canvas>
-
-<!-- Botones de acción -->
-<div>
-  <label>
-    Modo:
-    <select [(ngModel)]="mode">
-      <option value="min">Minimizar</option>
-      <option value="max">Maximizar</option>
-    </select>
-  </label>
-  <button (click)="runKruskal()">Resolver Kruskal</button>
-</div>
-
-<h2>MST:</h2>
-<ul>
-  <li *ngFor="let edge of mst">
-    ({{(edge.source + 1) }} → {{(edge.destination + 1)}}) con peso {{edge.weight}}
-  </li>
-</ul>
-
-<button (click)="clearData()">Limpiar</button>
+    <div class="right-panel">
+      <canvas #graphCanvas class="graph-canvas"></canvas>
+    </div>
+  </div>
+</mat-card>
+<app-help-button [helpContent]="helpContent" />

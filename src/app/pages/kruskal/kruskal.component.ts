@@ -1,6 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, ViewChild,  } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatOption } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatSelectModule } from '@angular/material/select';
+import { HelpContent } from '@app/models/Help.model';
+import { HelpButtonComponent } from '@app/src/help-button';
 
 interface Edge {
   source: number;
@@ -10,13 +25,68 @@ interface Edge {
 
 @Component({
   selector: 'app-kruskal',
-  imports: [FormsModule,CommonModule],
+  imports: [
+    FormsModule,
+    CommonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatListModule,
+    MatOption,
+    MatSelectModule,
+    MatButtonModule,
+    MatInputModule,
+    HelpButtonComponent,
+  ],
   templateUrl: './kruskal.component.html',
   styleUrl: './kruskal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
 })
 export default class KruskalComponent {
+  helpContent: HelpContent = {
+    title: 'Algoritmo de Kruskal',
+    description:
+      'El algoritmo de Kruskal es un algoritmo de teoría de grafos para encontrar el árbol de expansión mínima (MST) de un grafo conexo y ponderado. Esto significa que encuentra un subconjunto de las aristas que forma un árbol que incluye todos los vértices, donde el peso total de todas las aristas en el árbol es minimizado.',
+    steps: [
+      {
+        number: 1,
+        title: 'Configuración Inicial',
+        description:
+          'Ingresa el número de vértices que tendrá tu grafo. Este será el número total de nodos que podrás conectar.',
+      },
+      {
+        number: 2,
+        title: 'Agregar Aristas',
+        description:
+          'Agrega las aristas que conectarán los vértices. Para cada arista necesitas especificar:\n- Vértice de origen (1 hasta n)\n- Vértice de destino (1 hasta n)\n- Peso de la arista (cualquier número)',
+      },
+      {
+        number: 3,
+        title: 'Seleccionar Modo',
+        description:
+          'Elige si quieres encontrar el árbol de expansión mínima (minimizar) o máxima (maximizar).',
+      },
+      {
+        number: 4,
+        title: 'Ejecutar Algoritmo',
+        description:
+          "Presiona 'Resolver Kruskal' para que el algoritmo encuentre el árbol de expansión óptimo según el modo seleccionado.",
+      },
+    ],
+    images: [
+      {
+        url: '/assets/help/kruskal-example.png',
+        caption: 'Ejemplo de un árbol de expansión mínima',
+        alt: 'Imagen mostrando un grafo antes y después de aplicar Kruskal',
+      },
+    ],
+    tips: [
+      'Los vértices se numeran desde 1 hasta N, donde N es el número total de vértices',
+      'Asegúrate de que el grafo esté conectado para obtener un árbol de expansión válido',
+      'Los pesos pueden ser números positivos o negativos',
+      'Puedes visualizar el grafo en tiempo real mientras agregas las aristas',
+      "Usa el botón 'Limpiar' para empezar desde cero si necesitas rehacer el grafo",
+    ],
+  };
   vertices: number = 0;
   edges: Edge[] = [];
   mst: Edge[] = [];
@@ -62,7 +132,7 @@ export default class KruskalComponent {
     this.parent = Array.from({ length: this.vertices }, (_, i) => i);
 
     const sortedEdges = [...this.edges].sort((a, b) =>
-      this.mode === 'min' ? a.weight - b.weight : b.weight - a.weight
+      this.mode === 'min' ? a.weight - b.weight : b.weight - a.weight,
     );
 
     const result: Edge[] = [];
@@ -126,7 +196,7 @@ export default class KruskalComponent {
     const centerY = 300;
     const radius = 200;
 
-    const nodePositions: { [key: number]: { x: number, y: number } } = {};
+    const nodePositions: { [key: number]: { x: number; y: number } } = {};
 
     // Dibuja nodos en círculo
     for (let i = 0; i < this.vertices; i++) {
@@ -145,7 +215,7 @@ export default class KruskalComponent {
       // Número del nodo
       this.ctx.fillStyle = 'black';
       this.ctx.font = '14px Arial';
-      this.ctx.fillText((i+1).toString(), x - 5, y + 5);
+      this.ctx.fillText((i + 1).toString(), x - 5, y + 5);
     }
 
     // Dibuja aristas
@@ -180,5 +250,4 @@ export default class KruskalComponent {
     this.drawGraph();
     this.cdr.markForCheck();
   }
-
 }

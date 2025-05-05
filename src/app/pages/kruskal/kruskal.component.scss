@@ -1,58 +1,94 @@
+:host {
+  --background-color: #ffffff;
+  --text-color: #000000;
+  --primary-color: #4caf50;
+  --warn-color: #f44336;
+  --border-color: #000000;
+  --canvas-border: #000000;
+
+  :root.dark-mode & {
+    --background-color: #121212;
+    --text-color: #ffffff;
+    --primary-color: #45a049;
+    --warn-color: #d32f2f;
+    --border-color: #ffffff;
+    --canvas-border: #ffffff;
+  }
+}
+
 .kruskal-page {
   padding: 20px;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  height: 100vh;
+
+  .main-container {
+    display: flex;
+    gap: 20px;
+    height: 100%;
+  }
+
+  .left-panel {
+    width: 400px;
+    min-width: 400px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-right: 15px;
+  }
+
+  .right-panel {
+    flex: 1;
+    min-height: 600px;
+    border: 1px solid var(--canvas-border);
+    border-radius: 8px;
+    background: var(--background-color);
+
+    .graph-canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
 
   h1 {
     font-size: 2.5rem;
     margin-bottom: 20px;
+    color: var(--text-color);
   }
 
   h2 {
     margin-top: 20px;
     margin-bottom: 10px;
+    color: var(--text-color);
   }
 
   .form-section {
     margin-bottom: 20px;
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
 
-    label {
-      margin-bottom: 10px;
-      font-weight: bold;
+    mat-form-field {
+      flex: 1 1 200px;
+    }
 
-      input {
-        margin-left: 10px;
-        padding: 5px;
-      }
+    button {
+      flex: 0 0 auto;
     }
   }
 
   .buttons {
     margin-top: 20px;
-    button {
-      margin-right: 10px;
-      padding: 10px 20px;
-      background-color: #4caf50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-
-      &:last-child {
-        background-color: #f44336;
-      }
-    }
+    display: flex;
+    gap: 10px;
   }
 
   .result {
     margin-top: 30px;
-    ul {
-      list-style-type: none;
-      padding: 0;
 
-      li {
-        margin-bottom: 10px;
-      }
+    mat-list-item {
+      color: var(--text-color);
     }
   }
 }
