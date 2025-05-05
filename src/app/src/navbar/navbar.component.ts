@@ -88,7 +88,7 @@ export class NavbarComponent {
     {
       label: 'Dijkstra',
       path: '/dijkstra',
-      icon: 'bx-git-pull-request',
+      icon: 'bx bx-network-chart',
       description: 'Algoritmo de Dijkstra para encontrar el camino más corto',
     },
   ];

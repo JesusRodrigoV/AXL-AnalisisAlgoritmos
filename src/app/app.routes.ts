@@ -39,6 +39,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/proyecto/proyecto.component'),
   },
   {
+    path: 'kruskal',
+    loadComponent: () => import('./pages/kruskal/kruskal.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',
