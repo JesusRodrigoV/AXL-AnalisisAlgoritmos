@@ -1,10 +1,13 @@
 <h1>Algoritmo de Kruskal</h1>
 
+<!-- Entrada de vértices con botón -->
 <div>
   <label>Número de vértices:</label>
   <input type="number" [(ngModel)]="vertices">
+  <button (click)="onVertexCountChange()">Actualizar Nodos</button>
 </div>
 
+<!-- Entrada de aristas -->
 <div>
   <label>Origen:</label>
   <input type="number" [(ngModel)]="newSource">
@@ -18,12 +21,6 @@
   <button (click)="addEdge()">Agregar Arista</button>
 </div>
 
-<ul>
-  <li *ngFor="let edge of edges">
-    ({{edge.source}} → {{edge.destination}}) con peso {{edge.weight}}
-  </li>
-</ul>
-
 <h2>Lista de Aristas</h2>
 <ul>
   <li *ngFor="let edge of edges">
@@ -31,7 +28,10 @@
   </li>
 </ul>
 
+<!-- Canvas para graficar -->
+<canvas #graphCanvas width="600" height="600" style="border:1px solid black;"></canvas>
 
+<!-- Botones de acción -->
 <button (click)="runKruskal()">Resolver Kruskal</button>
 
 <h2>MST:</h2>

@@ -167,4 +167,10 @@ export default class KruskalComponent {
       this.ctx.clearRect(0, 0, 600, 600);
     }
   }
+
+  public onVertexCountChange(): void {
+    this.drawGraph();
+    this.cdr.markForCheck();
+  }
+
 }
