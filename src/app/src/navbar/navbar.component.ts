@@ -44,6 +44,12 @@ export class NavbarComponent {
       description: 'Algoritmo de Johnson para encontrar caminos más cortos',
     },
     {
+      label: 'Dijkstra',
+      path: '/dijkstra',
+      icon: 'bx-git-compare',
+      description: 'Algoritmo de Dijkstra para encontrar el camino más corto',
+    },
+    {
       label: 'Asignación',
       path: '/asignacion',
       icon: 'bx-task',

@@ -7,6 +7,7 @@ export class Nodo {
   private _nombre: string;
   private _color: string;
   esOrigen?: boolean = false;
+  private _peso: number;
 
   constructor(
     x: number,
@@ -15,7 +16,8 @@ export class Nodo {
     contador: number,
     selected: boolean,
     nombre: string,
-    color: string = 'yellow',
+    peso: number = 0,
+    color: string = 'yellow'
   ) {
     this._x = x;
     this._y = y;
@@ -24,6 +26,7 @@ export class Nodo {
     this._selected = selected;
     this._nombre = nombre;
     this._color = color;
+    this._peso = peso;
   }
 
   get x(): number {
@@ -80,5 +83,13 @@ export class Nodo {
 
   set color(value: string) {
     this._color = value;
+  }
+
+  get peso(): number {
+    return this._peso;
+  }
+
+  set peso(value: number) {
+    this._peso = value;
   }
 }
