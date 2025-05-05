@@ -31,7 +31,8 @@ export const routes: Routes = [
   },
   {
     path: 'dijkstra',
-    loadComponent: () => import('./pages/dijkstra/dijkstra.component'),
+    loadComponent: () =>
+      import('./pages/Dijsktra/dijkstra.component').then((m) => m.default),
   },
   {
     path: 'proyecto',

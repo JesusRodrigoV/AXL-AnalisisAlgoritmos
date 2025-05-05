@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { RouterModule } from '@angular/router';
 import { BenefitComponent } from './benefit';
 import { FeatureComponent } from './feature';
 import { FooterComponent } from '@app/src/footer';
@@ -21,9 +22,11 @@ export interface Benefits {
 
 @Component({
   selector: 'app-home',
+  standalone: true,
   imports: [
     MatCardModule,
     MatButtonModule,
+    RouterModule,
     BenefitComponent,
     FeatureComponent,
     FooterComponent,
@@ -48,6 +51,14 @@ export default class HomeComponent {
       description:
         'Encuentra todos los caminos más cortos entre todos los pares de vértices en grafos dispersos.',
       route: '/johnson',
+      buttonText: 'EXPLORAR',
+    },
+    {
+      icon: 'bx-git-compare',
+      title: 'Algoritmo de Dijkstra',
+      description:
+        'Encuentra el camino más corto desde un nodo origen a todos los demás nodos en un grafo.',
+      route: '/dijkstra',
       buttonText: 'EXPLORAR',
     },
     {
@@ -90,14 +101,8 @@ export default class HomeComponent {
     },
     {
       icon: 'bx-book',
-      title: 'Herramienta Educativa',
-      description:
-        'Perfecta para aprender y enseñar conceptos de teoría de grafos',
-    },
-    {
-      icon: 'bx-chart',
-      title: 'Análisis Detallado',
-      description: 'Resultados paso a paso y métricas detalladas',
+      title: 'Documentación Completa',
+      description: 'Guías detalladas y ejemplos para cada algoritmo',
     },
   ];
 }

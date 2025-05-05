@@ -1,0 +1,79 @@
+<div class="container">
+  <div class="canvas-container" #canvasContainer>
+    <canvas
+      #myCanvas
+      class="myCanvas"
+      id="myCanvas"
+      [width]="canvasWidth"
+      [height]="canvasHeight"
+      (dblclick)="dobleClickCanvas($event)"
+      (click)="clickCanvas($event)"
+      (contextmenu)="menuContexto($event)"
+    >
+    </canvas>
+  </div>
+
+  <div class="controls">
+    <div class="button-group">
+      <button mat-raised-button color="accent" (click)="seleccionarArchivo()">
+        <mat-icon>file_upload</mat-icon>
+        Importar
+      </button>
+      <button mat-raised-button color="accent" (click)="exportar()">
+        <mat-icon>file_download</mat-icon>
+        Exportar
+      </button>
+      <button mat-raised-button color="primary" (click)="onModeToggled('connect')" [class.active]="modes['connect']">
+        <mat-icon>link</mat-icon>
+        Conectar Nodos
+      </button>
+      <button mat-raised-button color="warn" (click)="onModeToggled('delete')" [class.active]="modes['delete']">
+        <mat-icon>delete</mat-icon>
+        Eliminar
+      </button>
+      <button mat-raised-button color="accent" (click)="limpiarCanvas()">
+        <mat-icon>clear_all</mat-icon>
+        Limpiar
+      </button>
+    </div>
+
+    <div class="node-selection">
+      <div class="select-group">
+        <mat-form-field>
+          <mat-label>Nodo Inicio</mat-label>
+          <mat-select [(ngModel)]="nodoInicio" (selectionChange)="onNodeSelectionChange()">
+            <mat-option [value]="null">Seleccionar nodo</mat-option>
+            <mat-option *ngFor="let nodo of nodos" [value]="nodo.contador">
+              {{ nodo.nombre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="select-group">
+        <mat-form-field>
+          <mat-label>Nodo Fin</mat-label>
+          <mat-select [(ngModel)]="nodoFin" (selectionChange)="onNodeSelectionChange()">
+            <mat-option [value]="null">Seleccionar nodo</mat-option>
+            <mat-option *ngFor="let nodo of nodos" [value]="nodo.contador">
+              {{ nodo.nombre }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <button mat-raised-button color="primary" (click)="ejecutarDijkstra()" [disabled]="!nodoInicio || !nodoFin">
+        <mat-icon>play_arrow</mat-icon>
+        Ejecutar Dijkstra
+      </button>
+    </div>
+
+    <app-adjacency-matrix
+      [nodos]="nodos"
+      [conexiones]="conexiones">
+    </app-adjacency-matrix>
+
+    <input type="file" id="fileInput" (change)="onFileSelected($event)" style="display: none">
+  </div>
+
+  <app-help-button [helpContent]="helpContent"></app-help-button> 

@@ -54,6 +54,7 @@ export class ModalContentComponent {
       peso: number;
       dirigido: boolean;
       showDirectedOption: boolean;
+      isNode: boolean;
     },
   ) {
     this.form = this.fb.group({
@@ -85,7 +86,6 @@ export class ModalContentComponent {
     this.dialogRef.close(formValue);
   }
 
-  // Método helper para obtener mensajes de error
   getMensajeError(): string {
     const control = this.form.get('peso');
 
@@ -107,5 +107,9 @@ export class ModalContentComponent {
     }
 
     return 'Valor inválido';
+  }
+
+  onNoClick(): void {
+    this.dialogRef.close();
   }
 }
