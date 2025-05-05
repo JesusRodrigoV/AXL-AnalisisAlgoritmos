@@ -30,6 +30,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/arboles/arboles.component'),
   },
   {
+    path: 'dijkstra',
+    loadComponent: () => import('./pages/dijkstra/dijkstra.component'),
+  },
+  {
+    path: 'proyecto',
+    loadComponent: () => import('./pages/proyecto/proyecto.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',

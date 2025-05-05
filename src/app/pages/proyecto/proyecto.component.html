@@ -1,0 +1,39 @@
+<main class="proyecto-container">
+  <section class="hero-section">
+    <div class="content-wrapper">
+      <h1 class="title">{{ titulo }}</h1>
+      <div class="intro">
+        <p>{{ intro }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="problema-section">
+    <div class="content-wrapper">
+      <h2 class="section-title">Problema</h2>
+      <div class="problema">
+        <p>{{ problema }}</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="objetivos-section">
+    <div class="content-wrapper">
+      <h2 class="section-title">Objetivos</h2>
+
+      <div class="objetivo-general">
+        <h3 class="subsection-title">Objetivo General</h3>
+        <p>{{ objGeneral }}</p>
+      </div>
+
+      <div class="objetivos-especificos">
+        <h3 class="subsection-title">Objetivos Específicos</h3>
+        <ul class="objetivos-list">
+          @for (objetivo of objEspecificos; track objetivo) {
+            <li class="objetivo-item">{{ objetivo }}</li>
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>

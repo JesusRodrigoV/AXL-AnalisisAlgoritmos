@@ -32,6 +32,12 @@ export class NavbarComponent {
       description: 'Página principal',
     },
     {
+      label: 'Proyecto',
+      path: '/proyecto',
+      icon: 'bx-book',
+      description: 'Información del proyecto',
+    },
+    {
       label: 'Editor Simple',
       path: '/editor',
       icon: 'bxs-edit',
@@ -67,8 +73,19 @@ export class NavbarComponent {
       icon: 'bx bxs-tree',
       description: 'Simulador de árboles binarios',
     },
+    {
+      label: 'Kruskal',
+      path: '/kruskal',
+      icon: 'bx-network-chart',
+      description: 'Algoritmo de Kruskal para árbol de expansión mínima',
+    },
+    {
+      label: 'Dijkstra',
+      path: '/dijkstra',
+      icon: 'bx-git-pull-request',
+      description: 'Algoritmo de Dijkstra para encontrar el camino más corto',
+    },
   ];
-  private router: Router = inject(Router);
   private location: Location = inject(Location);
 
   isRouteActive(path: string): boolean {
