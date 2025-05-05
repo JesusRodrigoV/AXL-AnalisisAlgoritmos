@@ -67,6 +67,12 @@ export class NavbarComponent {
       icon: 'bx bxs-tree',
       description: 'Simulador de árboles binarios',
     },
+    {
+      label: 'Kruskal',
+      path: '/kruskal',
+      icon: 'bx bx-network-chart',
+      description: 'Algoritmo de mayor de rutas',
+    },
   ];
   private router: Router = inject(Router);
   private location: Location = inject(Location);

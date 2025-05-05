@@ -32,12 +32,21 @@
 <canvas #graphCanvas width="600" height="600" style="border:1px solid black;"></canvas>
 
 <!-- Botones de acción -->
-<button (click)="runKruskal()">Resolver Kruskal</button>
+<div>
+  <label>
+    Modo:
+    <select [(ngModel)]="mode">
+      <option value="min">Minimizar</option>
+      <option value="max">Maximizar</option>
+    </select>
+  </label>
+  <button (click)="runKruskal()">Resolver Kruskal</button>
+</div>
 
 <h2>MST:</h2>
 <ul>
   <li *ngFor="let edge of mst">
-    ({{edge.source}} → {{edge.destination}}) con peso {{edge.weight}}
+    ({{(edge.source + 1) }} → {{(edge.destination + 1)}}) con peso {{edge.weight}}
   </li>
 </ul>
 

@@ -24,6 +24,7 @@ export default class KruskalComponent {
   newSource: number | null = null;
   newDestination: number | null = null;
   newWeight: number | null = null;
+  mode: 'min' | 'max' = 'min'; // 'min' por defecto
 
   private parent: number[] = [];
 
@@ -60,7 +61,10 @@ export default class KruskalComponent {
 
     this.parent = Array.from({ length: this.vertices }, (_, i) => i);
 
-    const sortedEdges = [...this.edges].sort((a, b) => a.weight - b.weight);
+    const sortedEdges = [...this.edges].sort((a, b) =>
+      this.mode === 'min' ? a.weight - b.weight : b.weight - a.weight
+    );
+
     const result: Edge[] = [];
 
     for (const edge of sortedEdges) {
@@ -81,11 +85,15 @@ export default class KruskalComponent {
       this.newDestination !== null &&
       this.newWeight !== null
     ) {
+      // Convertir de 1-based a 0-based
+      const adjustedSource = this.newSource - 1;
+      const adjustedDestination = this.newDestination - 1;
+
       this.edges = [
         ...this.edges,
         {
-          source: this.newSource,
-          destination: this.newDestination,
+          source: adjustedSource,
+          destination: adjustedDestination,
           weight: this.newWeight,
         },
       ];
@@ -137,7 +145,7 @@ export default class KruskalComponent {
       // Número del nodo
       this.ctx.fillStyle = 'black';
       this.ctx.font = '14px Arial';
-      this.ctx.fillText(i.toString(), x - 5, y + 5);
+      this.ctx.fillText((i+1).toString(), x - 5, y + 5);
     }
 
     // Dibuja aristas
