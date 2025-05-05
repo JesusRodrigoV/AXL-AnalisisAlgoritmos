@@ -7,13 +7,6 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatOption } from '@angular/material/core';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatListModule } from '@angular/material/list';
-import { MatSelectModule } from '@angular/material/select';
 import { HelpContent } from '@app/models/Help.model';
 import { HelpButtonComponent } from '@app/src/help-button';
 
@@ -25,21 +18,11 @@ interface Edge {
 
 @Component({
   selector: 'app-kruskal',
-  imports: [
-    FormsModule,
-    CommonModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatListModule,
-    MatOption,
-    MatSelectModule,
-    MatButtonModule,
-    MatInputModule,
-    HelpButtonComponent,
-  ],
+  imports: [FormsModule, CommonModule, HelpButtonComponent],
   templateUrl: './kruskal.component.html',
   styleUrl: './kruskal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  standalone: true,
 })
 export default class KruskalComponent {
   helpContent: HelpContent = {
