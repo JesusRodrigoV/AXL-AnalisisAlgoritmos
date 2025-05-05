@@ -1,0 +1,210 @@
+:host {
+  // Modo claro
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --accent-primary: #1976d2;
+  --accent-secondary: #3f51b5;
+  --gradient-start: #1976d2;
+  --gradient-end: #3f51b5;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --divider-color: #e0e0e0;
+
+  // Modo oscuro
+  :root.dark-mode & {
+    --bg-primary: #121212;
+    --bg-secondary: #1e1e1e;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --accent-primary: #2196f3;
+    --accent-secondary: #3f51b5;
+    --gradient-start: #2196f3;
+    --gradient-end: #3f51b5;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --divider-color: #333333;
+  }
+}
+
+.proyecto-container {
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+
+  .content-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+}
+
+.hero-section {
+  position: relative;
+  height: 60vh;
+  min-height: 400px;
+  background: linear-gradient(
+    135deg,
+    var(--gradient-start) 0%,
+    var(--gradient-end) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+
+  .title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    animation: fadeInUp 0.8s ease-out;
+  }
+
+  .intro {
+    font-size: 1.5rem;
+    opacity: 0.9;
+    max-width: 800px;
+    margin: 0 auto;
+    animation: fadeInUp 1s ease-out;
+  }
+
+  .wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,144C960,149,1056,139,1152,122.7C1248,107,1344,85,1392,74.7L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+    background-size: cover;
+  }
+}
+
+.section-title {
+  font-size: 2.5rem;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  text-align: center;
+  position: relative;
+  padding-bottom: 1rem;
+
+  &:after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: var(--accent-primary);
+    border-radius: 2px;
+  }
+}
+
+.problema-section,
+.objetivos-section {
+  padding: 4rem 2rem;
+  background-color: var(--bg-secondary);
+
+  .content-wrapper {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    box-shadow: var(--card-shadow);
+  }
+}
+
+.subsection-title {
+  font-size: 1.75rem;
+  color: var(--text-primary);
+  margin: 2rem 0 1rem;
+}
+
+.problema {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.objetivo-general {
+  background: var(--bg-secondary);
+  padding: 2rem;
+  border-radius: 8px;
+  margin: 1rem 0 2rem;
+
+  p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+  }
+}
+
+.objetivos-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  .objetivo-item {
+    position: relative;
+    padding: 1.5rem 1.5rem 1.5rem 3.5rem;
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--divider-color);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:before {
+      content: "✓";
+      position: absolute;
+      left: 1.5rem;
+      color: var(--accent-primary);
+      font-weight: bold;
+    }
+
+    &:hover {
+      background: var(--bg-secondary);
+      transform: translateX(5px);
+      transition: all 0.3s ease;
+    }
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    height: 50vh;
+
+    .title {
+      font-size: 2.5rem;
+    }
+
+    .intro {
+      font-size: 1.2rem;
+    }
+  }
+
+  .content-wrapper {
+    padding: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .subsection-title {
+    font-size: 1.5rem;
+  }
+}
