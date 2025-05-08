@@ -577,12 +577,35 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
     });
     distancias[this.nodoInicio] = 0;
   
+    // Construir lista de conexiones considerando inversas si no es dirigido
+    const conexionesConInversas: Conexion[] = [];
+  
+    this.conexiones.forEach((conexion) => {
+      conexionesConInversas.push(conexion);
+  
+      const yaExisteInversa = this.conexiones.some(
+        (c) => c.desde === conexion.hasta && c.hasta === conexion.desde
+      );
+  
+      if (!conexion.dirigido && !yaExisteInversa) {
+        const inversa = new Conexion(
+          conexion.hasta,
+          conexion.desde,
+          conexion.peso,
+          conexion.dirigido
+        );
+        inversa.color = conexion.color;
+        conexionesConInversas.push(inversa);
+      }
+    });
+  
+    // Algoritmo de Dijkstra
     while (noVisitados.size > 0) {
       let nodoActual = -1;
       let distanciaComparacion = modo === 'min' ? Infinity : -Infinity;
-      
+  
       noVisitados.forEach((nodo) => {
-        if ((modo === 'min' && distancias[nodo] < distanciaComparacion) || 
+        if ((modo === 'min' && distancias[nodo] < distanciaComparacion) ||
             (modo === 'max' && distancias[nodo] > distanciaComparacion)) {
           distanciaComparacion = distancias[nodo];
           nodoActual = nodo;
@@ -594,11 +617,11 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
   
       if (nodoActual === this.nodoFin) break;
   
-      this.conexiones.forEach((conexion) => {
+      conexionesConInversas.forEach((conexion) => {
         if (conexion.desde === nodoActual) {
           const nuevaDistancia = distancias[nodoActual] + conexion.peso;
-          
-          if ((modo === 'min' && nuevaDistancia < distancias[conexion.hasta]) || 
+  
+          if ((modo === 'min' && nuevaDistancia < distancias[conexion.hasta]) ||
               (modo === 'max' && nuevaDistancia > distancias[conexion.hasta])) {
             distancias[conexion.hasta] = nuevaDistancia;
             previos[conexion.hasta] = nodoActual;
@@ -607,18 +630,20 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       });
     }
   
-    // Restaurar nombres originales antes de mostrar distancias
+    // Restaurar nombres originales
     this.nodos.forEach((nodo, index) => {
       nodo.nombre = String.fromCharCode(65 + index);
     });
   
     // Mostrar distancias en los nodos
     this.nodos.forEach(nodo => {
-      if (distancias[nodo.contador] !== Infinity && distancias[nodo.contador] !== -Infinity) {
-        nodo.nombre += ` (${distancias[nodo.contador]})`;
+      const d = distancias[nodo.contador];
+      if (d !== Infinity && d !== -Infinity) {
+        nodo.nombre += ` (${d})`;
       }
     });
   
+    // Reconstruir camino más corto
     const camino: number[] = [];
     let actual = this.nodoFin;
     while (actual !== null) {
@@ -626,11 +651,11 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       actual = previos[actual]!;
     }
   
-    // Dibujar el camino encontrado
+    // Dibujar camino encontrado
     const ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.dibujarNodo(ctx);
-      
+  
       for (let i = 0; i < camino.length - 1; i++) {
         const desde = this.nodos.find(n => n.contador === camino[i]);
         const hasta = this.nodos.find(n => n.contador === camino[i + 1]);
@@ -638,13 +663,15 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
           ctx.beginPath();
           ctx.moveTo(desde.x, desde.y);
           ctx.lineTo(hasta.x, hasta.y);
-          ctx.strokeStyle = modo === 'min' ? '#00ff00' : '#ff0000'; // Verde para min, rojo para max
+          ctx.strokeStyle = modo === 'min' ? '#00ff00' : '#ff0000';
           ctx.lineWidth = 3;
           ctx.stroke();
         }
       }
     }
   }
+  
+  
 
   seleccionarNodoInicio(x: number, y: number): void {
     const nodoSeleccionado = this.nodos.find(

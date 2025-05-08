@@ -71,7 +71,13 @@ export class Conexion {
   set dirigido(value: boolean) {
     this._dirigido = value;
   }
-  get color(): string | undefined {
+  
+  get color(): string {
     return this._color;
   }
+  
+  set color(value: string) {
+    this._color = value;
+  }
+  
 }
