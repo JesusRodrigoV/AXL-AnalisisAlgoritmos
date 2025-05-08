@@ -62,18 +62,18 @@
         </mat-form-field>
       </div>
 
-      <button mat-raised-button color="primary" (click)="ejecutarDijkstra()" [disabled]="!nodoInicio || !nodoFin">
-        <mat-icon>play_arrow</mat-icon>
-        Ejecutar Dijkstra
+      <button mat-raised-button color="primary" (click)="ejecutarDijkstra('min')" [disabled]="!nodoInicio || !nodoFin">
+        <mat-icon>trending_down</mat-icon>
+        Dijkstra (Min)
+      </button>
+    
+      <button mat-raised-button color="primary" (click)="ejecutarDijkstra('max')" [disabled]="!nodoInicio || !nodoFin">
+        <mat-icon>trending_up</mat-icon>
+        Dijkstra (Max)
       </button>
     </div>
-
-    <app-adjacency-matrix
-      [nodos]="nodos"
-      [conexiones]="conexiones">
-    </app-adjacency-matrix>
 
     <input type="file" id="fileInput" (change)="onFileSelected($event)" style="display: none">
   </div>
 
-  <app-help-button [helpContent]="helpContent"></app-help-button> 
+  <app-help-button [helpContent]="helpContent"></app-help-button>

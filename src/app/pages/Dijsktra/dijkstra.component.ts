@@ -15,7 +15,6 @@ import { ColorService } from '@app/services/color';
 import { ExportImportService } from '@app/services/export-import';
 import { UndoRedoService } from '@app/services/undo-redo';
 import { ButtonBarComponent } from '@app/src/button-bar';
-import { AdjacencyMatrixComponent } from '@app/src/adjacency-matrix';
 import { HelpButtonComponent } from '@app/src/help-button';
 import { HelpContent } from '@app/models/Help.model';
 import { ModalContentComponent } from '@app/src/my-canvas/modal-content';
@@ -34,7 +33,6 @@ import { ModalContentComponent } from '@app/src/my-canvas/modal-content';
     MatInputModule,
     MatCardModule,
     ButtonBarComponent,
-    AdjacencyMatrixComponent,
     HelpButtonComponent,
     ModalContentComponent,
   ],
@@ -178,17 +176,65 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
     event.preventDefault();
   }
 
-  exportar() {
-    const estado = {
-      nodos: this.nodos,
-      conexiones: this.conexiones
-    };
-    const blob = new Blob([JSON.stringify(estado)], { type: 'application/json' });
+  async exportar() {
+    try {
+      const estado = {
+        nodos: this.nodos,
+        conexiones: this.conexiones
+      };
+      
+      // Crear el contenido del archivo
+      const contenido = JSON.stringify(estado, null, 2);
+      const blob = new Blob([contenido], { type: 'application/json' });
+      
+      // Verificar si el navegador soporta la API de File System Access
+      if ('showSaveFilePicker' in window) {
+        try {
+          // @ts-ignore - TypeScript no tiene definiciones para esta API experimental
+          const handle = await window.showSaveFilePicker({
+            suggestedName: 'grafo-dijkstra.json',
+            types: [{
+              description: 'Archivos JSON',
+              accept: { 'application/json': ['.json'] },
+            }],
+          });
+          
+          // Crear un stream de escritura
+          const writable = await handle.createWritable();
+          await writable.write(blob);
+          await writable.close();
+        } catch (err) {
+          // Si el usuario cancela la operación o el navegador no soporta la API
+          console.log('Guardado cancelado o no soportado, usando método alternativo');
+          this.descargarArchivoAlternativo(blob, 'grafo-dijkstra.json');
+        }
+      } else {
+        // Método alternativo para navegadores que no soportan la API
+        this.descargarArchivoAlternativo(blob, 'grafo-dijkstra.json');
+      }
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      alert('Ocurrió un error al exportar el archivo');
+    }
+  }
+
+  private descargarArchivoAlternativo(blob: Blob, nombreDefault: string) {
+    // Pedir al usuario el nombre del archivo
+    let nombreArchivo = prompt('Ingrese el nombre del archivo:', nombreDefault) || nombreDefault;
+    
+    // Asegurarse de que tenga la extensión .json
+    if (!nombreArchivo.endsWith('.json')) {
+      nombreArchivo = nombreArchivo + '.json'; // Usamos nueva asignación en lugar de +=
+    }
+    
+    // Descargar usando el método tradicional
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'dijkstra-graph.json';
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   }
 
@@ -200,21 +246,77 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
   onFileSelected(event: Event) {
     const fileInput = event.target as HTMLInputElement;
     const file = fileInput.files?.[0];
+    
     if (file) {
       const reader = new FileReader();
+      
       reader.onload = (e) => {
         try {
           const estado = JSON.parse(e.target?.result as string);
-          this.nodos = estado.nodos;
-          this.conexiones = estado.conexiones;
-          this.contador = Math.max(...this.nodos.map(n => n.contador), 0);
+          
+          // Validar la estructura básica del archivo
+          if (!estado.nodos || !estado.conexiones) {
+            throw new Error('El archivo no tiene el formato correcto');
+          }
+          
+          // Crear nuevos arrays para forzar la detección de cambios
+          const nuevosNodos = estado.nodos.map((nodo: any) => {
+            return new Nodo(
+              nodo.x,
+              nodo.y,
+              nodo.radio || this.NODO_RADIO_BASE,
+              nodo.contador,
+              nodo.selected || false,
+              nodo.nombre,
+              nodo.valor || 0,
+              nodo.color || '#2196f3'
+            );
+          });
+          
+          const nuevasConexiones = estado.conexiones.map((conn: any) => {
+            return new Conexion(
+              conn.desde,
+              conn.hasta,
+              conn.peso,
+              conn.dirigido || false,
+            );
+          });
+          
+          // Asignar los nuevos arrays
+          this.nodos = nuevosNodos;
+          this.conexiones = nuevasConexiones;
+          
+          // Actualizar el contador
+          this.contador = this.nodos.length > 0 
+            ? Math.max(...this.nodos.map(n => n.contador)) 
+            : 0;
+          
+          // Resetear selecciones
           this.nodoInicio = null;
           this.nodoFin = null;
+          this.primerNodoSeleccionado = null;
+          this.segundoNodoSeleccionado = null;
+          
+          // Forzar el redibujado del canvas
           this.redibujarCanvas();
+          
+          // Forzar la detección de cambios
+          this.cdr.markForCheck();
+          
         } catch (error) {
           console.error('Error al cargar el archivo:', error);
+          alert('Error al cargar el archivo: ' + (error instanceof Error ? error.message : 'Formato inválido'));
+        } finally {
+          // Resetear el input para permitir cargar el mismo archivo nuevamente
+          fileInput.value = '';
         }
       };
+      
+      reader.onerror = () => {
+        alert('Error al leer el archivo');
+        fileInput.value = '';
+      };
+      
       reader.readAsText(file);
     }
   }
@@ -279,40 +381,30 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
 
   private manejarConexion(x: number, y: number, ctx: CanvasRenderingContext2D): void {
     const nodoSeleccionado = this.nodos.find(
-      (nodo) =>
-        Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) <
-        nodo.radio,
+      (nodo) => Math.sqrt(Math.pow(x - nodo.x, 2) + Math.pow(y - nodo.y, 2)) < nodo.radio
     );
+  
     if (nodoSeleccionado) {
       if (this.primerNodoSeleccionado === null) {
         this.primerNodoSeleccionado = nodoSeleccionado.contador;
         nodoSeleccionado.selected = true;
       } else {
-        if (nodoSeleccionado.contador === this.primerNodoSeleccionado) {
-          alert('No se puede conectar un nodo consigo mismo');
-          this.limpiarSeleccion();
-          return;
-        }
-
-        const existeConexion = this.conexiones.some(
-          (conn) =>
-            (conn.desde === this.primerNodoSeleccionado &&
-              conn.hasta === nodoSeleccionado.contador) ||
-            (conn.desde === nodoSeleccionado.contador &&
-              conn.hasta === this.primerNodoSeleccionado),
+        // Permitir múltiples conexiones entre los mismos nodos (incluso inversas)
+        const existeMismaConexion = this.conexiones.some(
+          (conn) => conn.desde === this.primerNodoSeleccionado && 
+                    conn.hasta === nodoSeleccionado.contador
         );
-
-        if (existeConexion) {
-          alert('Ya existe una conexión entre estos nodos');
+  
+        if (existeMismaConexion) {
+          alert('Ya existe una conexión en esta dirección');
           this.limpiarSeleccion();
           return;
         }
-
+  
         this.segundoNodoSeleccionado = nodoSeleccionado.contador;
         this.showModal(this.primerNodoSeleccionado, this.segundoNodoSeleccionado);
       }
       this.dibujarNodo(ctx);
-      this.guardarEstado();
     }
   }
 
@@ -379,49 +471,61 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
+  
       if (desde && hasta) {
         ctx.beginPath();
-        let dx = hasta.x - desde.x;
-        let dy = hasta.y - desde.y;
-        let distancia = Math.sqrt(dx * dx + dy * dy);
-        let radio = 20;
-        let offsetX = (dx / distancia) * radio;
-        let offsetY = (dy / distancia) * radio;
-        let startX = desde.x + offsetX;
-        let startY = desde.y + offsetY;
-        let endX = hasta.x - offsetX * 1.5;
-        let endY = hasta.y - offsetY * 1.5;
-
+  
+        // --- Nuevo: Calcular si existe conexión inversa ---
+        const esBidireccional = this.conexiones.some(
+          (c) => c.desde === conexion.hasta && c.hasta === conexion.desde
+        );
+  
+        // --- Ajustar el desplazamiento (offset) ---
+        const offset = esBidireccional ? 10 : 0; // Desplazamiento si hay conexión inversa
+        const angle = Math.atan2(hasta.y - desde.y, hasta.x - desde.x);
+        
+        // Puntos de inicio/final con desplazamiento perpendicular
+        const offsetX = offset * Math.cos(angle + Math.PI / 2);
+        const offsetY = offset * Math.sin(angle + Math.PI / 2);
+  
+        const startX = desde.x + offsetX;
+        const startY = desde.y + offsetY;
+        const endX = hasta.x + offsetX;
+        const endY = hasta.y + offsetY;
+  
+        // Dibujar línea principal (con desplazamiento si es bidireccional)
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
         ctx.strokeStyle = conexion.color || '#666';
         ctx.lineWidth = 2;
         ctx.stroke();
-
-        const angle = Math.atan2(dy, dx);
-        const arrowLength = 15;
+  
+        // Dibujar flecha (siempre dirigida)
+        const arrowLength = 20;
         const arrowAngle = Math.PI / 6;
+        // Calcular el punto final ajustado (antes de tocar el nodo)
+        const distanciaFlecha = hasta.radio + 2; // 2px extra para separación visual
+        const arrowX = endX - distanciaFlecha * Math.cos(angle);
+        const arrowY = endY - distanciaFlecha * Math.sin(angle);
 
-        const arrowX = endX;
-        const arrowY = endY;
-
+  
         ctx.beginPath();
         ctx.moveTo(arrowX, arrowY);
         ctx.lineTo(
           arrowX - arrowLength * Math.cos(angle - arrowAngle),
           arrowY - arrowLength * Math.sin(angle - arrowAngle)
         );
-        ctx.moveTo(arrowX, arrowY);
         ctx.lineTo(
           arrowX - arrowLength * Math.cos(angle + arrowAngle),
           arrowY - arrowLength * Math.sin(angle + arrowAngle)
         );
-        ctx.strokeStyle = conexion.color || '#666';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        const midX = (startX + endX) / 2;
-        const midY = (startY + endY) / 2;
+        ctx.closePath();
+        ctx.fillStyle = conexion.color || '#666';
+        ctx.fill();
+  
+        // Dibujar peso (centrado en la línea)
+        const midX = (startX + endX) / 2 + offsetY * 0.6; // Ajuste para evitar superposición
+        const midY = (startY + endY) / 2 - offsetX * 0.6;
         ctx.fillStyle = 'white';
         ctx.fillRect(midX - 10, midY - 10, 20, 20);
         ctx.font = '12px Arial';
@@ -455,70 +559,78 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
     });
   }
 
-  ejecutarDijkstra(): void {
+  ejecutarDijkstra(modo: 'min' | 'max' = 'min'): void {
     if (this.nodoInicio === null || this.nodoFin === null) {
       alert('Por favor, seleccione un nodo de inicio y un nodo de fin');
       return;
     }
-
+  
     const distancias: { [key: number]: number } = {};
     const previos: { [key: number]: number | null } = {};
     const noVisitados = new Set<number>();
-
+  
+    // Inicialización
     this.nodos.forEach((nodo) => {
-      distancias[nodo.contador] = Infinity;
+      distancias[nodo.contador] = modo === 'min' ? Infinity : -Infinity;
       previos[nodo.contador] = null;
       noVisitados.add(nodo.contador);
     });
     distancias[this.nodoInicio] = 0;
-
+  
     while (noVisitados.size > 0) {
       let nodoActual = -1;
-      let menorDistancia = Infinity;
+      let distanciaComparacion = modo === 'min' ? Infinity : -Infinity;
+      
       noVisitados.forEach((nodo) => {
-        if (distancias[nodo] < menorDistancia) {
-          menorDistancia = distancias[nodo];
+        if ((modo === 'min' && distancias[nodo] < distanciaComparacion) || 
+            (modo === 'max' && distancias[nodo] > distanciaComparacion)) {
+          distanciaComparacion = distancias[nodo];
           nodoActual = nodo;
         }
       });
-
+  
       if (nodoActual === -1) break;
       noVisitados.delete(nodoActual);
-
+  
       if (nodoActual === this.nodoFin) break;
-
+  
       this.conexiones.forEach((conexion) => {
         if (conexion.desde === nodoActual) {
           const nuevaDistancia = distancias[nodoActual] + conexion.peso;
-          if (nuevaDistancia < distancias[conexion.hasta]) {
+          
+          if ((modo === 'min' && nuevaDistancia < distancias[conexion.hasta]) || 
+              (modo === 'max' && nuevaDistancia > distancias[conexion.hasta])) {
             distancias[conexion.hasta] = nuevaDistancia;
             previos[conexion.hasta] = nodoActual;
           }
         }
       });
     }
-
-    // Actualizar los nombres de los nodos con sus distancias
+  
+    // Restaurar nombres originales antes de mostrar distancias
+    this.nodos.forEach((nodo, index) => {
+      nodo.nombre = String.fromCharCode(65 + index);
+    });
+  
+    // Mostrar distancias en los nodos
     this.nodos.forEach(nodo => {
-      if (distancias[nodo.contador] !== Infinity) {
-        nodo.nombre = distancias[nodo.contador].toString();
+      if (distancias[nodo.contador] !== Infinity && distancias[nodo.contador] !== -Infinity) {
+        nodo.nombre += ` (${distancias[nodo.contador]})`;
       }
     });
-
+  
     const camino: number[] = [];
     let actual = this.nodoFin;
     while (actual !== null) {
       camino.unshift(actual);
       actual = previos[actual]!;
     }
-
-    // Dibujar el camino más corto en verde
+  
+    // Dibujar el camino encontrado
     const ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
-      // Primero dibujar todo el grafo
       this.dibujarNodo(ctx);
       
-      // Luego dibujar el camino más corto en verde
       for (let i = 0; i < camino.length - 1; i++) {
         const desde = this.nodos.find(n => n.contador === camino[i]);
         const hasta = this.nodos.find(n => n.contador === camino[i + 1]);
@@ -526,14 +638,12 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
           ctx.beginPath();
           ctx.moveTo(desde.x, desde.y);
           ctx.lineTo(hasta.x, hasta.y);
-          ctx.strokeStyle = '#00ff00';
+          ctx.strokeStyle = modo === 'min' ? '#00ff00' : '#ff0000'; // Verde para min, rojo para max
           ctx.lineWidth = 3;
           ctx.stroke();
         }
       }
     }
-
-    alert(`La distancia mínima es: ${distancias[this.nodoFin]}`);
   }
 
   seleccionarNodoInicio(x: number, y: number): void {
@@ -581,10 +691,23 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   redibujarCanvas() {
-    const ctx = this.canvas.nativeElement.getContext('2d');
-    if (ctx) {
-      this.dibujarNodo(ctx);
-    }
+    const canvas = this.canvas.nativeElement;
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) return;
+  
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Establecer fondo
+    ctx.fillStyle = this.colorFondo;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Redibujar todo
+    this.dibujarNodo(ctx);
+    
+    // Forzar detección de cambios
+    this.cdr.detectChanges();
   }
 
   showModal(desde: number, hasta: number): void {
@@ -592,21 +715,22 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       width: '400px',
       data: {
         peso: 0,
-        dirigido: false,
-        showDirectedOption: true
+        dirigido: true, // Siempre dirigida
+        showBidirectionalOption: true // Mostrar opción para crear la inversa
       }
     });
-
+  
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
-        const nuevaConexion = new Conexion(desde, hasta, result.peso, result.dirigido);
-        this.conexiones.push(nuevaConexion);
-        const ctx = this.canvas.nativeElement.getContext('2d');
-        if (ctx) {
-          this.dibujarNodo(ctx);
+        // Conexión principal (desde → hasta)
+        this.conexiones.push(new Conexion(desde, hasta, result.peso, true));
+  
+        // Si el usuario eligió bidireccional, crear conexión inversa (hasta → desde)
+        if (result.bidireccional) {
+          this.conexiones.push(new Conexion(hasta, desde, result.peso, true));
         }
-        this.limpiarSeleccion();
-      } else {
+  
+        this.redibujarCanvas();
         this.limpiarSeleccion();
       }
     });
