@@ -20,13 +20,19 @@
 
   <button (click)="addEdge()">Agregar Arista</button>
 </div>
+<div>
+  <button (click)="exportData()">Exportar JSON</button>
 
+  <button (click)="triggerFileInput()">Importar JSON</button>
+  <input #fileInput type="file" accept=".json" (change)="importData($event)" hidden />
+</div>
+<!--
 <h2>Lista de Aristas</h2>
 <ul>
   <li *ngFor="let edge of edges">
     ({{ edge.source }} → {{ edge.destination }}) con peso {{ edge.weight }}
   </li>
-</ul>
+</ul>-->
 
 <!-- Canvas para graficar -->
 <canvas #graphCanvas width="600" height="600" style="border:1px solid black;"></canvas>
