@@ -20,9 +20,30 @@
         {{ getMensajeError() }}
       </mat-error>
     </mat-form-field>
-    @if (data.showDirectedOption) {
-      <mat-checkbox formControlName="dirigido"> Dirigido </mat-checkbox>
-    }
+    
+    <mat-checkbox formControlName="dirigido"> Dirigido </mat-checkbox>
+    <mat-checkbox formControlName="bidireccional"> Bidireccional </mat-checkbox>
+
+    <ng-container *ngIf="form.get('bidireccional')?.value">
+      <mat-form-field>
+        <mat-label>Peso inverso</mat-label>
+        <input
+          matInput
+          type="text"
+          formControlName="pesoInverso"
+          [class.is-invalid]="
+            form.get('pesoInverso')?.invalid && (enviado || form.get('pesoInverso')?.touched)
+          "
+        />
+        <mat-error
+          *ngIf="
+            form.get('pesoInverso')?.invalid && (enviado || form.get('pesoInverso')?.touched)
+          "
+        >
+          {{ getMensajeError() }}
+        </mat-error>
+      </mat-form-field>
+    </ng-container>
   </form>
 </div>
 <div mat-dialog-actions>
