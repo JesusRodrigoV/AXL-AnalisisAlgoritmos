@@ -45,6 +45,7 @@ import { CommonModule } from '@angular/common';
 export class ModalContentComponent {
   form: FormGroup;
   enviado = false;
+  mostrarPesoInverso = false;
 
   constructor(
     private fb: FormBuilder,
@@ -53,7 +54,7 @@ export class ModalContentComponent {
     public data: {
       peso: number;
       dirigido: boolean;
-      showDirectedOption: boolean;
+      showBidirectionalOption: boolean;
       isNode: boolean;
     },
   ) {
@@ -68,6 +69,24 @@ export class ModalContentComponent {
         ],
       ],
       dirigido: [data.dirigido || false],
+      bidireccional: [false],
+      pesoInverso: [''],
+    });
+
+    this.form.get('bidireccional')?.valueChanges.subscribe((val) => {
+      this.mostrarPesoInverso = val;
+      if (val) {
+        this.form.get('pesoInverso')?.setValidators([
+          Validators.required,
+          Validators.pattern(/^-?\d*\.?\d+$/),
+          Validators.min(Number.MIN_SAFE_INTEGER),
+          Validators.max(Number.MAX_SAFE_INTEGER),
+        ]);
+      } else {
+        this.form.get('pesoInverso')?.clearValidators();
+        this.form.get('pesoInverso')?.setValue('');
+      }
+      this.form.get('pesoInverso')?.updateValueAndValidity();
     });
   }
 
@@ -81,6 +100,8 @@ export class ModalContentComponent {
     const formValue = {
       peso: Number(this.form.get('peso')?.value),
       dirigido: this.form.get('dirigido')?.value === true,
+      bidireccional: this.form.get('bidireccional')?.value === true,
+      pesoInverso: this.form.get('bidireccional')?.value ? Number(this.form.get('pesoInverso')?.value) : undefined,
     };
 
     this.dialogRef.close(formValue);

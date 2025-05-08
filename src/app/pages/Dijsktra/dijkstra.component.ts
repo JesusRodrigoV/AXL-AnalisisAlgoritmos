@@ -224,7 +224,7 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
     
     // Asegurarse de que tenga la extensión .json
     if (!nombreArchivo.endsWith('.json')) {
-      nombreArchivo = nombreArchivo + '.json'; // Usamos nueva asignación en lugar de +=
+      nombreArchivo = nombreArchivo + '.json';
     }
     
     // Descargar usando el método tradicional
@@ -260,26 +260,34 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
           }
           
           // Crear nuevos arrays para forzar la detección de cambios
-          const nuevosNodos = estado.nodos.map((nodo: any) => {
+          const nuevosNodos = estado.nodos.map((nodo: any, idx: number) => {
+            // Solo la letra como nombre
+            let nombreLimpio = nodo.nombre ?? nodo._nombre ?? String.fromCharCode(65 + idx);
+            // Si el nombre tiene paréntesis (ej: "A (5)"), solo tomar la letra
+            if (typeof nombreLimpio === 'string' && nombreLimpio.includes('(')) {
+              nombreLimpio = nombreLimpio.split('(')[0].trim();
+            }
             return new Nodo(
-              nodo.x,
-              nodo.y,
-              nodo.radio || this.NODO_RADIO_BASE,
-              nodo.contador,
-              nodo.selected || false,
-              nodo.nombre,
-              nodo.valor || 0,
-              nodo.color || '#2196f3'
+              nodo.x ?? nodo._x,
+              nodo.y ?? nodo._y,
+              nodo.radio ?? nodo._radio ?? this.NODO_RADIO_BASE,
+              nodo.contador ?? nodo._contador ?? idx + 1,
+              nodo.selected ?? nodo._selected ?? false,
+              nombreLimpio,
+              nodo.peso ?? nodo.valor ?? nodo._peso ?? nodo._valor ?? 0,
+              nodo.color ?? nodo._color ?? '#2196f3'
             );
           });
           
           const nuevasConexiones = estado.conexiones.map((conn: any) => {
-            return new Conexion(
-              conn.desde,
-              conn.hasta,
-              conn.peso,
-              conn.dirigido || false,
-            );
+            const desde = conn.desde ?? conn._desde;
+            const hasta = conn.hasta ?? conn._hasta;
+            const peso = conn.peso ?? conn._peso ?? 0;
+            const dirigido = conn.dirigido ?? conn._dirigido ?? false;
+            const color = conn.color ?? conn._color ?? '#666';
+            const nuevaConexion = new Conexion(desde, hasta, peso, dirigido);
+            nuevaConexion.color = color;
+            return nuevaConexion;
           });
           
           // Asignar los nuevos arrays
@@ -471,60 +479,59 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
     this.conexiones.forEach((conexion) => {
       const desde = this.nodos.find((c) => c.contador === conexion.desde);
       const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
-  
+
       if (desde && hasta) {
         ctx.beginPath();
-  
-        // --- Nuevo: Calcular si existe conexión inversa ---
-        const esBidireccional = this.conexiones.some(
+
+        // Calcular si existe conexión inversa
+        const esBidireccional = !conexion.dirigido || this.conexiones.some(
           (c) => c.desde === conexion.hasta && c.hasta === conexion.desde
         );
-  
-        // --- Ajustar el desplazamiento (offset) ---
-        const offset = esBidireccional ? 10 : 0; // Desplazamiento si hay conexión inversa
+
+        // Ajustar el desplazamiento
+        const offset = esBidireccional ? 10 : 0;
         const angle = Math.atan2(hasta.y - desde.y, hasta.x - desde.x);
-        
-        // Puntos de inicio/final con desplazamiento perpendicular
+
         const offsetX = offset * Math.cos(angle + Math.PI / 2);
         const offsetY = offset * Math.sin(angle + Math.PI / 2);
-  
+
         const startX = desde.x + offsetX;
         const startY = desde.y + offsetY;
         const endX = hasta.x + offsetX;
         const endY = hasta.y + offsetY;
-  
-        // Dibujar línea principal (con desplazamiento si es bidireccional)
+
+        // Dibujar línea principal
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
         ctx.strokeStyle = conexion.color || '#666';
         ctx.lineWidth = 2;
         ctx.stroke();
-  
-        // Dibujar flecha (siempre dirigida)
-        const arrowLength = 20;
-        const arrowAngle = Math.PI / 6;
-        // Calcular el punto final ajustado (antes de tocar el nodo)
-        const distanciaFlecha = hasta.radio + 2; // 2px extra para separación visual
-        const arrowX = endX - distanciaFlecha * Math.cos(angle);
-        const arrowY = endY - distanciaFlecha * Math.sin(angle);
 
-  
-        ctx.beginPath();
-        ctx.moveTo(arrowX, arrowY);
-        ctx.lineTo(
-          arrowX - arrowLength * Math.cos(angle - arrowAngle),
-          arrowY - arrowLength * Math.sin(angle - arrowAngle)
-        );
-        ctx.lineTo(
-          arrowX - arrowLength * Math.cos(angle + arrowAngle),
-          arrowY - arrowLength * Math.sin(angle + arrowAngle)
-        );
-        ctx.closePath();
-        ctx.fillStyle = conexion.color || '#666';
-        ctx.fill();
-  
-        // Dibujar peso (centrado en la línea)
-        const midX = (startX + endX) / 2 + offsetY * 0.6; // Ajuste para evitar superposición
+        // Dibujar flecha (si es dirigida)
+        if (conexion.dirigido) {
+          const arrowLength = 20;
+          const arrowAngle = Math.PI / 6;
+          const distanciaFlecha = hasta.radio + 2;
+          const arrowX = endX - distanciaFlecha * Math.cos(angle);
+          const arrowY = endY - distanciaFlecha * Math.sin(angle);
+
+          ctx.beginPath();
+          ctx.moveTo(arrowX, arrowY);
+          ctx.lineTo(
+            arrowX - arrowLength * Math.cos(angle - arrowAngle),
+            arrowY - arrowLength * Math.sin(angle - arrowAngle)
+          );
+          ctx.lineTo(
+            arrowX - arrowLength * Math.cos(angle + arrowAngle),
+            arrowY - arrowLength * Math.sin(angle + arrowAngle)
+          );
+          ctx.closePath();
+          ctx.fillStyle = conexion.color || '#666';
+          ctx.fill();
+        }
+
+        // Dibujar peso
+        const midX = (startX + endX) / 2 + offsetY * 0.6;
         const midY = (startY + endY) / 2 - offsetX * 0.6;
         ctx.fillStyle = 'white';
         ctx.fillRect(midX - 10, midY - 10, 20, 20);
@@ -564,11 +571,11 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       alert('Por favor, seleccione un nodo de inicio y un nodo de fin');
       return;
     }
-  
+
     const distancias: { [key: number]: number } = {};
     const previos: { [key: number]: number | null } = {};
     const noVisitados = new Set<number>();
-  
+
     // Inicialización
     this.nodos.forEach((nodo) => {
       distancias[nodo.contador] = modo === 'min' ? Infinity : -Infinity;
@@ -576,18 +583,15 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       noVisitados.add(nodo.contador);
     });
     distancias[this.nodoInicio] = 0;
-  
+
     // Construir lista de conexiones considerando inversas si no es dirigido
     const conexionesConInversas: Conexion[] = [];
-  
+
     this.conexiones.forEach((conexion) => {
       conexionesConInversas.push(conexion);
-  
-      const yaExisteInversa = this.conexiones.some(
-        (c) => c.desde === conexion.hasta && c.hasta === conexion.desde
-      );
-  
-      if (!conexion.dirigido && !yaExisteInversa) {
+
+      // Agregar la inversa si NO es dirigida
+      if (!conexion.dirigido) {
         const inversa = new Conexion(
           conexion.hasta,
           conexion.desde,
@@ -598,29 +602,27 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
         conexionesConInversas.push(inversa);
       }
     });
-  
+
     // Algoritmo de Dijkstra
-    while (noVisitados.size > 0) {
-      let nodoActual = -1;
-      let distanciaComparacion = modo === 'min' ? Infinity : -Infinity;
-  
+    const visitados: Set<number> = new Set();
+    while (visitados.size < this.nodos.length) {
+      let nodoActual: number | null = null;
+      let mejorDistancia = modo === 'min' ? Infinity : -Infinity;
       noVisitados.forEach((nodo) => {
-        if ((modo === 'min' && distancias[nodo] < distanciaComparacion) ||
-            (modo === 'max' && distancias[nodo] > distanciaComparacion)) {
-          distanciaComparacion = distancias[nodo];
+        if ((modo === 'min' && distancias[nodo] < mejorDistancia) ||
+            (modo === 'max' && distancias[nodo] > mejorDistancia)) {
+          mejorDistancia = distancias[nodo];
           nodoActual = nodo;
         }
       });
-  
-      if (nodoActual === -1) break;
+      if (nodoActual === null) break;
       noVisitados.delete(nodoActual);
-  
+      visitados.add(nodoActual);
       if (nodoActual === this.nodoFin) break;
-  
+
       conexionesConInversas.forEach((conexion) => {
         if (conexion.desde === nodoActual) {
           const nuevaDistancia = distancias[nodoActual] + conexion.peso;
-  
           if ((modo === 'min' && nuevaDistancia < distancias[conexion.hasta]) ||
               (modo === 'max' && nuevaDistancia > distancias[conexion.hasta])) {
             distancias[conexion.hasta] = nuevaDistancia;
@@ -629,12 +631,12 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
         }
       });
     }
-  
+
     // Restaurar nombres originales
     this.nodos.forEach((nodo, index) => {
       nodo.nombre = String.fromCharCode(65 + index);
     });
-  
+
     // Mostrar distancias en los nodos
     this.nodos.forEach(nodo => {
       const d = distancias[nodo.contador];
@@ -642,7 +644,7 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
         nodo.nombre += ` (${d})`;
       }
     });
-  
+
     // Reconstruir camino más corto
     const camino: number[] = [];
     let actual = this.nodoFin;
@@ -650,28 +652,78 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       camino.unshift(actual);
       actual = previos[actual]!;
     }
-  
+
     // Dibujar camino encontrado
     const ctx = this.canvas.nativeElement.getContext('2d');
     if (ctx) {
       this.dibujarNodo(ctx);
-  
+
       for (let i = 0; i < camino.length - 1; i++) {
         const desde = this.nodos.find(n => n.contador === camino[i]);
         const hasta = this.nodos.find(n => n.contador === camino[i + 1]);
         if (desde && hasta) {
+          let conexionReal = this.conexiones.find(
+            c => c.desde === desde.contador && c.hasta === hasta.contador
+          );
+          let invertida = false;
+          if (!conexionReal) {
+            conexionReal = this.conexiones.find(
+              c => c.desde === hasta.contador && c.hasta === desde.contador
+            );
+            invertida = true;
+          }
+
+          const angle = Math.atan2(hasta.y - desde.y, hasta.x - desde.x);
+          let offset = 0;
+          if (conexionReal) {
+            const esBidireccional = this.conexiones.some(
+              c => c.desde === hasta.contador && c.hasta === desde.contador
+            ) && this.conexiones.some(
+              c => c.desde === desde.contador && c.hasta === hasta.contador
+            );
+            offset = esBidireccional ? 10 : 0;
+          }
+
+          const offsetSign = invertida ? -1 : 1;
+          const offsetX = offset * Math.cos(angle + Math.PI / 2) * offsetSign;
+          const offsetY = offset * Math.sin(angle + Math.PI / 2) * offsetSign;
+          const startX = desde.x + offsetX;
+          const startY = desde.y + offsetY;
+          const endX = hasta.x + offsetX;
+          const endY = hasta.y + offsetY;
+
           ctx.beginPath();
-          ctx.moveTo(desde.x, desde.y);
-          ctx.lineTo(hasta.x, hasta.y);
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
           ctx.strokeStyle = modo === 'min' ? '#00ff00' : '#ff0000';
           ctx.lineWidth = 3;
           ctx.stroke();
+
+          if (conexionReal) {
+            const arrowLength = 20;
+            const arrowAngle = Math.PI / 6;
+            const distanciaFlecha = hasta.radio + 2;
+            const arrowX = endX - distanciaFlecha * Math.cos(angle);
+            const arrowY = endY - distanciaFlecha * Math.sin(angle);
+
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowY);
+            ctx.lineTo(
+              arrowX - arrowLength * Math.cos(angle - arrowAngle),
+              arrowY - arrowLength * Math.sin(angle - arrowAngle)
+            );
+            ctx.lineTo(
+              arrowX - arrowLength * Math.cos(angle + arrowAngle),
+              arrowY - arrowLength * Math.sin(angle + arrowAngle)
+            );
+            ctx.closePath();
+            ctx.fillStyle = modo === 'min' ? '#00ff00' : '#ff0000';
+            ctx.fill();
+          }
         }
       }
     }
   }
-  
-  
 
   seleccionarNodoInicio(x: number, y: number): void {
     const nodoSeleccionado = this.nodos.find(
@@ -746,18 +798,33 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
         showBidirectionalOption: true // Mostrar opción para crear la inversa
       }
     });
-  
+
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
+        // Validar peso
+        if (result.peso < 0) {
+          alert('El peso no puede ser negativo');
+          this.limpiarSeleccion();
+          return;
+        }
+
         // Conexión principal (desde → hasta)
         this.conexiones.push(new Conexion(desde, hasta, result.peso, true));
-  
-        // Si el usuario eligió bidireccional, crear conexión inversa (hasta → desde)
-        if (result.bidireccional) {
-          this.conexiones.push(new Conexion(hasta, desde, result.peso, true));
+
+        // Si el usuario eligió bidireccional, crear conexión inversa con su propio peso
+        if (result.bidireccional && result.pesoInverso !== undefined) {
+          if (result.pesoInverso < 0) {
+            alert('El peso inverso no puede ser negativo');
+            this.limpiarSeleccion();
+            return;
+          }
+          this.conexiones.push(new Conexion(hasta, desde, result.pesoInverso, true));
         }
-  
+
         this.redibujarCanvas();
+        this.limpiarSeleccion();
+        this.guardarEstado();
+      } else {
         this.limpiarSeleccion();
       }
     });

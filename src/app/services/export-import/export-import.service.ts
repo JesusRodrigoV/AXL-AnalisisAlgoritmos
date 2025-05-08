@@ -76,16 +76,17 @@ export class ExportImportService {
           let loadedConexiones: Conexion[] = [];
 
           if (Array.isArray(json.nodos)) {
-            json.nodos.forEach((nodo: any) => {
+            json.nodos.forEach((nodo: any, idx: number) => {
               loadedNodos.push(
                 new Nodo(
-                  nodo._x,
-                  nodo._y,
-                  radio,
-                  nodo.contador || loadedNodos.length + 1,
-                  false,
-                  nodo._nombre,
-                  nodo._color,
+                  nodo.x ?? nodo._x,
+                  nodo.y ?? nodo._y,
+                  nodo.radio ?? radio,
+                  nodo.contador ?? idx + 1,
+                  nodo.selected ?? false,
+                  nodo.nombre ?? nodo._nombre ?? String.fromCharCode(65 + idx),
+                  nodo.valor ?? 0,
+                  nodo.color ?? nodo._color ?? '#2196f3',
                 ),
               );
             });
@@ -93,15 +94,16 @@ export class ExportImportService {
 
           if (Array.isArray(json.conexiones)) {
             json.conexiones.forEach((conexion: any) => {
-              const desde = conexion._desde || conexion.desde;
-              const hasta = conexion._hasta || conexion.hasta;
-              const peso = conexion._peso ?? conexion.peso ?? 0;
-              const dirigido = conexion._dirigido ?? conexion.dirigido ?? false;
+              const desde = conexion.desde ?? conexion._desde;
+              const hasta = conexion.hasta ?? conexion._hasta;
+              const peso = conexion.peso ?? conexion._peso ?? 0;
+              const dirigido = conexion.dirigido ?? conexion._dirigido ?? false;
+              const color = conexion.color ?? conexion._color ?? '#666';
 
               if (desde !== undefined && hasta !== undefined) {
-                loadedConexiones.push(
-                  new Conexion(desde, hasta, peso, dirigido),
-                );
+                const nuevaConexion = new Conexion(desde, hasta, peso, dirigido);
+                nuevaConexion.color = color;
+                loadedConexiones.push(nuevaConexion);
               }
             });
           }
