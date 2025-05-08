@@ -94,6 +94,7 @@ export default class KruskalComponent {
   vertices: number = 0;
   edges: Edge[] = [];
   mst: Edge[] = [];
+  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
   newSource: number | null = null;
   newDestination: number | null = null;
@@ -228,17 +229,30 @@ export default class KruskalComponent {
       const to = nodePositions[edge.destination];
 
       if (from && to) {
+        // Determinar si la arista está en el MST
+        const isInMST = this.mst.some(
+          (e) =>
+            (e.source === edge.source &&
+              e.destination === edge.destination &&
+              e.weight === edge.weight) ||
+            (e.source === edge.destination &&
+              e.destination === edge.source &&
+              e.weight === edge.weight),
+        );
+
         // Línea
         this.ctx.beginPath();
         this.ctx.moveTo(from.x, from.y);
         this.ctx.lineTo(to.x, to.y);
-        this.ctx.strokeStyle = 'gray';
+        this.ctx.strokeStyle = isInMST ? 'green' : 'gray';
+        this.ctx.lineWidth = isInMST ? 3 : 1;
         this.ctx.stroke();
 
         // Peso en la mitad
         const midX = (from.x + to.x) / 2;
         const midY = (from.y + to.y) / 2;
-        this.ctx.fillStyle = 'black';
+        this.ctx.fillStyle = isInMST ? 'green' : 'black';
+        this.ctx.font = '14px Arial';
         this.ctx.fillText(edge.weight.toString(), midX, midY);
       }
     }
@@ -253,5 +267,60 @@ export default class KruskalComponent {
   public onVertexCountChange(): void {
     this.drawGraph();
     this.cdr.markForCheck();
+  }
+
+  public exportData(): void {
+    const data = {
+      vertices: this.vertices,
+      edges: this.edges,
+      mode: this.mode,
+    };
+
+    const fileName =
+      prompt('Ingresa el nombre del archivo (sin extensión):', 'grafo') ||
+      'grafo';
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: 'application/json',
+    });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${fileName}.json`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+  public triggerFileInput(): void {
+    this.fileInputRef.nativeElement.click();
+  }
+
+  public importData(event: Event): void {
+    const input = event.target as HTMLInputElement;
+
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(reader.result as string);
+        if (typeof json.vertices === 'number' && Array.isArray(json.edges)) {
+          this.vertices = json.vertices;
+          this.edges = json.edges;
+          this.mst = [];
+          this.drawGraph();
+          this.cdr.markForCheck();
+        } else {
+          alert('Archivo inválido: estructura incorrecta.');
+        }
+      } catch (error) {
+        alert('Error al leer el archivo JSON.');
+      }
+    };
+
+    reader.readAsText(file);
   }
 }

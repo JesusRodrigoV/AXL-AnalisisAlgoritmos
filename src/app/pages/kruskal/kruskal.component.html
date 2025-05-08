@@ -41,6 +41,27 @@
             </button>
           </div>
 
+          <!-- Import/Export Buttons -->
+          <div class="form-section">
+            <button mat-raised-button color="primary" (click)="exportData()">
+              Exportar JSON
+            </button>
+            <button
+              mat-raised-button
+              color="primary"
+              (click)="triggerFileInput()"
+            >
+              Importar JSON
+            </button>
+            <input
+              #fileInput
+              type="file"
+              accept=".json"
+              (change)="importData($event)"
+              hidden
+            />
+          </div>
+
           <!-- Edge List -->
           <mat-card-subtitle>Lista de Aristas</mat-card-subtitle>
           <mat-list>
@@ -77,6 +98,8 @@
           <button mat-raised-button color="warn" (click)="clearData()">
             Limpiar
           </button>
+
+          <!-- Help Button -->
           <app-help-button [helpContent]="helpContent" />
         </mat-card-content>
       </mat-card>
@@ -93,4 +116,3 @@
     </mat-sidenav-content>
   </mat-sidenav-container>
 </div>
-<app-help-button [helpContent]="helpContent" />
