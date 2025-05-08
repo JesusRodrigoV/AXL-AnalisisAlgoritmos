@@ -25,6 +25,8 @@
 
   <button (click)="triggerFileInput()">Importar JSON</button>
   <input #fileInput type="file" accept=".json" (change)="importData($event)" hidden />
+
+  <button (click)="clearData()">Limpiar</button>
 </div>
 <!--
 <h2>Lista de Aristas</h2>
@@ -56,4 +58,4 @@
   </li>
 </ul>
 
-<button (click)="clearData()">Limpiar</button>
+
