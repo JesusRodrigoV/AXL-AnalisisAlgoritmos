@@ -23,11 +23,11 @@
         <mat-icon>file_download</mat-icon>
         Exportar
       </button>
-      <button mat-raised-button color="primary" (click)="onModeToggled('connect')" [class.active]="modes['connect']">
+      <button mat-raised-button color="primary" (click)="onModeToggled('connect')" [class.modo-activo]="isModoActivo('connect')">
         <mat-icon>link</mat-icon>
         Conectar Nodos
       </button>
-      <button mat-raised-button color="warn" (click)="onModeToggled('delete')" [class.active]="modes['delete']">
+      <button mat-raised-button color="warn" (click)="onModeToggled('delete')" [class.modo-activo]="isModoActivo('delete')">
         <mat-icon>delete</mat-icon>
         Eliminar
       </button>

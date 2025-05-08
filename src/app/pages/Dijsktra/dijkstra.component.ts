@@ -345,10 +345,56 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
       const rect = canvas.getBoundingClientRect();
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
-      
+
+      // 1. ¿Doble clic sobre un nodo? Editar nombre
+      const nodo = this.nodos.find(
+        (n) => Math.sqrt(Math.pow(x - n.x, 2) + Math.pow(y - n.y, 2)) < n.radio
+      );
+      if (nodo) {
+        const nuevoNombre = prompt('Ingrese el nuevo nombre para el nodo:', nodo.nombre);
+        if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
+          nodo.nombre = nuevoNombre.trim();
+          this.redibujarCanvas();
+          this.guardarEstado();
+        }
+        return;
+      }
+
+      // 2. ¿Doble clic cerca del peso de una conexión? Editar peso
+      for (const conexion of this.conexiones) {
+        const desde = this.nodos.find((c) => c.contador === conexion.desde);
+        const hasta = this.nodos.find((c) => c.contador === conexion.hasta);
+        if (desde && hasta) {
+          // Calcular posición del peso (igual que en dibujarNodo)
+          const esBidireccional = !conexion.dirigido || this.conexiones.some(
+            (c) => c.desde === conexion.hasta && c.hasta === conexion.desde
+          );
+          const angle = Math.atan2(hasta.y - desde.y, hasta.x - desde.x);
+          const offset = esBidireccional ? 10 : 0;
+          const offsetX = offset * Math.cos(angle + Math.PI / 2);
+          const offsetY = offset * Math.sin(angle + Math.PI / 2);
+          const startX = desde.x + offsetX;
+          const startY = desde.y + offsetY;
+          const endX = hasta.x + offsetX;
+          const endY = hasta.y + offsetY;
+          const midX = (startX + endX) / 2 + offsetY * 0.6;
+          const midY = (startY + endY) / 2 - offsetX * 0.6;
+          // Si el doble clic está cerca del peso
+          if (Math.abs(x - midX) < 15 && Math.abs(y - midY) < 15) {
+            const nuevoPeso = prompt('Ingrese el nuevo peso para la conexión:', String(conexion.peso));
+            if (nuevoPeso !== null && !isNaN(Number(nuevoPeso))) {
+              conexion.peso = Number(nuevoPeso);
+              this.redibujarCanvas();
+              this.guardarEstado();
+            }
+            return;
+          }
+        }
+      }
+
+      // Si no es sobre nodo ni peso, crear nodo nuevo (comportamiento original)
       this.contador++;
       const nombreNodo = String.fromCharCode(64 + this.contador); // A = 65, B = 66, etc.
-      
       const nuevoNodo = new Nodo(
         x,
         y,
@@ -359,7 +405,6 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
         0,
         '#2196f3'
       );
-      
       this.nodos = [...this.nodos, nuevoNodo];
       this.dibujarNodo(ctx);
       this.guardarEstado();
@@ -828,5 +873,30 @@ export default class DijkstraComponent implements OnInit, AfterViewInit, OnDestr
         this.limpiarSeleccion();
       }
     });
+  }
+
+  // Editar el nombre de un nodo seleccionado desde el menú contextual
+  editarNombreNodo(nodo: any) {
+    const nuevoNombre = prompt('Ingrese el nuevo nombre para el nodo:', nodo.nombre);
+    if (nuevoNombre !== null && nuevoNombre.trim() !== '') {
+      nodo.nombre = nuevoNombre.trim();
+      this.redibujarCanvas();
+      this.guardarEstado();
+    }
+  }
+
+  // Editar el peso de una conexión seleccionada desde el menú contextual
+  editarPesoConexion(conexion: any) {
+    const nuevoPeso = prompt('Ingrese el nuevo peso para la conexión:', String(conexion.peso));
+    if (nuevoPeso !== null && !isNaN(Number(nuevoPeso))) {
+      conexion.peso = Number(nuevoPeso);
+      this.redibujarCanvas();
+      this.guardarEstado();
+    }
+  }
+
+  // Devuelve true si el modo está activo (para usar en la clase del botón)
+  isModoActivo(modo: string): boolean {
+    return !!this.modes[modo];
   }
 }
