@@ -1,0 +1,46 @@
+<div class="container">
+  <h2>Calculadora de Transformada de Laplace</h2>
+
+  <form [formGroup]="laplaceForm" (submit)="enviarDatos()">
+    <mat-form-field appearance="outline" class="formula-input">
+      <mat-label>Función en el dominio del tiempo (t)</mat-label>
+      <textarea
+        matInput
+        formControlName="formula"
+        placeholder="Ejemplo: exp(-a*t)*sin(w*t)"
+        rows="2"
+      ></textarea>
+      @if (laplaceForm.controls.formula.invalid && laplaceForm.controls.formula.touched) {
+        <mat-error>Ingrese una fórmula válida</mat-error>
+      }
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="laplaceForm.invalid">
+      Calcular Transformada
+    </button>
+  </form>
+
+  
+  @if (resultados()) {
+    <mat-card class="result-card">
+      <mat-card-content>
+        <h3>Fórmula original:</h3>
+        <p><code>f(t) = {{ resultados()?.formulaOriginal }}</code></p>
+        
+        <h3>Transformada de Laplace:</h3>
+        <p><code>F(s) = {{ resultados()?.transformada }}</code></p>
+        
+        <h3>Representación LaTeX:</h3>
+        <div class="katex-container" #katexContainer></div>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (error()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        {{ error() }}
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

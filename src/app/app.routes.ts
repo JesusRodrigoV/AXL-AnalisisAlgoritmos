@@ -43,6 +43,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/kruskal/kruskal.component'),
   },
   {
+    path: 'fuzzy',
+    loadComponent: () => import('./pages/fuzzy/fuzzy.component'),
+  },
+  {
+    path: 'laplace',
+    loadComponent: () => import('./pages/laplace/laplace.component'),
+  },
+  {
     path: '',
     redirectTo: '/home',
     pathMatch: 'full',

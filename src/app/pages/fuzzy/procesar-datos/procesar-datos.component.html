@@ -1,0 +1,88 @@
+<div class="container">
+  <h2>Procesar Lógica Difusa</h2>
+
+  <form [formGroup]="form" (ngSubmit)="enviarDatos()">
+    <mat-form-field appearance="outline" class="variable-input">
+      <mat-label>Variable 1</mat-label>
+      <input
+        matInput
+        type="number"
+        formControlName="variable1"
+        min="0"
+        max="100"
+        required
+      />
+      <mat-error *ngIf="form.get('variable1')?.invalid && form.get('variable1')?.touched">
+        Debe estar entre 0 y 100
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="variable-input">
+      <mat-label>Variable 2</mat-label>
+      <input
+        matInput
+        type="number"
+        formControlName="variable2"
+        min="0"
+        max="100"
+        required
+      />
+      <mat-error *ngIf="form.get('variable2')?.invalid && form.get('variable2')?.touched">
+        Debe estar entre 0 y 100
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="variable-input">
+      <mat-label>Variable 3</mat-label>
+      <input
+        matInput
+        type="number"
+        formControlName="variable3"
+        min="0"
+        max="100"
+        required
+      />
+      <mat-error *ngIf="form.get('variable3')?.invalid && form.get('variable3')?.touched">
+        Debe estar entre 0 y 100
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="variable-input">
+      <mat-label>Variable 4</mat-label>
+      <input
+        matInput
+        type="number"
+        formControlName="variable4"
+        min="0"
+        max="100"
+        required
+      />
+      <mat-error *ngIf="form.get('variable4')?.invalid && form.get('variable4')?.touched">
+        Debe estar entre 0 y 100
+      </mat-error>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
+      Procesar
+    </button>
+  </form>
+
+  @if (resultados()) {
+    <mat-card class="result-card">
+      <mat-card-header>
+        <mat-card-title>Resultado</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p>{{ resultados().resultado | number: '1.2-2' }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (error()) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <p>{{ error() }}</p>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

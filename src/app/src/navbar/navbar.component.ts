@@ -31,12 +31,14 @@ export class NavbarComponent {
       icon: 'bxs-home',
       description: 'Página principal',
     },
+    /*
     {
       label: 'Proyecto',
       path: '/proyecto',
       icon: 'bx-book',
       description: 'Información del proyecto',
     },
+    */
     {
       label: 'Editor Simple',
       path: '/editor',
@@ -84,6 +86,18 @@ export class NavbarComponent {
       path: '/dijkstra',
       icon: 'bx bx-network-chart',
       description: 'Algoritmo de Dijkstra para encontrar el camino más corto',
+    },
+    {
+      label: 'Fuzzy',
+      path: '/fuzzy',
+      icon: 'bx bx-network-chart',
+      description: 'Logica difusa para sistemas de control',
+    },
+    {
+      label: 'Laplace',
+      path: '/laplace',
+      icon: 'bx bx-network-chart',
+      description: 'Transformada de Laplace',
     },
   ];
   private location: Location = inject(Location);
