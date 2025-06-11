@@ -1,5 +1,5 @@
 <mat-toolbar color="primary" class="navbar">
-  <a mat-button routerLink="/home" class="brand">
+  <a mat-button (click)="navigateTo({ path: '/home', label: 'Inicio', icon: 'bx-scatter-chart', description: 'Página principal' })" class="brand">
     <i class="bx bx-scatter-chart"></i>
     <span>Análisis de Algoritmos</span>
   </a>
@@ -8,7 +8,7 @@
     @for (ruta of rutas; track ruta.path) {
       <a
         mat-button
-        [routerLink]="ruta.path"
+        (click)="navigateTo(ruta)"
         [class.active-link]="isRouteActive(ruta.path)"
         [matTooltip]="ruta.description"
         [matTooltipShowDelay]="500"
@@ -44,7 +44,7 @@
     @for (ruta of rutas; track ruta.path) {
       <a
         mat-menu-item
-        [routerLink]="ruta.path"
+        (click)="navigateTo(ruta)"
         [class.active-link]="isRouteActive(ruta.path)"
       >
         <div class="menu-item-content">
@@ -56,7 +56,5 @@
     }
   </mat-menu>
 </mat-toolbar>
-
-<div class="navbar-spacer"></div>
 
 <div class="navbar-spacer"></div>
