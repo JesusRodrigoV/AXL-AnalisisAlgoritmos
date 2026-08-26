@@ -16,13 +16,13 @@
     </mat-form-field>
 
     <button mat-raised-button color="primary" type="submit" [disabled]="laplaceForm.invalid">
-      Calcular Transformada
+      <i class="bx bx-calculator"></i> Calcular Transformada
     </button>
   </form>
 
   
   @if (resultados()) {
-    <mat-card class="result-card">
+    <mat-card class="result-card" appearance="outlined">
       <mat-card-content>
         <h3>Fórmula original:</h3>
         <p><code>f(t) = {{ resultados()?.formulaOriginal }}</code></p>
@@ -37,7 +37,7 @@
   }
 
   @if (error()) {
-    <mat-card class="error-card">
+    <mat-card class="error-card" appearance="outlined">
       <mat-card-content>
         {{ error() }}
       </mat-card-content>

@@ -2,78 +2,55 @@
   <mat-sidenav-container class="sidenav-container">
     <!-- Left Sidebar (30%) -->
     <mat-sidenav mode="side" opened class="controls-sidenav">
-      <mat-card class="controls-card">
+      <mat-card class="controls-card" appearance="outlined">
         <mat-card-header>
           <mat-card-title>Algoritmo de Kruskal</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <!-- Vertex Input -->
           <div class="form-section">
-            <mat-form-field appearance="fill">
+            <mat-form-field appearance="outline">
               <mat-label>Número de vértices</mat-label>
               <input matInput type="number" [(ngModel)]="vertices" />
             </mat-form-field>
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="onVertexCountChange()"
-            >
-              Actualizar Nodos
+            <button mat-raised-button color="primary" (click)="onVertexCountChange()">
+              <i class="bx bx-refresh"></i> Actualizar Nodos
             </button>
           </div>
 
           <!-- Edge Input -->
           <div class="form-section">
-            <mat-form-field appearance="fill">
+            <mat-form-field appearance="outline">
               <mat-label>Origen</mat-label>
               <input matInput type="number" [(ngModel)]="newSource" />
             </mat-form-field>
-            <mat-form-field appearance="fill">
+            <mat-form-field appearance="outline">
               <mat-label>Destino</mat-label>
               <input matInput type="number" [(ngModel)]="newDestination" />
             </mat-form-field>
-            <mat-form-field appearance="fill">
+            <mat-form-field appearance="outline">
               <mat-label>Peso</mat-label>
               <input matInput type="number" [(ngModel)]="newWeight" />
             </mat-form-field>
             <button mat-raised-button color="primary" (click)="addEdge()">
-              Agregar Arista
+              <i class="bx bx-plus"></i> Agregar Arista
             </button>
           </div>
 
           <!-- Import/Export Buttons -->
           <div class="form-section">
             <button mat-raised-button color="primary" (click)="exportData()">
-              Exportar JSON
+              <i class="bx bx-download"></i> Exportar JSON
             </button>
-            <button
-              mat-raised-button
-              color="primary"
-              (click)="triggerFileInput()"
-            >
-              Importar JSON
+            <button mat-raised-button color="primary" (click)="triggerFileInput()">
+              <i class="bx bx-upload"></i> Importar JSON
             </button>
-            <input
-              #fileInput
-              type="file"
-              accept=".json"
-              (change)="importData($event)"
-              hidden
-            />
+            <input #fileInput type="file" accept=".json" (change)="importData($event)" hidden />
           </div>
 
-          <!--
-<mat-card-subtitle>Lista de Aristas</mat-card-subtitle>
-          <mat-list>
-            <mat-list-item *ngFor="let edge of edges">
-              ({{ edge.source }} → {{ edge.destination }}) con peso
-              {{ edge.weight }}
-            </mat-list-item>
-          </mat-list>
--->
           <!-- Mode Selection and Run -->
           <div class="form-section">
-            <mat-form-field appearance="fill">
+            <mat-form-field appearance="outline">
               <mat-label>Modo</mat-label>
               <mat-select [(ngModel)]="mode">
                 <mat-option value="min">Minimizar</mat-option>
@@ -81,22 +58,13 @@
               </mat-select>
             </mat-form-field>
             <button mat-raised-button color="primary" (click)="runKruskal()">
-              Resolver Kruskal
+              <i class="bx bx-play"></i> Resolver Kruskal
             </button>
           </div>
 
-          <!--
-          <mat-card-subtitle>MST:</mat-card-subtitle>
-          <mat-list>
-            <mat-list-item *ngFor="let edge of mst">
-              ({{ edge.source + 1 }} → {{ edge.destination + 1 }}) con peso
-              {{ edge.weight }}
-            </mat-list-item>
-          </mat-list>
--->
           <!-- Clear Button -->
           <button mat-raised-button color="warn" (click)="clearData()">
-            Limpiar
+            <i class="bx bx-trash"></i> Limpiar
           </button>
 
           <!-- Help Button -->
@@ -107,12 +75,11 @@
 
     <!-- Right Canvas (70%) -->
     <mat-sidenav-content class="canvas-content">
-      <canvas
-        #graphCanvas
-        width="600"
-        height="600"
-        style="border: 1px solid var(--canvas-border)"
-      ></canvas>
+      <mat-card appearance="outlined" class="canvas-card">
+        <mat-card-content>
+          <canvas #graphCanvas width="600" height="600"></canvas>
+        </mat-card-content>
+      </mat-card>
     </mat-sidenav-content>
   </mat-sidenav-container>
 </div>

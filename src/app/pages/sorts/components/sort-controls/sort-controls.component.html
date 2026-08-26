@@ -1,0 +1,83 @@
+<div class="controls-row">
+  <div class="action-buttons">
+    <button
+      mat-raised-button
+      color="accent"
+      (click)="generate.emit()"
+      [disabled]="isSorting"
+    >
+      Generar Array
+    </button>
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="sort.emit()"
+      [disabled]="isSorting && !isPaused"
+    >
+      {{ !isSorting ? 'Ordenar' : isPaused ? 'Continuar' : 'Ordenando...' }}
+    </button>
+
+    <button
+      mat-raised-button
+      color="warn"
+      (click)="clear.emit()"
+      [disabled]="isArrayEmpty"
+    >
+      Limpiar
+    </button>
+
+    <div class="file-buttons">
+      <input
+        #fileInput
+        type="file"
+        style="display: none"
+        (change)="onFileSelected($event)"
+        accept=".json,.txt"
+      />
+
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="fileInput.click()"
+        [disabled]="isSorting"
+      >
+        Importar
+      </button>
+
+      <button
+        mat-raised-button
+        color="primary"
+        [matMenuTriggerFor]="exportMenu"
+        [disabled]="isSorting || isArrayEmpty"
+      >
+        Exportar
+      </button>
+
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportFile.emit('json')">
+          Exportar como JSON
+        </button>
+        <button mat-menu-item (click)="exportFile.emit('txt')">
+          Exportar como TXT
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+
+  <div class="speed-control">
+    <span class="speed-label">Velocidad:</span>
+    <mat-button-toggle-group
+      [value]="speedMultiplier"
+      (change)="onSpeedChange($event.value)"
+      class="speed-toggle"
+    >
+      <mat-button-toggle [value]="0.5">0.5x</mat-button-toggle>
+      <mat-button-toggle [value]="1">1x</mat-button-toggle>
+      <mat-button-toggle [value]="2">2x</mat-button-toggle>
+      <mat-button-toggle [value]="5">5x</mat-button-toggle>
+      <mat-button-toggle [value]="10">10x</mat-button-toggle>
+      <mat-button-toggle [value]="9999">Max</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+</div>

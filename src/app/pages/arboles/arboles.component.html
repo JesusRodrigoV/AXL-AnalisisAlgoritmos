@@ -1,7 +1,7 @@
 <div class="container">
   <div class="layout">
     <!-- Panel de Control (Izquierda) -->
-    <mat-card class="control-panel">
+    <mat-card class="control-panel" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Árboles Binarios</mat-card-title>
         <mat-card-subtitle>Visualización y Manipulación</mat-card-subtitle>
@@ -19,15 +19,12 @@
                   placeholder="Ej: 50, 30, 70, 20, 40"
                   [matTooltip]="'Ingresa números separados por comas'"
                 />
-                <mat-icon
-                  matSuffix
-                  matTooltip="Los valores se ordenarán automáticamente"
-                  >info</mat-icon
-                >
+                <i class="bx bx-info-circle" matSuffix
+                  [matTooltip]="'Los valores se ordenarán automáticamente'"
+                ></i>
               </mat-form-field>
               <button mat-raised-button color="primary" (click)="crearArbol()">
-                <mat-icon>account_tree</mat-icon>
-                Construir Árbol
+                <i class="bx bx-tree"></i> Construir Árbol
               </button>
             </div>
           </mat-tab>
@@ -48,7 +45,7 @@
                   (click)="guardarPreOrder()"
                   [matTooltip]="'Construir usando preorden'"
                 >
-                  <mat-icon>play_arrow</mat-icon>
+                  <i class="bx bx-play"></i>
                 </button>
               </mat-form-field>
 
@@ -65,7 +62,7 @@
                   (click)="guardarInOrder()"
                   [matTooltip]="'Construir usando inorden'"
                 >
-                  <mat-icon>play_arrow</mat-icon>
+                  <i class="bx bx-play"></i>
                 </button>
               </mat-form-field>
 
@@ -82,7 +79,7 @@
                   (click)="guardarPostOrder()"
                   [matTooltip]="'Construir usando postorden'"
                 >
-                  <mat-icon>play_arrow</mat-icon>
+                  <i class="bx bx-play"></i>
                 </button>
               </mat-form-field>
             </div>
@@ -93,33 +90,27 @@
 
         <!-- Acciones Generales -->
         <div class="actions">
-          <button mat-stroked-button color="primary" (click)="generarRandom()">
-            <mat-icon>casino</mat-icon>
-            Aleatorio
+          <button mat-raised-button color="primary" (click)="generarRandom()">
+            <i class="bx bx-dice"></i> Aleatorio
           </button>
-          <button mat-stroked-button color="warn" (click)="limpiarEntradas()">
-            <mat-icon>clear_all</mat-icon>
-            Limpiar
+          <button mat-raised-button color="warn" (click)="limpiarEntradas()">
+            <i class="bx bx-trash"></i> Limpiar
           </button>
-          <button
-            mat-stroked-button
-            (click)="exportarArbol()"
-            [disabled]="!raiz"
-          >
-            <mat-icon>file_download</mat-icon>
-            Exportar
+          <button mat-raised-button (click)="exportarArbol()" [disabled]="!raiz">
+            <i class="bx bx-download"></i> Exportar
           </button>
-          <button mat-stroked-button (click)="importarArbol()">
-            <mat-icon>file_upload</mat-icon>
-            Importar
+          <button mat-raised-button (click)="importarArbol()">
+            <i class="bx bx-upload"></i> Importar
           </button>
         </div>
       </mat-card-content>
     </mat-card>
 
     <!-- Área del Canvas (Derecha) -->
-    <mat-card class="canvas-card">
-      <canvas #canvas width="800" height="600"></canvas>
+    <mat-card class="canvas-card" appearance="outlined">
+      <mat-card-content>
+        <canvas #canvas width="800" height="600"></canvas>
+      </mat-card-content>
     </mat-card>
   </div>
 

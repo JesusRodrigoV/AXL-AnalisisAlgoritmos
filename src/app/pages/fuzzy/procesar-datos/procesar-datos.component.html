@@ -63,12 +63,12 @@
     </mat-form-field>
 
     <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">
-      Procesar
+      <i class="bx bx-check"></i> Procesar
     </button>
   </form>
 
   @if (resultados()) {
-    <mat-card class="result-card">
+    <mat-card class="result-card" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Resultado</mat-card-title>
       </mat-card-header>
@@ -79,7 +79,7 @@
   }
 
   @if (error()) {
-    <mat-card class="error-card">
+    <mat-card class="error-card" appearance="outlined">
       <mat-card-content>
         <p>{{ error() }}</p>
       </mat-card-content>

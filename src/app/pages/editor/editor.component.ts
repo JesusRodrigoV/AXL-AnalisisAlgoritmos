@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { HelpContent } from '@app/models/Help.model';
-import { HelpButtonComponent } from '@app/src/help-button';
-import { MyCanvasComponent } from '@app/src/my-canvas';
+import { HelpButtonComponent } from '@app/shared/components/help-button';
+import { MyCanvasComponent } from '@app/shared/components/my-canvas';
 
 @Component({
   selector: 'app-editor',

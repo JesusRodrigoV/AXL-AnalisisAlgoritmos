@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { HelpContent } from '@app/models/Help.model';
-import { HelpButtonComponent } from '@app/src/help-button';
+import { HelpButtonComponent } from '@app/shared/components/help-button';
 import { JohnsonCanvasComponent } from 'src/app/pages/johnson/components/johnson-canvas';
 
 @Component({

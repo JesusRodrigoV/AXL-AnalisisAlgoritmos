@@ -4,6 +4,8 @@ export class Conexion {
   private _peso: number;
   private _dirigido: boolean;
   private _color: string;
+  holgura?: number;
+  rutaCritica?: boolean;
 
   constructor(desde: number, hasta: number, peso: number, dirigido: boolean) {
     this._desde = desde;
@@ -13,7 +15,6 @@ export class Conexion {
     this._color = '#666';
   }
 
-  // Método para serialización
   toJSON() {
     return {
       desde: this._desde,
@@ -21,63 +22,36 @@ export class Conexion {
       peso: this._peso,
       dirigido: this._dirigido,
       color: this._color,
+      holgura: this.holgura,
+      rutaCritica: this.rutaCritica,
     };
   }
 
-  // Método estático para deserialización
   static fromJSON(json: any): Conexion {
-    const desde = json._desde || json.desde;
-    const hasta = json._hasta || json.hasta;
-    const peso = json._peso || json.peso;
-    const dirigido = json._dirigido ?? json.dirigido ?? false; // Usar operador nullish para manejar false explícito
+    const desde = json._desde ?? json.desde;
+    const hasta = json._hasta ?? json.hasta;
+    const peso = json._peso ?? json.peso ?? 0;
+    const dirigido = json._dirigido ?? json.dirigido ?? false;
 
     const conexion = new Conexion(desde, hasta, peso, dirigido);
-    conexion._dirigido = dirigido; // Asegurar que se mantiene el valor correcto
+    conexion._dirigido = dirigido;
 
     if (json._color || json.color) {
       conexion._color = json._color || json.color;
     }
+    if (json.holgura != null) conexion.holgura = json.holgura;
+    if (json.rutaCritica != null) conexion.rutaCritica = json.rutaCritica;
     return conexion;
   }
 
-  get desde(): number {
-    return this._desde;
-  }
-
-  set desde(value: number) {
-    this._desde = value;
-  }
-
-  get hasta(): number {
-    return this._hasta;
-  }
-
-  set hasta(value: number) {
-    this._hasta = value;
-  }
-
-  get peso(): number {
-    return this._peso;
-  }
-
-  set peso(value: number) {
-    this._peso = value;
-  }
-
-  get dirigido(): boolean {
-    return this._dirigido;
-  }
-
-  set dirigido(value: boolean) {
-    this._dirigido = value;
-  }
-  
-  get color(): string {
-    return this._color;
-  }
-  
-  set color(value: string) {
-    this._color = value;
-  }
-  
+  get desde(): number { return this._desde; }
+  set desde(value: number) { this._desde = value; }
+  get hasta(): number { return this._hasta; }
+  set hasta(value: number) { this._hasta = value; }
+  get peso(): number { return this._peso; }
+  set peso(value: number) { this._peso = value; }
+  get dirigido(): boolean { return this._dirigido; }
+  set dirigido(value: boolean) { this._dirigido = value; }
+  get color(): string { return this._color; }
+  set color(value: string) { this._color = value; }
 }

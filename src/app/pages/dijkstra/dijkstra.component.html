@@ -1,0 +1,81 @@
+<div class="container">
+  <mat-card appearance="outlined" class="canvas-card">
+    <mat-card-content>
+      <div class="canvas-container" #canvasContainer>
+        <canvas
+          #myCanvas
+          class="myCanvas"
+          id="myCanvas"
+          [width]="canvasWidth"
+          [height]="canvasHeight"
+          (dblclick)="dobleClickCanvas($event)"
+          (click)="clickCanvas($event)"
+          (contextmenu)="menuContexto($event)"
+        >
+        </canvas>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="controls-card">
+    <mat-card-content>
+      <div class="controls">
+        <div class="button-group">
+          <button mat-raised-button color="accent" (click)="seleccionarArchivo()">
+            <i class="bx bx-upload"></i> Importar
+          </button>
+          <button mat-raised-button color="accent" (click)="exportar()">
+            <i class="bx bx-download"></i> Exportar
+          </button>
+          <button mat-raised-button color="primary" (click)="onModeToggled('connect')" [class.modo-activo]="isModoActivo('connect')">
+            <i class="bx bx-link"></i> Conectar Nodos
+          </button>
+          <button mat-raised-button color="warn" (click)="onModeToggled('delete')" [class.modo-activo]="isModoActivo('delete')">
+            <i class="bx bx-trash"></i> Eliminar
+          </button>
+          <button mat-raised-button color="accent" (click)="limpiarCanvas()">
+            <i class="bx bx-trash"></i> Limpiar
+          </button>
+        </div>
+
+        <div class="node-selection">
+          <div class="select-group">
+            <mat-form-field appearance="outline">
+              <mat-label>Nodo Inicio</mat-label>
+              <mat-select [(ngModel)]="nodoInicio" (selectionChange)="onNodeSelectionChange()">
+                <mat-option [value]="null">Seleccionar nodo</mat-option>
+                <mat-option *ngFor="let nodo of nodos" [value]="nodo.contador">
+                  {{ nodo.nombre }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="select-group">
+            <mat-form-field appearance="outline">
+              <mat-label>Nodo Fin</mat-label>
+              <mat-select [(ngModel)]="nodoFin" (selectionChange)="onNodeSelectionChange()">
+                <mat-option [value]="null">Seleccionar nodo</mat-option>
+                <mat-option *ngFor="let nodo of nodos" [value]="nodo.contador">
+                  {{ nodo.nombre }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <button mat-raised-button color="primary" (click)="ejecutarDijkstra('min')" [disabled]="!nodoInicio || !nodoFin">
+            <i class="bx bx-down-arrow"></i> Dijkstra (Min)
+          </button>
+
+          <button mat-raised-button color="primary" (click)="ejecutarDijkstra('max')" [disabled]="!nodoInicio || !nodoFin">
+            <i class="bx bx-up-arrow"></i> Dijkstra (Max)
+          </button>
+        </div>
+
+        <input type="file" #fileInput id="fileInput" (change)="onFileSelected($event)" style="display: none">
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <app-help-button [helpContent]="helpContent"></app-help-button>
+</div>

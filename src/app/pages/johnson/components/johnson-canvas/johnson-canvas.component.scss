@@ -1,7 +1,9 @@
+@use '../../../../../styles/shared' as *;
+
 .johnson-layout {
   display: flex;
   height: 100%;
-  background-color: #f5f5f5;
+  background-color: var(--axl-bg-secondary);
 }
 
 .config-panel {
@@ -9,9 +11,7 @@
   margin: 16px;
   overflow-y: auto;
 
-  mat-card-header {
-    margin-bottom: 16px;
-  }
+  @include mat-card-header-margin(16px);
 
   .activities-table {
     width: 100%;
@@ -21,20 +21,20 @@
     .table-header {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr 60px;
-      background: #f5f5f5;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      background: var(--axl-bg-secondary);
+      border-bottom: 1px solid var(--axl-divider);
 
       .header-cell {
         padding: 12px 8px;
         font-weight: 500;
-        color: rgba(0, 0, 0, 0.87);
+        color: var(--axl-text-primary);
       }
     }
 
     .table-row {
       display: grid;
       grid-template-columns: 2fr 1fr 1fr 60px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+      border-bottom: 1px solid var(--axl-divider);
 
       &:last-child {
         border-bottom: none;
@@ -68,16 +68,16 @@
     }
 
     .mat-mdc-text-field-wrapper {
-      padding: 0 8px !important; // Añadir padding horizontal
+      padding: 0 8px !important;
     }
 
     .mat-mdc-form-field-infix {
-      padding: 8px 0 !important; // Padding vertical
+      padding: 8px 0 !important;
       min-height: 40px !important;
     }
 
     .mat-mdc-input-element {
-      padding: 0 8px; // Padding interno para los inputs
+      padding: 0 8px;
     }
   }
 
@@ -88,8 +88,7 @@
     margin-top: 16px;
 
     .actions-row {
-      display: flex;
-      gap: 8px;
+      @include flex-group(8px);
 
       button {
         flex: 1;
@@ -104,14 +103,7 @@
       }
     }
 
-    .primary-actions {
-      justify-content: space-between;
-
-      button {
-        flex: 1;
-      }
-    }
-
+    .primary-actions,
     .secondary-actions {
       justify-content: space-between;
 
@@ -126,9 +118,9 @@
   flex: 1;
   margin: 16px;
   position: relative;
-  background: white;
+  background: var(--axl-canvas-bg);
   border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--axl-shadow);
   overflow: hidden;
   min-height: 500px;
   display: flex;
@@ -138,8 +130,7 @@
     position: absolute;
     top: 16px;
     right: 16px;
-    display: flex;
-    gap: 8px;
+    @include flex-group(8px);
     padding: 8px;
     border-radius: 4px;
     z-index: 500;
@@ -151,13 +142,13 @@
       transition: all 0.3s ease;
 
       &:hover {
-        background: #f5f5f5;
+        background: var(--axl-bg-secondary);
         transform: scale(1.05);
       }
 
       i {
         font-size: 20px;
-        color: #666;
+        color: var(--axl-text-secondary);
       }
     }
   }
@@ -175,7 +166,7 @@
     }
 
     canvas {
-      background-color: #fff;
+      background-color: var(--axl-canvas-bg);
     }
   }
 
@@ -183,10 +174,11 @@
     position: absolute;
     bottom: 16px;
     left: 16px;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--axl-bg-surface);
+    opacity: 0.95;
     padding: 12px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--axl-shadow);
     z-index: 1000;
 
     .legend-item {
@@ -205,17 +197,17 @@
         border-radius: 2px;
 
         &.critical {
-          background-color: #ff4081;
+          background-color: var(--axl-error);
         }
 
         &.regular {
-          background-color: #2196f3;
+          background-color: var(--axl-accent);
         }
       }
 
       span {
         font-size: 14px;
-        color: rgba(0, 0, 0, 0.87);
+        color: var(--axl-text-primary);
       }
     }
   }

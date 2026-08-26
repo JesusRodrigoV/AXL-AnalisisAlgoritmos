@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterModule } from '@angular/router';
 import { BenefitComponent } from './benefit';
 import { FeatureComponent } from './feature';
-import { FooterComponent } from '@app/src/footer';
+import { FooterComponent } from '@app/shared/components/footer';
 
 export interface RouteCard {
   icon: string;
@@ -82,7 +82,7 @@ export default class HomeComponent {
       title: 'Algoritmos de Ordenamiento',
       description:
         'Visualiza y comprende diferentes algoritmos de ordenamiento y su rendimiento.',
-      route: '/sorts/selection',
+      route: '/sorts',
       buttonText: 'COMENZAR',
     },
   ];

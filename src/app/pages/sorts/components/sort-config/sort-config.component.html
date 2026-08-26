@@ -1,0 +1,105 @@
+<div class="config-container">
+  <mat-form-field>
+    <mat-label>Algoritmo</mat-label>
+    <mat-select
+      [ngModel]="selectedAlgorithm"
+      (ngModelChange)="onAlgorithmChange($event)"
+      [disabled]="isSorting"
+    >
+      <mat-option value="selection">Selection Sort</mat-option>
+      <mat-option value="insertion">Insertion Sort</mat-option>
+      <mat-option value="shell">Shell Sort</mat-option>
+      <mat-option value="merge">Merge Sort</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Modo de ingreso</mat-label>
+    <mat-select
+      [ngModel]="inputMode"
+      (ngModelChange)="onInputModeChange($event)"
+      [disabled]="isSorting"
+    >
+      <mat-option value="auto">Automático</mat-option>
+      <mat-option value="manual">Manual</mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <ng-container *ngIf="inputMode === 'auto'">
+    <mat-form-field>
+      <mat-label>Tamaño del Array</mat-label>
+      <input
+        matInput
+        type="number"
+        [ngModel]="arraySize"
+        (ngModelChange)="onArraySizeChange($event)"
+        min="1"
+        max="1000"
+        [disabled]="isSorting"
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Valor Mínimo</mat-label>
+      <input
+        matInput
+        type="number"
+        [ngModel]="minValue"
+        (ngModelChange)="onMinValueChange($event)"
+        [disabled]="isSorting"
+      />
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Valor Máximo</mat-label>
+      <input
+        matInput
+        type="number"
+        [ngModel]="maxValue"
+        (ngModelChange)="onMaxValueChange($event)"
+        [disabled]="isSorting"
+      />
+    </mat-form-field>
+  </ng-container>
+
+  <ng-container *ngIf="inputMode === 'manual'">
+    <mat-form-field class="manual-input">
+      <mat-label>Valores (separados por comas)</mat-label>
+      <input
+        matInput
+        type="text"
+        [ngModel]="manualInput"
+        (ngModelChange)="onManualInputChange($event)"
+        placeholder="Ingrese números separados por comas"
+        [disabled]="isSorting"
+      />
+      <mat-hint>Ejemplo: 5, 2, 8, 1, 9, ...</mat-hint>
+    </mat-form-field>
+  </ng-container>
+
+  <mat-form-field *ngIf="selectedAlgorithm === 'shell'">
+    <mat-label>Valor de h</mat-label>
+    <input
+      matInput
+      type="number"
+      [ngModel]="hValue"
+      (ngModelChange)="onHValueChange($event)"
+      min="1"
+      [disabled]="isSorting"
+    />
+    <mat-hint>Valor inicial para el intervalo</mat-hint>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Tipo de Ordenamiento</mat-label>
+    <mat-select
+      [ngModel]="sortOrder"
+      (ngModelChange)="onSortOrderChange($event)"
+      [disabled]="isSorting"
+    >
+      <mat-option *ngFor="let option of sortOptions" [value]="option.value">
+        {{ option.label }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>

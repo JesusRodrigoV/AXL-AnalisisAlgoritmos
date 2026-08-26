@@ -20,7 +20,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { HttpErrorResponse } from '@angular/common/http';
 import katex from 'katex';
-import 'katex/dist/katex.min.css';
 
 @Component({
   selector: 'app-procesar-laplace',

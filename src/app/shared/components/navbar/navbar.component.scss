@@ -1,0 +1,137 @@
+@use '../../../../styles/shared' as *;
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 clamp(8px, 2vw, 16px);
+  background: linear-gradient(135deg, var(--axl-accent) 0%, var(--axl-accent-secondary) 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  height: 90px;
+
+  @media (min-width: 768px) {
+    height: 64px;
+    padding: 0 24px;
+  }
+
+  button[mat-button] {
+    .bx-sun,
+    .bx-moon {
+      color: white;
+      font-size: clamp(1.25rem, 2vw, 1.5rem);
+      transition: opacity 0.3s ease;
+
+      &:hover { opacity: 0.8; }
+    }
+  }
+
+  .bx { color: white; }
+}
+
+.brand {
+  @include flex-group(0);
+
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+  white-space: nowrap;
+  overflow: hidden;
+
+  i {
+    margin-right: clamp(4px, 1vw, 8px);
+    font-size: clamp(20px, 4vw, 24px);
+  }
+
+  span {
+    @media (max-width: 360px) { display: none; }
+  }
+}
+
+.nav-links {
+  display: none;
+  gap: 4px;
+  margin-left: auto;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar { display: none; }
+
+  @media (min-width: 768px) { display: flex; }
+
+  .nav-link {
+    @include flex-group(0);
+
+    align-items: center;
+    color: white;
+    opacity: 0.9;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.3s ease-out;
+    padding: 0 12px;
+    height: 36px;
+    white-space: nowrap;
+
+    i { margin-right: 6px; font-size: clamp(18px, 2vw, 20px); }
+    span { font-size: clamp(14px, 1.5vw, 16px); }
+
+    &:hover {
+      opacity: 1;
+      background-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+  }
+}
+
+i.bx { font-size: 1.5rem; }
+
+.nav-link.active-link {
+  opacity: 1;
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu-mobile {
+  display: block;
+  margin-left: 8px;
+
+  @media (min-width: 768px) { display: none; }
+
+  i { font-size: clamp(24px, 3vw, 28px); }
+}
+
+.route-description {
+  display: block;
+  font-size: 0.75rem;
+  margin-top: 4px;
+}
+
+// Angular Material overrides — !important required for shadow DOM穿透
+::ng-deep .mat-menu-panel {
+  max-width: 280px !important;
+  border-radius: 8px !important;
+
+  .mat-menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto !important;
+    line-height: 1.2;
+    padding: 12px 16px;
+
+    i { margin-right: 8px; font-size: 18px; }
+    span { font-size: 14px; margin: 2px 0; }
+  }
+}
+
+.navbar-spacer { height: 30px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

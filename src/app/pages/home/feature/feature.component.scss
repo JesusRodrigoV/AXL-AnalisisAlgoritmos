@@ -1,32 +1,15 @@
+@use '../../../../styles/shared' as *;
+
 .feature-card {
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  @include card-hover(translateY, -5px);
   cursor: pointer;
-}
-.feature-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 mat-card-header {
-  margin-bottom: 1rem;
+  @include mat-card-header-margin(1rem);
 
   i.bx {
-    color: #1976d2;
-    font-size: clamp(28px, 3vw, 32px);
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-
-    @media (min-width: 768px) {
-      width: 48px;
-      height: 48px;
-    }
+    @include icon-circle;
   }
 }
 
@@ -54,7 +37,6 @@ mat-card-actions {
   }
 }
 
-// Responsive Design
 @media (max-width: 768px) {
   .features {
     padding: 2rem 1rem;

@@ -1,83 +1,28 @@
-<mat-card class="sort-card">
+<mat-card class="sort-card" appearance="outlined">
   <mat-card-header>
-    <mat-button-toggle-group
-      [(ngModel)]="selectedAlgorithm"
-      (ngModelChange)="onAlgorithmChange()"
-      aria-label="Algoritmos de ordenamiento"
-    >
-      <mat-button-toggle value="selection">Selection Sort</mat-button-toggle>
-      <mat-button-toggle value="insertion">Insertion Sort</mat-button-toggle>
-      <mat-button-toggle value="shell">Shell Sort</mat-button-toggle>
-      <mat-button-toggle value="merge">Merge Sort</mat-button-toggle>
-    </mat-button-toggle-group>
+    <app-sort-config
+      [selectedAlgorithm]="selectedAlgorithm"
+      [arraySize]="arraySize"
+      [minValue]="minValue"
+      [maxValue]="maxValue"
+      [hValue]="hValue"
+      [sortOrder]="sortOrder"
+      [inputMode]="inputMode"
+      [manualInput]="manualInput"
+      [isSorting]="isSorting"
+      (selectedAlgorithmChange)="onAlgorithmChange($event)"
+      (arraySizeChange)="onArraySizeChange($event)"
+      (minValueChange)="onMinValueChange($event)"
+      (maxValueChange)="onMaxValueChange($event)"
+      (hValueChange)="onHValueChange($event)"
+      (sortOrderChange)="onSortOrderChange($event)"
+      (inputModeChange)="onInputModeChange($event)"
+      (manualInputChange)="onManualInputChange($event)"
+      (validationError)="onValidationError($event)"
+    />
   </mat-card-header>
 
   <mat-card-content>
-    <div class="input-container">
-      <mat-form-field>
-        <mat-label>Modo de ingreso</mat-label>
-        <mat-select
-          [(ngModel)]="inputMode"
-          (selectionChange)="onInputModeChange()"
-        >
-          <mat-option value="auto">Automático</mat-option>
-          <mat-option value="manual">Manual</mat-option>
-        </mat-select>
-      </mat-form-field>
-
-      <ng-container *ngIf="inputMode === 'auto'">
-        <mat-form-field>
-          <mat-label>Tamaño del Array</mat-label>
-          <input
-            matInput
-            type="number"
-            [(ngModel)]="arraySize"
-            min="1"
-            max="1000"
-          />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Valor Mínimo</mat-label>
-          <input matInput type="number" [(ngModel)]="minValue" />
-        </mat-form-field>
-
-        <mat-form-field>
-          <mat-label>Valor Máximo</mat-label>
-          <input matInput type="number" [(ngModel)]="maxValue" />
-        </mat-form-field>
-      </ng-container>
-
-      <ng-container *ngIf="inputMode === 'manual'">
-        <mat-form-field class="manual-input">
-          <mat-label>Valores (separados por comas)</mat-label>
-          <input
-            matInput
-            type="text"
-            [(ngModel)]="manualInput"
-            (ngModelChange)="onManualInputChange()"
-            placeholder="Ingrese números separados por comas"
-          />
-          <mat-hint>Ejemplo: 5, 2, 8, 1, 9, ...</mat-hint>
-        </mat-form-field>
-      </ng-container>
-
-      <mat-form-field *ngIf="selectedAlgorithm === 'shell'">
-        <mat-label>Valor de h</mat-label>
-        <input matInput type="number" [(ngModel)]="hValue" min="1" />
-        <mat-hint>Valor inicial para el intervalo</mat-hint>
-      </mat-form-field>
-
-      <mat-form-field>
-        <mat-label>Tipo de Ordenamiento</mat-label>
-        <mat-select [(ngModel)]="sortOrder">
-          <mat-option *ngFor="let option of sortOptions" [value]="option.value">
-            {{ option.label }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </div>
-
     <div #chartContainer class="chart-container"></div>
     <div class="execution-time-container">
       <mat-card-subtitle>
@@ -86,70 +31,17 @@
     </div>
   </mat-card-content>
 
-  <mat-card-actions>
-    <button
-      mat-raised-button
-      color="accent"
-      (click)="generateNewArray()"
-      [disabled]="isSorting"
-    >
-      Generar Array
-    </button>
-
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="startSort()"
-      [disabled]="isSorting"
-    >
-      {{ !isSorting ? "Ordenar" : "Ordenando..." }}
-    </button>
-
-    <button
-      mat-raised-button
-      color="warn"
-      (click)="clearSort()"
-      [disabled]="arrayData.length === 0"
-    >
-      Limpiar
-    </button>
-
-    <div class="import-export-buttons">
-      <input
-        #fileInput
-        type="file"
-        style="display: none"
-        (change)="handleFileInput($event)"
-        accept=".json,.txt"
-      />
-
-      <button
-        mat-raised-button
-        color="primary"
-        (click)="fileInput.click()"
-        [disabled]="isSorting"
-      >
-        Importar Array
-      </button>
-
-      <button
-        mat-raised-button
-        color="primary"
-        [matMenuTriggerFor]="exportMenu"
-        [disabled]="isSorting || arrayData.length === 0"
-      >
-        Exportar Array
-      </button>
-
-      <mat-menu #exportMenu="matMenu">
-        <button mat-menu-item (click)="exportArray('json')">
-          Exportar como JSON
-        </button>
-        <button mat-menu-item (click)="exportArray('txt')">
-          Exportar como TXT
-        </button>
-      </mat-menu>
-    </div>
-  </mat-card-actions>
+  <app-sort-controls
+    [isSorting]="isSorting"
+    [isArrayEmpty]="arrayData.length === 0"
+    [isPaused]="isPaused"
+    [speedMultiplier]="speedMultiplier"
+    (generate)="generateArray()"
+    (sort)="startSort()"
+    (clear)="clearSort()"
+    (importFile)="importFile($event)"
+    (exportFile)="exportFile($event)"
+    (speedChange)="onSpeedChange($event)"
+  />
 </mat-card>
 <app-help-button [helpContent]="helpContent" />

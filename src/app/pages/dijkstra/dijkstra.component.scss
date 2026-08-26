@@ -1,0 +1,63 @@
+@use '../../../styles/shared' as *;
+
+.container {
+  @include page-container;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.canvas-card mat-card-content {
+  padding: 0;
+}
+
+.canvas-container {
+  height: 500px;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--axl-canvas-bg);
+}
+
+.myCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.controls-card .controls {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.button-group {
+  @include flex-group(10px);
+}
+
+.node-selection {
+  @include flex-group(20px);
+  align-items: center;
+}
+
+.select-group {
+  flex: 1;
+  min-width: 200px;
+}
+
+@include mat-form-field-full-width;
+
+app-adjacency-matrix {
+  margin-top: 20px;
+  padding-bottom: 20px;
+  overflow-x: auto;
+}
+
+.modo-activo {
+  border: 2px solid var(--axl-accent) !important;
+  background-color: var(--axl-accent-light) !important;
+  color: var(--axl-accent) !important;
+  box-shadow: 0 0 8px rgba(25, 118, 210, 0.2);
+}

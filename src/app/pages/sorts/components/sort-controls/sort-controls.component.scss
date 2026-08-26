@@ -1,0 +1,46 @@
+@use '../../../../../styles/shared' as *;
+
+.controls-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+
+.action-buttons {
+  @include flex-group(12px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.file-buttons {
+  @include flex-group(8px);
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.speed-label {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.speed-toggle {
+  transform: scale(0.85);
+}
+
+@media (max-width: 600px) {
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .speed-control {
+    flex-direction: column;
+  }
+}

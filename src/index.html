@@ -14,12 +14,24 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
+    <link
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css"
+      rel="stylesheet"
+      crossorigin="anonymous"
+    />
   </head>
   <body class="mat-typography">
     <app-root></app-root>
   </body>
 
   <script>
+    // Prevent FOUC: apply dark mode class before first paint
+    (function() {
+      var t = localStorage.getItem('app_theme');
+      var dark = t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (dark) document.documentElement.classList.add('dark-mode');
+    })();
+    // Disable context menu
     document.addEventListener("contextmenu", function (event) {
       event.preventDefault();
     });

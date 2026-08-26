@@ -1,0 +1,26 @@
+@use '../../../../../styles/shared' as *;
+
+.config-container {
+  @include flex-group(16px);
+  margin-bottom: 20px;
+}
+
+mat-form-field {
+  min-width: 150px;
+  flex: 1;
+}
+
+.manual-input {
+  flex: 2;
+}
+
+@media (max-width: 600px) {
+  .config-container {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+}

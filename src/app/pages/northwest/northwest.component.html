@@ -1,30 +1,21 @@
 <div class="container">
-  <mat-card class="main-card">
+  <mat-card class="main-card" appearance="outlined">
     <mat-card-header>
       <mat-card-title>Método de la Esquina Noroeste</mat-card-title>
-
     </mat-card-header>
 
     <mat-card-content>
       <div class="input-section">
         <button mat-raised-button color="primary" (click)="triggerFileInput()">
-          Importar
+          <i class="bx bx-upload"></i> Importar
         </button>
 
-        <button
-          mat-raised-button
-          color="warn"
-          (click)="promptExportFileName()"
-        >
-          Exportar
+        <button mat-raised-button color="warn" (click)="promptExportFileName()">
+          <i class="bx bx-download"></i> Exportar
         </button>
 
-        <button
-          mat-raised-button
-          color="accent"
-          (click)="clearAll()"
-        >
-          Limpiar
+        <button mat-raised-button color="accent" (click)="clearAll()">
+          <i class="bx bx-trash"></i> Limpiar
         </button>
 
         <input
@@ -47,7 +38,7 @@
         </mat-form-field>
       </div>
 
-      <mat-card class="matrix-card">
+      <mat-card class="matrix-card" appearance="outlined">
         <mat-card-header>
           <mat-card-title>Matriz de costos</mat-card-title>
         </mat-card-header>
@@ -71,7 +62,7 @@
                   </th>
                   <th class="supply-header">
                     <div class="header-label">
-                      <i class="material-icons">local_shipping</i>
+                      <i class="bx bx-package"></i>
                       <span>Oferta Total</span>
                     </div>
                   </th>
@@ -126,7 +117,7 @@
                 <tr class="demand-row">
                   <th>
                     <div class="header-label">
-                      <i class="material-icons">shopping_cart</i>
+                      <i class="bx bx-cart"></i>
                       <span>Demanda</span>
                     </div>
                   </th>
@@ -197,7 +188,7 @@
       </div>
 
       <div class="results-section" *ngIf="showResults">
-        <mat-card class="result-card">
+        <mat-card class="result-card" appearance="outlined">
           <mat-card-header>
             <mat-card-title>Solución NorthWest</mat-card-title>
           </mat-card-header>
@@ -220,14 +211,14 @@
         </mat-card>
 
         <div class="results-info">
-          <mat-card class="info-card">
+          <mat-card class="info-card" appearance="outlined">
             <mat-card-content>
               <p>Costo NorthWest: {{ costoSolutionNW }}</p>
             </mat-card-content>
           </mat-card>
         </div>
 
-        <mat-card class="result-card">
+        <mat-card class="result-card" appearance="outlined">
           <mat-card-header>
             <mat-card-title>Solución optimizada</mat-card-title>
           </mat-card-header>
@@ -250,7 +241,7 @@
         </mat-card>
 
         <div class="results-info">
-          <mat-card class="info-card">
+          <mat-card class="info-card" appearance="outlined">
             <mat-card-content>
               <p>Costo Final: {{ costoSolution }}</p>
             </mat-card-content>

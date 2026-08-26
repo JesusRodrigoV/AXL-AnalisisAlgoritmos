@@ -82,7 +82,7 @@
                     <i class="bx bx-right-arrow-alt"></i>
                     <span class="node-dest">{{ getNodeName(i, false) }}</span>
                   </div>
-                  <div class="assignment-cost" *ngIf="canvas?.nodos">
+                  <div class="assignment-cost" *ngIf="currentNodes.length > 0">
                     <i class="bx bx-coin"></i>
                     {{ getAssignmentCost(i, assignment) }}
                   </div>
@@ -136,7 +136,7 @@
 
   <div class="right-section">
     <div class="canvas-section">
-      <mat-card class="canvas-card">
+      <mat-card class="canvas-card" appearance="outlined">
         <mat-card-content>
           <app-my-canvas
             [forceDirected]="true"

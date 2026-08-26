@@ -5,12 +5,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatDividerModule } from '@angular/material/divider';
-import { HelpButtonComponent } from '@app/src/help-button';
+import { HelpButtonComponent } from '@app/shared/components/help-button';
 import { HelpContent } from '@app/models/Help.model';
 
 class Nodo {
@@ -36,7 +35,6 @@ class Nodo {
     MatButtonModule,
     MatInputModule,
     MatFormFieldModule,
-    MatIconModule,
     MatTooltipModule,
     MatSnackBarModule,
     MatTabsModule,
@@ -765,7 +763,6 @@ export default class ArbolesComponent implements AfterViewInit {
   }
 
   agregarNumero() {
-    console.log('Agregar número');
   }
 
   generarRandom() {

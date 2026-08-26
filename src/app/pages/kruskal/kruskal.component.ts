@@ -15,7 +15,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatSelectModule } from '@angular/material/select';
 import { HelpContent } from '@app/models/Help.model';
-import { HelpButtonComponent } from '@app/src/help-button';
+import { HelpButtonComponent } from '@app/shared/components/help-button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 
 interface Edge {
@@ -35,7 +35,6 @@ interface Edge {
     MatFormFieldModule,
     MatButtonModule,
     MatInputModule,
-    MatListModule,
     MatOptionModule,
     MatSelectModule,
     MatSidenavModule,

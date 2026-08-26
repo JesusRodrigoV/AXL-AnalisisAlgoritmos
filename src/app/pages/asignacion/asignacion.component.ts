@@ -12,11 +12,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { MyCanvasComponent } from '@app/src/my-canvas';
-import { HelpButtonComponent } from '@app/src/help-button';
+import { MyCanvasComponent } from '@app/shared/components/my-canvas';
+import { HelpButtonComponent } from '@app/shared/components/help-button';
 import { AssignmentSolverService } from '@app/services/assignment-solver';
 import { HelpContent } from '@app/models/Help.model';
 import { Conexion, Nodo } from '@app/models';
+import { GraphStoreService } from '@app/shared/services/graph-store.service';
 import { AsignacionMatrixComponent } from './asignacion-matrix';
 
 @Component({
@@ -40,6 +41,7 @@ export default class AsignacionComponent {
   private isProcessing = false;
   @ViewChild(MyCanvasComponent) canvas!: MyCanvasComponent;
   private assignmentSolver = inject(AssignmentSolverService);
+  private store = inject(GraphStoreService);
   currentNodes: Nodo[] = [];
   currentConections: Conexion[] = [];
 
@@ -100,12 +102,10 @@ export default class AsignacionComponent {
             return;
           }
 
-          console.time('hungarianAlgorithm');
           this.result = this.assignmentSolver.solve(
             matrix,
             this.isMaximization,
           );
-          console.timeEnd('hungarianAlgorithm');
 
           // Actualizar UI en un nuevo ciclo
           requestAnimationFrame(() => {
@@ -114,12 +114,9 @@ export default class AsignacionComponent {
 
             // Forzar sincronización con el canvas
             if (this.canvas) {
-              this.canvas.nodos = [...this.currentNodes];
-              this.canvas.conexiones = [...this.currentConections];
-              const ctx = this.canvas.canvas.nativeElement.getContext('2d');
-              if (ctx) {
-                this.canvas.dibujarNodo(ctx);
-              }
+              this.store.nodos.set([...this.currentNodes]);
+              this.store.conexiones.set([...this.currentConections]);
+              this.canvas.render();
             }
 
             this.cdr.detectChanges();
@@ -189,9 +186,6 @@ export default class AsignacionComponent {
     this.currentNodes.forEach((node) => {
       const esOrigen = origenIds.has(node.contador);
       if (node.esOrigen !== esOrigen) {
-        console.log(
-          `Actualizando nodo ${node.contador}: esOrigen = ${esOrigen}`,
-        );
         node.esOrigen = esOrigen;
       }
     });
@@ -242,7 +236,6 @@ export default class AsignacionComponent {
       );
     }
 
-    console.log('Matriz final:', matrix);
     return matrix;
   }
 
@@ -267,9 +260,6 @@ export default class AsignacionComponent {
       }
 
       const color = this.assignmentColors[i % this.assignmentColors.length];
-      console.log(
-        `Asignando color ${color} a nodos: origen ${i} -> destino ${j}`,
-      );
 
       // Actualizar tanto en currentNodes como en los arrays originales
       const originNode = origins[i];
@@ -293,27 +283,18 @@ export default class AsignacionComponent {
 
       if (currentOrigin) {
         this.applyNodeStyle(currentOrigin, color);
-        console.log(
-          `Nodo origen ${currentOrigin.contador} coloreado con ${color}`,
-        );
       }
       if (currentDest) {
         this.applyNodeStyle(currentDest, color);
-        console.log(
-          `Nodo destino ${currentDest.contador} coloreado con ${color}`,
-        );
       }
     });
 
     if (this.canvas) {
-      this.canvas.nodos = [...this.currentNodes];
-      const ctx = this.canvas.canvas.nativeElement.getContext('2d');
-      if (ctx) {
-        requestAnimationFrame(() => {
-          this.canvas.dibujarNodo(ctx);
-          this.cdr.detectChanges();
-        });
-      }
+      this.store.nodos.set([...this.currentNodes]);
+      requestAnimationFrame(() => {
+        this.canvas.render();
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -368,7 +349,7 @@ export default class AsignacionComponent {
     return true;
   }
   private storeOriginalSizes(): void {
-    this.canvas.nodos.forEach((n) => {
+    this.store.nodos().forEach((n) => {
       this.originalRadii.set(n.contador, n.radio);
     });
   }
@@ -391,21 +372,11 @@ export default class AsignacionComponent {
     }
 
     if (this.canvas) {
-      this.canvas.nodos = [...this.currentNodes];
-      this.canvas.conexiones = [...this.currentConections];
+      this.store.nodos.set([...this.currentNodes]);
+      this.store.conexiones.set([...this.currentConections]);
 
       requestAnimationFrame(() => {
-        const ctx = this.canvas.canvas.nativeElement.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = '#ffffff'; // O el color de fondo que uses
-          ctx.fillRect(
-            0,
-            0,
-            this.canvas.canvas.nativeElement.width,
-            this.canvas.canvas.nativeElement.height,
-          );
-          this.canvas.dibujarNodo(ctx);
-        }
+        this.canvas.render();
         this.cdr.detectChanges();
       });
     }

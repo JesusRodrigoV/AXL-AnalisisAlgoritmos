@@ -1,0 +1,79 @@
+@use '../../../../styles/shared' as *;
+
+.matrix-placeholder,
+.matrix-error {
+  @include flex-group(0, nowrap);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--axl-bg-secondary);
+  border-radius: 4px;
+  min-height: 200px;
+
+  p { margin-top: 1rem; color: var(--axl-text-primary); }
+}
+
+.matrix-error {
+  color: var(--axl-error);
+
+  i {
+    color: var(--axl-error);
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+}
+
+.matrix-container {
+  margin: 1rem;
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: var(--axl-shadow);
+}
+
+table {
+  @include table-base;
+
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+td,
+th {
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+th { white-space: nowrap; }
+
+.nodo-nombre {
+  background-color: var(--axl-table-header-bg);
+  color: var(--axl-text-primary);
+  font-weight: 500;
+}
+
+.suma-columna-fila {
+  background-color: var(--axl-bg-secondary);
+  color: var(--axl-text-primary);
+  font-weight: normal;
+}
+
+tr:not(:last-child):hover td {
+  background-color: var(--axl-bg-secondary);
+}
+
+tr:first-child {
+  th:first-child { border-top-left-radius: 8px; }
+  th:last-child { border-top-right-radius: 8px; }
+}
+
+tr:last-child {
+  td:first-child { border-bottom-left-radius: 8px; }
+  td:last-child { border-bottom-right-radius: 8px; }
+}
+
+@media (max-width: 768px) {
+  .matrix-container { margin: 0.5rem; }
+  td, th { padding: 8px; font-size: 13px; }
+}

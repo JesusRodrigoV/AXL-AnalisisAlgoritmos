@@ -32,7 +32,7 @@ export const routes: Routes = [
   {
     path: 'dijkstra',
     loadComponent: () =>
-      import('./pages/Dijsktra/dijkstra.component').then((m) => m.default),
+      import('./pages/dijkstra/dijkstra.component').then((m) => m.default),
   },
   {
     path: 'proyecto',

@@ -5,9 +5,11 @@ import {
   ElementRef,
   PLATFORM_ID,
   Inject,
+  inject,
 } from '@angular/core';
 import { Nodo } from 'src/app/pages/johnson/models/nodo.model.jonson';
 import { Conexion } from 'src/app/pages/johnson/models/conexion.model.jonson';
+import { JohnsonAdapterService } from '@app/shared/services/johnson-adapter.service';
 import { CommonModule, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -79,6 +81,8 @@ export class JohnsonCanvasComponent implements OnInit {
   nodos: Nodo[] = []; // Lista de nodos
   conexiones: Conexion[] = []; // Lista de conexiones
   selectedNodo: Nodo | null = null; // Nodo seleccionado para crear conexiones
+
+  private adapter = inject(JohnsonAdapterService);
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
@@ -246,6 +250,7 @@ export class JohnsonCanvasComponent implements OnInit {
     this.scale = 1;
     this.offsetX = 0;
     this.offsetY = 0;
+    this.adapter.clear();
     this.limpiarCanvas();
   }
 
@@ -348,6 +353,8 @@ export class JohnsonCanvasComponent implements OnInit {
     // 7. Ajuste de coordenadas y visualización
     this.ajustarCoordenadas();
     this.calcularJohnson(); // Este método ahora actualiza los tiempos y holguras
+    this.adapter.pushToStore(this.nodos, this.conexiones);
+    this.adapter.saveSnapshot();
     this.dibujarGrafo();
     this.hayGrafo = true;
   }
@@ -955,9 +962,7 @@ export class JohnsonCanvasComponent implements OnInit {
     }
 
     if (iteraciones >= MAX_ITERACIONES) {
-      console.warn(
-        'Se alcanzó el límite máximo de iteraciones en calcularTiemposIda',
-      );
+      this.mostrarError('Se alcanzó el límite máximo de iteraciones en calcular tiempos');
     }
   }
 
@@ -990,9 +995,7 @@ export class JohnsonCanvasComponent implements OnInit {
     }
 
     if (iteraciones >= MAX_ITERACIONES) {
-      console.warn(
-        'Se alcanzó el límite máximo de iteraciones en calcularTiemposVuelta',
-      );
+      this.mostrarError('Se alcanzó el límite máximo de iteraciones en calcular tiempos');
     }
   }
 
@@ -1113,6 +1116,8 @@ export class JohnsonCanvasComponent implements OnInit {
         });
 
         this.hayGrafo = true;
+        this.adapter.pushToStore(this.nodos, this.conexiones);
+        this.adapter.saveSnapshot();
 
         if (!this.ctx) {
           setTimeout(() => {
